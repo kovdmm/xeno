@@ -4,7 +4,7 @@
 // any use that bypasses XT.rng is a bug.
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -44,7 +44,9 @@ export function loadXT(files, { seed = 1, globals = {} } = {}) {
   const ctx = createContext(sandbox);
   runInContext('Math.random = () => { throw new Error("Math.random used: take it from XT.rng"); }', ctx);
   for (const f of files) {
-    runInContext(readFileSync(resolve(ROOT, "js", f + ".js"), "utf8"), ctx, { filename: f + ".js" });
+    runInContext(readFileSync(resolve(ROOT, "js", f + ".js"), "utf8"), ctx, {
+      filename: pathToFileURL(resolve(ROOT, "js", f + ".js")).href,
+    });
   }
   return win.XT;
 }
