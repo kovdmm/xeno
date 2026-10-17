@@ -2,7 +2,7 @@
 import type { Vec } from "../game/types";
 import type { Commands } from "./commands";
 import type { UiContext } from "./context";
-import { CheatTyper, escapeAction, hotkey, physicalLetter, spaceAction, type OpenScreens } from "./keys";
+import { CheatTyper, escapeAction, hotkey, physicalDigit, physicalLetter, spaceAction, type OpenScreens } from "./keys";
 import { clearPicks } from "./state";
 
 export interface InputDeps {
@@ -73,7 +73,9 @@ export function installInput(ui: UiContext, d: InputDeps) {
 
   document.addEventListener("keydown", (e) => {
     const target = e.target as Element | null;
-    if (target?.closest && target.closest("input,textarea")) return;
+    if (target?.closest && target.closest("input,textarea,select")) return;
+    // browser shortcuts (Ctrl+S, Ctrl+R, Alt+F ...) are not for the game; a held key does not repeat its action
+    if (!e.key || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
     if (screens.isOpen("credits")) {
       if (e.key === "Escape" || e.key === " " || e.key === "Enter") {
         e.preventDefault();
@@ -83,11 +85,11 @@ export function installInput(ui: UiContext, d: InputDeps) {
     }
     // cheat codes use the physical keys, so any layout works
     const kc = physicalLetter(e.code);
-    if (kc && !e.ctrlKey && !e.metaKey && !e.altKey && cheats.feed(kc)) {
+    if (kc && cheats.feed(kc)) {
       e.preventDefault();
       return;
     }
-    const k = hotkey(e.key);
+    const k = physicalDigit(e.code) || hotkey(e.key);
     if (k === "m") {
       d.toggleSound();
       return;

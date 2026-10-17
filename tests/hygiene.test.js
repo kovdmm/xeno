@@ -5,7 +5,7 @@ import { join, relative } from "node:path";
 const ROOT = new URL("../src/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 const walk = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory() ? walk(join(dir, e.name)) : /\.(js|ts)$/.test(e.name) ? [join(dir, e.name)] : [],
+    e.isDirectory() ? walk(join(dir, e.name)) : /\.(mjs|js|ts)$/.test(e.name) ? [join(dir, e.name)] : [],
   );
 const files = walk(ROOT).map((f) => ({ name: relative(ROOT, f).replaceAll("\\", "/"), text: readFileSync(f, "utf8") }));
 const under = (dir) => files.filter((f) => f.name.startsWith(dir + "/"));
@@ -43,7 +43,11 @@ describe("source hygiene", () => {
   });
 
   it("no stray control characters in the sources (a backspace once replaced a regex escape)", () => {
-    for (const f of files) expect(f.text, f.name).not.toMatch(/[\x00-\x08\x0b\x0c\x0e-\x1f]/);
+    const OTHER = ["../tests/", "../e2e/", "../scripts/"].flatMap((d) => {
+      const dir = join(ROOT, d);
+      return walk(dir).map((f) => ({ name: relative(ROOT, f).replaceAll("\\", "/"), text: readFileSync(f, "utf8") }));
+    });
+    for (const f of [...files, ...OTHER]) expect(f.text, f.name).not.toMatch(/[\x00-\x08\x0b\x0c\x0e-\x1f]/);
   });
 
   it("the simulation (src/game) knows nothing about the browser, texts or colours", () => {

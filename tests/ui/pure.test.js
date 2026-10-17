@@ -6,6 +6,7 @@ import {
   CheatTyper,
   escapeAction,
   hotkey,
+  physicalDigit,
   physicalLetter,
   spaceAction,
 } from "../../src/ui/keys";
@@ -40,6 +41,13 @@ describe("hotkeys", () => {
     expect(hotkey("Ц")).toBe("w");
     expect(hotkey("Escape")).toBe("escape");
     expect(hotkey("1")).toBe("1");
+  });
+
+  it("digits come from the key code too (on AZERTY the number row types symbols)", () => {
+    expect(physicalDigit("Digit1")).toBe("1");
+    expect(physicalDigit("Numpad8")).toBe("8");
+    expect(physicalDigit("KeyA")).toBe("");
+    expect(physicalDigit(undefined)).toBe("");
   });
 
   it("the physical letter comes from the key code, not the layout", () => {

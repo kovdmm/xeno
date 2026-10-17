@@ -436,6 +436,12 @@ test.describe("keyboard extras", () => {
     expect((await state(page)).towers).toEqual([]);
   });
 
+  test("the tower digits work on a layout whose number row types symbols (AZERTY)", async ({ page }) => {
+    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "&", code: "Digit1", bubbles: true })));
+    await tick(page, 2);
+    await expect(page.locator('.tb[data-t="gun"]')).toHaveClass(/\bon\b/);
+  });
+
   test("ten quick clicks on the logo roll the credits", async ({ page }) => {
     await page.click("#pauseBtn");
     await page.click("#pMenu");
@@ -475,5 +481,58 @@ test.describe("phone layout", () => {
     await page.click('#info [data-act="cancel"]');
     await expect(page.locator("#pal")).toBeVisible();
     await expect(page.locator("#info")).toBeHidden();
+  });
+});
+
+test.describe("keys that are not for the game", () => {
+  test.beforeEach(async ({ page }) => {
+    await openGame(page);
+    await rich(page);
+    await core(page, (C) => C.place("gun", 6, 5));
+    await tick(page, 2);
+    await clickCell(page, [6.5, 5.5]);
+  });
+
+  test("browser shortcuts (Ctrl+S, Ctrl+R, Alt+F...) do not sell, aim or call waves", async ({ page }) => {
+    for (const k of ["Control+s", "Control+r", "Control+n", "Alt+f", "Meta+u", "Control+q"]) await press(page, k);
+    const s = await state(page);
+    expect(s.towers.length).toBe(1);
+    expect(s.towers[0].lvl).toBe(0);
+    expect(s.wave).toBe(0);
+    expect(s.cd.stasis).toBe(0);
+    await expect(page.locator("#speedBtn")).toHaveText("×1");
+  });
+
+  test("typing a letter to pick a language in the selector does not drive the game", async ({ page }) => {
+    await page.keyboard.press("Escape"); // drop the selection first: the card is not the point here
+    await page.click("#pauseBtn");
+    await page.click("#pSettings");
+    await page.focus("#langSel");
+    for (const k of ["s", "n", "r", "f", "u"]) await page.keyboard.press(k);
+    const s = await state(page);
+    expect(s.towers.length).toBe(1);
+    expect(s.wave).toBe(0);
+    expect(s.cd.carpet).toBe(0);
+  });
+
+  test("a held key does not repeat its action (Escape would flicker the pause screen)", async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await tick(page, 2);
+    expect(await visible(page, "pause")).toBe(false); // selection dropped first
+    await page.keyboard.down("Escape");
+    await page.keyboard.down("Escape");
+    await page.keyboard.down("Escape");
+    await page.keyboard.up("Escape");
+    await tick(page, 2);
+    expect(await visible(page, "pause")).toBe(true);
+  });
+
+  test("a key event without a key (autofill, some IMEs) does not break the keyboard", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.evaluate(() => document.dispatchEvent(new Event("keydown")));
+    await press(page, "u");
+    expect(errors).toEqual([]);
+    expect((await state(page)).towers[0].lvl).toBe(1);
   });
 });

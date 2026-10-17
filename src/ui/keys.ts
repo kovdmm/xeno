@@ -21,6 +21,12 @@ export function hotkey(key: string): string {
   return LAYOUT[k] || k;
 }
 
+/** The digit of a number-row or keypad key, from its `code`: on some layouts (AZERTY) the row types symbols. */
+export function physicalDigit(code: string | undefined): string {
+  const m = code && /^(?:Digit|Numpad)(\d)$/.exec(code);
+  return m ? m[1] : "";
+}
+
 /** The physical letter ("a".."z") of a KeyboardEvent, from its `code`: it does not depend on the layout. */
 export function physicalLetter(code: string | undefined): string {
   return code && code.startsWith("Key") ? code.slice(3).toLowerCase() : "";

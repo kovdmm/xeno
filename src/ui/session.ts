@@ -8,7 +8,11 @@ import { clearPicks } from "./state";
 export function createSession(ui: UiContext, progress: Progress, openCredits: () => void) {
   const { core: C, state: st, t, L, $, screens } = ui;
 
+  // the credits roll 1.8 s after a victory; starting another game in that time must cancel them
+  let creditsTimer: ReturnType<typeof setTimeout> | undefined;
+
   function newGame() {
+    clearTimeout(creditsTimer);
     st.best = progress.bestOf(st.diff);
     C.newGame(st.diff);
     clearPicks(st);
@@ -51,7 +55,7 @@ export function createSession(ui: UiContext, progress: Progress, openCredits: ()
       $("over").classList.toggle("won", e.won);
       renderOver();
       screens.show("over");
-      if (e.won) setTimeout(openCredits, 1800); // victory: the credits roll over the win screen
+      if (e.won) creditsTimer = setTimeout(() => C.S.won && C.S.over && openCredits(), 1800); // over the win screen
     } else if (e.type === "sold" && st.sel === e.tower) st.sel = null;
     else if (e.type === "cheat") {
       ui.toast(t("cheatOk", { l: C.S.lives }));
