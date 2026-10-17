@@ -70,7 +70,9 @@ describe("manifest and index.html", () => {
   it("has what browsers require to offer installing", () => {
     expect(manifest.name).toBeTruthy();
     expect(manifest.start_url).toBeTruthy();
-    expect(["standalone", "fullscreen", "minimal-ui"]).toContain(manifest.display);
+    // not "fullscreen": on Android it hides the system bars so that swiping the nav menu in glitches
+    expect(manifest.display).toBe("standalone");
+    expect(manifest.display_override).toBeUndefined();
     const sizes = manifest.icons.map((i) => i.sizes);
     expect(sizes).toContain("192x192");
     expect(sizes).toContain("512x512");

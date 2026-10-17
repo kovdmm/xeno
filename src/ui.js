@@ -429,13 +429,17 @@ export function installUi(XT) {
    Shown only where the browser offers it (not on iPhone Safari, for example). */
   const root = document.documentElement;
   const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  // an installed app already has the whole screen: no fullscreen question, no fullscreen button
+  const asApp = matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches || navigator.standalone === true;
   const fsOK =
+    !asApp &&
     !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
     !!(root.requestFullscreen || root.webkitRequestFullscreen);
   function drawFs() {
     // lives in the settings; unsupported browsers (iPhone Safari) see a disabled button with an explanation
     const b = $("fsBtn"),
       on = fsOK && !!fsEl();
+    b.parentElement.hidden = b.parentElement.previousElementSibling.hidden = asApp;
     b.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px">' +
       (on
@@ -470,7 +474,7 @@ export function installUi(XT) {
   /* ---------- installing as an app ---------- */
   const installer = createInstaller(
     {
-      standalone: matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches || navigator.standalone === true,
+      standalone: asApp,
       userAgent: navigator.userAgent,
       maxTouchPoints: navigator.maxTouchPoints || 0,
     },

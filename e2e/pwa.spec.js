@@ -52,3 +52,38 @@ test("the service worker caches the game, which then opens offline", async ({ pa
   await page.waitForFunction(() => window.XT?.i18n);
   await expect(page.locator("#mPlay")).toHaveText("Play");
 });
+
+test.describe("installed app", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  const asApp = (page) =>
+    page.addInitScript(() => {
+      const mm = window.matchMedia.bind(window);
+      window.matchMedia = (q) => (/display-mode/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : mm(q));
+    });
+
+  test("no fullscreen question and no fullscreen button: the app already has the whole screen", async ({ page }) => {
+    await asApp(page);
+    await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+    await page.goto("/");
+    await page.waitForFunction(() => window.XT?.i18n);
+    await page.click("#mPlay");
+    await page.waitForTimeout(300);
+    await expect(page.locator("#fsAsk")).toBeHidden();
+    await page.click("#pauseBtn");
+    await page.click("#pSettings");
+    await expect(page.locator("#fsBtn")).toBeHidden();
+    await expect(page.locator("#installBtn")).toHaveText("Installed as an app");
+  });
+
+  test("in a normal browser tab on a phone the question is still asked", async ({ page }) => {
+    await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+    await page.addInitScript(() => {
+      Object.defineProperty(document, "fullscreenEnabled", { value: true });
+      Element.prototype.requestFullscreen ||= () => Promise.resolve();
+    });
+    await page.goto("/");
+    await page.waitForFunction(() => window.XT?.i18n);
+    await expect(page.locator("#fsAsk")).toBeVisible();
+  });
+});
