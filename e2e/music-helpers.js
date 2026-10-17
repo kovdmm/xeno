@@ -12,6 +12,8 @@ export async function open(page, { storage = {} } = {}) {
     for (const [k, v] of Object.entries(st)) localStorage.setItem(k, v);
   }, storage);
   await page.goto("/");
+  // a cold dev server may still be transforming modules: wait until the game has installed its audio
+  await page.waitForFunction(() => window.XT?.audio?.ok === true, null, { timeout: 30000 });
 }
 
 /** Music = looping Howl longer than 30 s. Returns how many copies are playing and how many exist at all. */

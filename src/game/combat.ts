@@ -1,0 +1,97 @@
+// Damage, status effects and the consequences of death or escape.
+import { FINAL } from "./constants";
+import { ET } from "./data/enemies";
+import type { Creep, Game, Vec } from "./types";
+
+/** Position of a creep including its drawing offset inside the cell. */
+export const ex = (c: Creep): number => c.x + c.ox;
+export const ey = (c: Creep): number => c.y + c.oy;
+export const pos = (c: Creep): Vec => [ex(c), ey(c)];
+
+export function ignite(c: Creep, burn: number, plague?: boolean): void {
+  if (c.dead) return;
+  c.burn = Math.max(c.burnT > 0 ? c.burn : 0, burn);
+  c.burnT = 2;
+  if (plague) c.plague = true;
+}
+
+export function stun(c: Creep, t: number): void {
+  if ((c.stunImm ?? 0) > 0) return;
+  const d = c.boss ? t * 0.25 : t;
+  c.stunT = Math.max(c.stunT, d);
+  c.stunImm = d + (c.boss ? 4 : 2.5);
+}
+
+/** Armor takes `armor` points off a hit but never more than 75%; `pierce` ignores it. */
+export function hit(g: Game, c: Creep, dmg: number, pierce: boolean): void {
+  if (c.dead) return;
+  if (c.vulnT > 0) dmg *= 1 + c.vuln;
+  if (!pierce) dmg = Math.max(dmg * 0.25, dmg - c.armor);
+  c.hp -= dmg;
+  if (c.hp <= 0) kill(g, c);
+}
+
+/** Damage everything within r (full inside 40% of the radius, 60% outside); flyers only if `air`. */
+export function areaHit(
+  g: Game,
+  x: number,
+  y: number,
+  r: number,
+  dmg: number,
+  pierce: boolean,
+  air: boolean,
+  extra?: ((c: Creep) => void) | null,
+): void {
+  for (const c of g.S.creeps) {
+    if (c.dead || (c.fly && !air)) continue;
+    const q = Math.hypot(ex(c) - x, ey(c) - y);
+    if (q > r + c.r * 0.5) continue;
+    hit(g, c, dmg * (q < r * 0.4 ? 1 : 0.6), pierce);
+    if (extra) extra(c);
+  }
+}
+
+/** A creep of wave n is gone (killed or leaked); when the whole wave is, pay the clear bonus. */
+function waveTick(g: Game, n: number): void {
+  const S = g.S;
+  if (--S.left[n] === 0) {
+    if (n === FINAL) {
+      if (S.lives > 0) endGame(g, true);
+      return;
+    }
+    const b = 4 + n;
+    S.credits += b;
+    g.emit({ type: "toast", key: "cleared", vars: { n, b } });
+  }
+}
+
+export function leak(g: Game, c: Creep): void {
+  if (c.dead) return;
+  const S = g.S;
+  c.dead = true;
+  S.lives -= ET[c.type].lives || 1;
+  g.emit({ type: "leak", creep: c });
+  if (S.lives <= 0) {
+    S.lives = 0;
+    endGame(g, false);
+    return;
+  }
+  waveTick(g, c.wave);
+}
+
+export function kill(g: Game, c: Creep): void {
+  if (c.dead) return;
+  const S = g.S;
+  c.dead = true;
+  S.credits += c.rw;
+  S.score += c.rw * 10 + S.wave;
+  g.emit({ type: "kill", creep: c, x: ex(c), y: ey(c) });
+  waveTick(g, c.wave);
+}
+
+export function endGame(g: Game, won: boolean): void {
+  if (g.S.over) return;
+  g.S.over = true;
+  g.S.won = won;
+  g.emit({ type: "end", won });
+}

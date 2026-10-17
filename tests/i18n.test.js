@@ -10,8 +10,14 @@ describe("i18n dictionaries", () => {
   it("ru and en have exactly the same keys", () => {
     const ru = Object.keys(I18N.ru).sort();
     const en = Object.keys(I18N.en).sort();
-    expect(en.filter((k) => !ru.includes(k)), "only in en").toEqual([]);
-    expect(ru.filter((k) => !en.includes(k)), "only in ru").toEqual([]);
+    expect(
+      en.filter((k) => !ru.includes(k)),
+      "only in en",
+    ).toEqual([]);
+    expect(
+      ru.filter((k) => !en.includes(k)),
+      "only in ru",
+    ).toEqual([]);
   });
 
   it("no translation is empty and placeholders match between languages", () => {
@@ -42,7 +48,8 @@ describe("i18n dictionaries", () => {
   });
 
   it("every code the core returns to the player has a message", () => {
-    const core = read("src/core.js");
+    // the simulation lives in several modules under src/game
+    const core = ["grid", "game", "abilities", "waves", "combat"].map((f) => read(`src/game/${f}.ts`)).join(" ");
     const codes = new Set([...core.matchAll(/"(pc[A-Z]\w*|pc22|noCred|pickUlt)"/g)].map((m) => m[1]));
     expect([...codes].sort()).toEqual(["noCred", "pc22", "pcBlock", "pcEdge", "pcEnemy", "pcRes", "pcTrap", "pickUlt"]);
     for (const c of codes) expect(I18N.ru[c], c).toBeDefined();
@@ -52,7 +59,11 @@ describe("i18n dictionaries", () => {
 
   it("every ability/tower/difficulty ships both languages in its data", () => {
     const C = XT.core;
-    for (const o of [...C.TKEYS.map((k) => C.TT[k]), ...C.DKEYS.map((k) => C.DIFF[k]), ...C.AKEYS.map((k) => C.AB[k])]) {
+    for (const o of [
+      ...C.TKEYS.map((k) => C.TT[k]),
+      ...C.DKEYS.map((k) => C.DIFF[k]),
+      ...C.AKEYS.map((k) => C.AB[k]),
+    ]) {
       expect(L(o), o.name).toBeTruthy();
       expect(o.name_en).toBeTruthy();
     }
