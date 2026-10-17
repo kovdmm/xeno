@@ -141,7 +141,12 @@
     "menuBest": "Rekord auf „{d}“: Welle {b} von {f}",
     "airHint": " Flieger fliegen direkt: Du brauchst Flugabwehr an ihrer Bahn.",
     "cmdTtl": "Kommandoposten",
-    "cmdTxt": "Schwierigkeit: {d}. Wähle einen Turm und platziere ihn auf dem Feld. Klicke auf einen gebauten Turm, um ihn zu verbessern oder zu verkaufen (70 % Rückerstattung)."
+    "cmdTxt": "Schwierigkeit: {d}. Wähle einen Turm und platziere ihn auf dem Feld. Klicke auf einen gebauten Turm, um ihn zu verbessern oder zu verkaufen (70 % Rückerstattung).",
+    "installH": "Installation",
+    "installBtn": "App installieren",
+    "installDone": "Als App installiert",
+    "installNo": "Installation ist in diesem Browser nicht verfügbar",
+    "installIos": "In Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“."
   },
   "game": {
     "towers": {

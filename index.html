@@ -30,10 +30,13 @@
         display: none !important;
       }
     </style>
-  </head>
-  <body>
     <title>Xeno-Tactic</title>
     <meta name="theme-color" content="#050605" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Xeno" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -43,6 +46,8 @@
       href="https://fonts.googleapis.com/css2?family=Russo+One&amp;family=PT+Sans+Narrow:wght@400;700&amp;display=swap"
     />
     <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <!-- Structure: src/core.js (game logic, no DOM) · src/render.js (canvas look) · src/audio.js (sound, howler.js) · src/i18n.js (texts) · src/ui.js (interface and loop) · src/main.js (wiring) · style.css (page look) -->
 
     <div class="app" id="app">
@@ -192,6 +197,9 @@
         <select class="langSel" id="langSel" data-i-label="langH"></select>
         <h3 class="mh" data-i="screenH"></h3>
         <div class="langs"><button class="lcard" id="fsBtn"></button></div>
+        <h3 class="mh" data-i="installH"></h3>
+        <div class="langs"><button class="lcard" id="installBtn"></button></div>
+        <p class="note" id="installNote" hidden></p>
         <h3 class="mh" data-i="soundH"></h3>
         <div class="sound">
           <button class="lcard" id="sndToggle"></button>

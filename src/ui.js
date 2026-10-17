@@ -2,6 +2,8 @@
    input, settings, records and the main loop.
    Talks to the game only through XT.core (commands, queries, events),
    draws only through XT.createRenderer and plays sound only through XT.audio. */
+import { createInstaller } from "./pwa.ts";
+
 export function installUi(XT) {
   const C = XT.core,
     I = XT.i18n,
@@ -465,6 +467,29 @@ export function installUi(XT) {
     if (!fsEl()) toggleFs();
   });
   $("fsNo").addEventListener("click", () => hide("fsAsk"));
+  /* ---------- installing as an app ---------- */
+  const installer = createInstaller(
+    {
+      standalone: matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches || navigator.standalone === true,
+      userAgent: navigator.userAgent,
+      maxTouchPoints: navigator.maxTouchPoints || 0,
+    },
+    window,
+    () => drawInstall(),
+  );
+  function drawInstall() {
+    const st = installer.state(),
+      b = $("installBtn"),
+      note = $("installNote");
+    b.textContent = st === "installed" ? t("installDone") : st === "unavailable" ? t("installNo") : t("installBtn");
+    b.disabled = st === "installed" || st === "unavailable";
+    note.hidden = st !== "ios";
+    note.textContent = st === "ios" ? t("installIos") : "";
+  }
+  $("installBtn").addEventListener("click", () => {
+    if (installer.state() === "ios") toast(t("installIos"));
+    else installer.prompt();
+  });
   /* easter egg: ten quick clicks on a logo roll the credits */
   let logoClicks = 0,
     logoT = 0;
@@ -579,6 +604,7 @@ export function installUi(XT) {
     buildPalette();
     drawSound();
     drawFs();
+    drawInstall();
     drawSpeed();
     renderOver();
     if (!S().started) $("banner").textContent = t("banner", { d: L(DIFF[diff]) });
@@ -633,6 +659,7 @@ export function installUi(XT) {
   }
   function openSettings() {
     drawFs();
+    drawInstall();
     renderLangs();
     renderDiffs();
     drawSound();

@@ -141,7 +141,12 @@
     "menuBest": "Best on {d}: wave {b} of {f}",
     "airHint": " Flyers skip the maze: you need anti-air along their lane.",
     "cmdTtl": "Command post",
-    "cmdTxt": "Difficulty: {d}. Pick a tower and place it on the field. Click a built tower to upgrade or sell it (70% refund)."
+    "cmdTxt": "Difficulty: {d}. Pick a tower and place it on the field. Click a built tower to upgrade or sell it (70% refund).",
+    "installH": "Install",
+    "installBtn": "Install the app",
+    "installDone": "Installed as an app",
+    "installNo": "Installing is not available in this browser",
+    "installIos": "In Safari tap Share, then “Add to Home Screen”."
   },
   "game": {
     "towers": {

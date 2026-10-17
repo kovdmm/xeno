@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#1c2a14"/>
+      <stop offset="1" stop-color="#050605"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#g)"/>
+  <!-- everything important sits inside the central 80% (maskable safe zone) -->
+  <g fill="none" stroke="#8dff3a" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="256,92 398,174 398,338 256,420 114,338 114,174" stroke-width="14" opacity=".55"/>
+    <path d="M190 190 L322 322 M322 190 L190 322" stroke-width="38"/>
+    <circle cx="256" cy="256" r="26" fill="#c0102e" stroke="#ff2a3a" stroke-width="8"/>
+  </g>
+</svg>

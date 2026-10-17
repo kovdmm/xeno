@@ -141,7 +141,12 @@
     "menuBest": "Rekord på ”{d}”: våg {b} av {f}",
     "airHint": " Flygare hoppar över labyrinten: du behöver luftvärn längs deras bana.",
     "cmdTtl": "Kommandocentral",
-    "cmdTxt": "Svårighetsgrad: {d}. Välj ett torn och placera det på planen. Klicka på ett byggt torn för att uppgradera eller sälja det (70 % tillbaka)."
+    "cmdTxt": "Svårighetsgrad: {d}. Välj ett torn och placera det på planen. Klicka på ett byggt torn för att uppgradera eller sälja det (70 % tillbaka).",
+    "installH": "Installation",
+    "installBtn": "Installera appen",
+    "installDone": "Installerad som app",
+    "installNo": "Installation är inte tillgänglig i den här webbläsaren",
+    "installIos": "I Safari: tryck på Dela och sedan ”Lägg till på hemskärmen”."
   },
   "game": {
     "towers": {
