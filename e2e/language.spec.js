@@ -1,0 +1,169 @@
+// The language selector and the five languages in the real browser.
+import { test, expect } from "@playwright/test";
+import { cellToClient } from "./harness.js";
+
+const LANGS = [
+  { code: "en", name: "English", html: "en", play: "Play", tower: "Machine Gun" },
+  { code: "ru", name: "Русский", html: "ru", play: "Играть", tower: "Пулемёт" },
+  { code: "de", name: "Deutsch", html: "de", play: "Spielen", tower: "Maschinengewehr" },
+  { code: "ua", name: "Українська", html: "uk", play: "Грати", tower: "Кулемет" },
+  { code: "sv", name: "Svenska", html: "sv", play: "Spela", tower: "Kulspruta" },
+];
+
+async function open(page) {
+  await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+  await page.goto("/");
+  await page.waitForFunction(() => window.XT?.i18n);
+}
+const choose = async (page, code) => {
+  await page.click("#mSettings");
+  await page.selectOption("#langSel", code);
+};
+
+test.describe("default language", () => {
+  test.use({ locale: "en-US" });
+
+  test("is English, and the title screen says so", async ({ page }) => {
+    await open(page);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.locator("#mPlay")).toHaveText("Play");
+    await expect(page.locator("h1.logo")).toHaveText("Xeno-Tactics");
+    expect(await page.title()).toBe("Xeno Tactics");
+  });
+
+  test("a language the game does not know falls back to English", async ({ browser }) => {
+    const ctx = await browser.newContext({ locale: "fr-FR" });
+    const page = await ctx.newPage();
+    await open(page);
+    await expect(page.locator("#mPlay")).toHaveText("Play");
+    await ctx.close();
+  });
+});
+
+test.describe("the selector", () => {
+  test.beforeEach(async ({ page }) => open(page));
+
+  test("lists every language by its own name", async ({ page }) => {
+    await page.click("#mSettings");
+    const opts = await page.locator("#langSel option").allTextContents();
+    expect(opts).toEqual(LANGS.map((l) => l.name));
+    expect(await page.locator("#langSel").inputValue()).toBe("en");
+    // a real <select>, not a row of buttons
+    expect(await page.locator("#langSel").evaluate((e) => e.tagName)).toBe("SELECT");
+    expect(await page.locator("#langs").count()).toBe(0);
+  });
+
+  for (const l of LANGS) {
+    test(`switching to ${l.name} translates the page at once`, async ({ page }) => {
+      await choose(page, l.code);
+      await expect(page.locator("html")).toHaveAttribute("lang", l.html);
+      await page.click("#setClose");
+      await expect(page.locator("#mPlay")).toHaveText(l.play);
+      // the tower palette (game data texts) follows too
+      await expect(page.locator("#towers .tb").first()).toHaveAttribute("aria-label", l.tower);
+      expect(await page.evaluate(() => document.title)).not.toBe("");
+    });
+  }
+
+  test("the choice is remembered after a reload", async ({ page }) => {
+    await choose(page, "sv");
+    await page.reload();
+    await page.waitForFunction(() => window.XT?.i18n);
+    await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+    await expect(page.locator("#mPlay")).toHaveText("Spela");
+    await page.click("#mSettings");
+    expect(await page.locator("#langSel").inputValue()).toBe("sv");
+  });
+
+  test("changing language leaves a running game untouched", async ({ page }) => {
+    await page.click("#mPlay");
+    await page.evaluate(() => {
+      XT.core.cheat("hesoyam");
+      XT.core.place("gun", 6, 5);
+      XT.core.sendWave();
+    });
+    await page.waitForTimeout(300);
+    const before = await page.evaluate(() => ({ t: XT.core.S.towers.length, w: XT.core.S.wave, c: XT.core.S.credits }));
+    await page.click("#pauseBtn");
+    await page.click("#pSettings");
+    await page.selectOption("#langSel", "de");
+    const after = await page.evaluate(() => ({ t: XT.core.S.towers.length, w: XT.core.S.wave, c: XT.core.S.credits }));
+    expect(after).toEqual(before);
+  });
+
+  test("the keyboard works on the selector", async ({ page }) => {
+    await page.click("#mSettings");
+    await page.focus("#langSel");
+    await page.keyboard.press("ArrowDown"); // en -> ru
+    await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  });
+
+  test("the Ukrainian keyboard layout drives the hotkeys (і is the S key: sell)", async ({ page }) => {
+    await page.click("#mPlay");
+    await page.evaluate(() => {
+      XT.core.cheat("hesoyam");
+      XT.core.place("gun", 6, 5);
+    });
+    const p = await cellToClient(page, [6.5, 5.5]);
+    await page.mouse.click(p.x, p.y); // select the tower
+    // Playwright cannot type Cyrillic by name, so send the event a Ukrainian layout produces for the S key
+    await page.evaluate(() =>
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "і", code: "KeyS", bubbles: true })),
+    );
+    expect(await page.evaluate(() => XT.core.S.towers.length)).toBe(0);
+  });
+});
+
+test.describe("language detection from the browser", () => {
+  for (const [locale, html, play] of [
+    ["de-DE", "de", "Spielen"],
+    ["uk-UA", "uk", "Грати"],
+    ["sv-SE", "sv", "Spela"],
+    ["ru-RU", "ru", "Играть"],
+  ]) {
+    test.describe(locale, () => {
+      test.use({ locale });
+      test(`starts in the browser's language`, async ({ page }) => {
+        await open(page);
+        await expect(page.locator("html")).toHaveAttribute("lang", html);
+        await expect(page.locator("#mPlay")).toHaveText(play);
+      });
+    });
+  }
+});
+
+test.describe("layout in every language", () => {
+  for (const vp of [
+    { width: 1280, height: 800, name: "desktop" },
+    { width: 390, height: 844, name: "phone" },
+  ]) {
+    test.describe(vp.name, () => {
+      test.use({ viewport: { width: vp.width, height: vp.height } });
+
+      for (const l of LANGS) {
+        test(`${l.name}: nothing is cut off or pushed off the screen`, async ({ page }) => {
+          await open(page);
+          await choose(page, l.code);
+          await page.click("#setClose");
+          await page.click("#mPlay");
+          await page.waitForTimeout(150);
+          const problems = await page.evaluate(() => {
+            const bad = [];
+            // names in the palette and ability bar fit their boxes (they shrink to fit)
+            for (const el of document.querySelectorAll(".tb .nm, .ab .sn"))
+              if (el.offsetParent && el.scrollWidth > el.clientWidth + 1) bad.push("cut off: " + el.textContent);
+            // no horizontal scrolling of the page
+            const de = document.documentElement;
+            if (de.scrollWidth > de.clientWidth + 1) bad.push("page scrolls sideways");
+            // every button's text stays inside the button
+            for (const b of document.querySelectorAll("button"))
+              if (b.offsetParent && b.scrollWidth > b.clientWidth + 2 && getComputedStyle(b).overflow !== "visible")
+                bad.push("button text cut: " + b.textContent.trim().slice(0, 30));
+            return bad;
+          });
+          expect(problems).toEqual([]);
+        });
+      }
+    });
+  }
+});

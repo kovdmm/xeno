@@ -1,0 +1,287 @@
+{
+  "ui": {
+    "crHint": "Zum Schließen klicken",
+    "credits": [
+      ["", "Xeno<span>-</span>Taktik"],
+      ["Ursprüngliche Idee", "Dmitry Kovalev"],
+      ["Spieldesign", "Claude Code"],
+      ["Programmierung", "Claude Code"],
+      ["Spiellogik & Balance für 200 Wellen", "Claude Code"],
+      ["Grafik & Animation", "Claude Code"],
+      ["Benutzeroberfläche", "Claude Code"],
+      ["Musik", "Claude Code"],
+      ["Soundeffekte", "Claude Code"],
+      ["Lokalisierung", "Claude Code"],
+      ["Tests", "Claude Code<br><small>und seine unermüdlichen Bots</small>"],
+      ["Außerirdische", "Claude Code"],
+      ["Inspiriert von", "Xeno Tactic"],
+      ["", "Danke fürs Spielen!"]
+    ],
+    "title": "Xeno-Taktik",
+    "brand": "Xeno<span>-</span>Taktik",
+    "sub": "Labyrinth-Tower-Defense nach dem Vorbild von Xeno Tactic · 200 Wellen",
+    "cCred": "Kredite",
+    "cLives": "Leben",
+    "cWave": "Welle",
+    "cScore": "Punkte",
+    "cBest": "Rekord",
+    "help": "Spielanleitung",
+    "settings": "Einstellungen",
+    "field": "Spielfeld",
+    "restart": "Nochmal spielen",
+    "hWaves": "Wellen",
+    "hTowers": "Türme",
+    "hAbil": "Fähigkeiten",
+    "pause": "Pause",
+    "pauseT": "Pause (Leertaste)",
+    "close": "Schließen",
+    "setTitle": "Einstellungen",
+    "langH": "Sprache",
+    "diffH": "Schwierigkeit",
+    "diffNote": "Ein Wechsel der Schwierigkeit startet ein neues Spiel. Rekorde werden für jede Stufe getrennt gespeichert.",
+    "startOver": "Neu beginnen",
+    "cancel": "Abbrechen",
+    "help1": "<b>So wird gespielt.</b> Aliens kriechen aus zwei Durchbrüchen des Nests (rotes Leuchten) und laufen zu den Toren der Basis (gelb-schwarze Streifen). Türme wirken wie Mauern: Baue ein Labyrinth, damit die Gegner länger unter Beschuss stehen. Die gestrichelte Linie zeigt den Weg. Flieger ignorieren das Labyrinth und fliegen geradewegs entlang der markierten Bahn: Stelle dort Raketen, Maschinengewehre, Laser oder Railguns auf. Panzerung verringert den Schaden jedes Treffers; Laser, Railgun, Haubitze, Brand, Fähigkeiten und alle Ultimate-Türme durchschlagen sie.",
+    "help2": "<b>Verbesserungen.</b> Die Stufen 1–4 machen einen Turm stärker. Auf Stufe 5 wählst du eine von zwei Ultimate-Spezialisierungen, die für jeden Turm anders sind; sie kostet das Dreifache der Stufe 4. Danach folgt endloses Übertakten: Jede Stufe bringt Schaden ×1,25 und kostet das 1,45-Fache.",
+    "help3": "<b>Gegner.</b> Ab der Spielmitte auf Normal und höher erscheinen Heiler (heilen ihre Nachbarn, gefährlich in langen Labyrinthen) und Springer (springen auf der Route nach vorn), und Flieger schließen sich den Bodenwellen an. Betäubung und Frost machen den Gegner für einige Sekunden immun.",
+    "help4": "<b>Fähigkeiten</b> werden mit jeder Welle teurer, treffen aber auch härter. Du gewinnst, indem du Welle 200 mit der Schwarmkönigin überlebst.",
+    "help5": "<b>Steuerung.</b> Wähle einen Turm und tippe auf das Feld. Tippe auf einen gebauten Turm, um ihn zu verbessern oder zu verkaufen. Bei einer Fähigkeit mit Ziel drückst du ihre Taste und danach eine Stelle auf dem Feld.",
+    "help6": "Tasten: <kbd>1</kbd>–<kbd>8</kbd> Türme, <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> Fähigkeiten, <kbd>U</kbd> verbessern oder übertakten, <kbd>S</kbd> verkaufen, <kbd>Leertaste</kbd> oder <kbd>Esc</kbd> Pause, <kbd>N</kbd> nächste Welle, <kbd>F</kbd> Vorspulen, <kbd>M</kbd> Ton. Rechtsklick oder erneutes Wählen hebt die Auswahl auf.",
+    "banner": "Schwierigkeit: {d}. Baue ein Labyrinth aus Türmen und überstehe 200 Wellen.",
+    "pcEdge": "Passt nicht an den Rand",
+    "pc22": "Benötigt einen freien Platz von 2×2",
+    "pcRes": "Hier ist ein Eingang oder Ausgang",
+    "pcEnemy": "Auf diesem Feld steht ein Gegner",
+    "pcBlock": "Der Weg darf nicht versperrt werden",
+    "pcTrap": "Gegner dürfen nicht eingesperrt werden",
+    "early": "Frühruf: +{b} Kr.",
+    "finalToast": "Letzte Welle: die Schwarmkönigin!",
+    "cleared": "Welle {n} abgewehrt: +{b} Kr.",
+    "won": "Sieg",
+    "lost": "Basis zerstört",
+    "wonTxt": "Die Schwarmkönigin ist besiegt und alle 200 Wellen sind auf „{d}“ abgewehrt.<br>Punkte: <b>{s}</b>. Verbleibende Leben: <b>{l}</b>.",
+    "lostTxt": "Du hast bis Welle <b>{w}</b> von 200 durchgehalten. Punkte: <b>{s}</b>.<br>Rekord auf „{d}“: Welle {b}.",
+    "cdToast": "{a}: bereit in {s} s",
+    "noCred": "Nicht genug Kredite",
+    "pickUlt": "Wähle eine Ultimate-Spezialisierung",
+    "pickUltPanel": "Wähle eine Ultimate-Spezialisierung im Panel",
+    "pickTarget": "Wähle ein Ziel für „{a}“",
+    "diffIs": "Schwierigkeit: {d}",
+    "bestShort": " Rekord: Welle {b}.",
+    "confirm": "Das aktuelle Spiel (Welle {w}) geht verloren. Auf „{d}“ neu beginnen?",
+    "bestLine": "Schwierigkeit: <b>{d}</b>. Rekord: Welle <b>{b}</b> von {f}.",
+    "dmg": "Schaden",
+    "dps": "Schaden/s",
+    "range": "Reichweite",
+    "reload": "Nachladen",
+    "blast": "Explosion",
+    "slow": "Verlangsamung",
+    "burn": "Brand/s",
+    "dead": "Totzone",
+    "targets": "Ziele",
+    "tBoth": "Boden und Luft",
+    "tAir": "nur Luft",
+    "tGround": "nur Boden",
+    "tough": ", zuerst der Zäheste",
+    "armor": "Panzerung",
+    "pierces": "durchschlägt",
+    "reduces": "verringert den Schaden",
+    "s": "s",
+    "cr": "Kr.",
+    "lvl": "Stufe {l}/5",
+    "upTo": "Verbessern auf {l} · {c}",
+    "ultHead": "Ultimate-Stufe 5 · <b>{c}</b> Kr.",
+    "piercesArmor": "Durchschlägt Panzerung",
+    "lvl5": "Stufe 5",
+    "oc": " · Übertakten {n}",
+    "ocBtn": "Übertakten {n} · Schaden ×1,25 · {c}",
+    "sell": "Verkaufen +{v}",
+    "tap": "Tippe auf das Feld.",
+    "finalWave": "<b>Letzte Welle.</b> Töte die Schwarmkönigin.",
+    "both": "von beiden Seiten",
+    "bossWave": "Brutmütter und Kriecher",
+    "nextWave": "Welle {n}: <b>{nm}</b>, {r}. In <em>{t} s</em>",
+    "firstWave": "Erste Welle: <b>{nm}</b>, {r}. Baue deine Verteidigung und starte dann.",
+    "start": "Start",
+    "noMore": "Keine weiteren Wellen",
+    "callNow": "Jetzt rufen",
+    "call": "Rufen",
+    "size": "Größe",
+    "size22": "2×2 Felder",
+    "price": "Preis",
+    "ultsList": "Spezialisierungen: {l}.",
+    "clickBuild": "Klicke auf das Feld, um zu bauen.",
+    "clickCast": "Klicke auf das Feld, um sie einzusetzen.",
+    "cooldown": "Abklingzeit",
+    "soundH": "Ton",
+    "volume": "Effekte",
+    "music": "Musik",
+    "soundOn": "Ton an",
+    "soundOff": "Ton aus",
+    "sndBtn": "Ton",
+    "noAudio": "Ton nicht verfügbar: howler.js wurde nicht geladen",
+    "rTB": "oben → unten",
+    "rRL": "rechts → links",
+    "fsOn": "Vollbild",
+    "fsAskT": "Im Vollbild spielen?",
+    "fsAskTxt": "Das Feld wird größer und die Browserleisten stören nicht. Du kannst das später in den Einstellungen ändern.",
+    "fsLater": "Nicht jetzt",
+    "fsOff": "Vollbild beenden",
+    "fsFail": "Der Browser hat den Vollbildmodus nicht erlaubt",
+    "screenH": "Bildschirm",
+    "fsNo": "Der Vollbildmodus ist in diesem Browser nicht verfügbar",
+    "cheatOk": "HESOYAM: Leben {l}, +250.000 Kr.",
+    "cheatBad": "Unbekannter Code",
+    "play": "Spielen",
+    "newGame": "Neues Spiel",
+    "contWave": "Weiter · Welle {w}",
+    "resume": "Fortsetzen",
+    "mainMenu": "Hauptmenü",
+    "paused": "Pause",
+    "speed": "Geschwindigkeit",
+    "tagline": "Die Kolonie ist gefallen. Das Nest rückt vor.",
+    "menuBest": "Rekord auf „{d}“: Welle {b} von {f}",
+    "airHint": " Flieger fliegen direkt: Du brauchst Flugabwehr an ihrer Bahn.",
+    "cmdTtl": "Kommandoposten",
+    "cmdTxt": "Schwierigkeit: {d}. Wähle einen Turm und platziere ihn auf dem Feld. Klicke auf einen gebauten Turm, um ihn zu verbessern oder zu verkaufen (70 % Rückerstattung)."
+  },
+  "game": {
+    "towers": {
+      "gun": {
+        "name": "Maschinengewehr",
+        "desc": "Billig und schnellfeuernd, trifft alles. Schwach gegen Panzerung.",
+        "ults": {
+          "mini": { "name": "Minigun", "desc": "Feuerrate ×6" },
+          "sniper": {
+            "name": "Scharfschütze",
+            "desc": "Reichweite ×1,7, Schaden ×6, halbe Feuerrate. Zielt auf den zähesten Gegner"
+          }
+        }
+      },
+      "cannon": {
+        "name": "Kanone",
+        "desc": "Flächengranaten auf kurze Distanz. Nur Bodenziele.",
+        "ults": {
+          "cluster": { "name": "Streumunition", "desc": "Die Granate verstreut 6 Submunitionen, Schaden ×2" },
+          "shock": {
+            "name": "Erschütterung",
+            "desc": "Schaden ×2,5, Explosion ×1,4, betäubt 0,5 s (danach 2,5 s Betäubungsimmunität)"
+          }
+        }
+      },
+      "frost": {
+        "name": "Kryo",
+        "desc": "Ein Impuls verlangsamt jeden Gegner in Reichweite.",
+        "ults": {
+          "zero": {
+            "name": "Absoluter Nullpunkt",
+            "desc": "Jeder 3. Impuls friert 1,2 s ein (mit Immunität), 80 % Verlangsamung, Reichweite ×1,4"
+          },
+          "brittle": {
+            "name": "Spröde",
+            "desc": "Gegner in Reichweite erleiden +60 % Schaden von allem, Reichweite ×1,6"
+          }
+        }
+      },
+      "missile": {
+        "name": "Raketen",
+        "desc": "Zielsuchende Raketen gegen Flieger.",
+        "ults": {
+          "swarm": { "name": "Raketenschwarm", "desc": "Salve auf 8 verschiedene Flieger" },
+          "sam": { "name": "Boden-Luft", "desc": "Trifft auch Bodeneinheiten, Flächenschaden" }
+        }
+      },
+      "laser": {
+        "name": "Laser",
+        "desc": "Dauerstrahl, der Panzerung durchschlägt. Schaden pro Sekunde.",
+        "ults": {
+          "prism": { "name": "Prisma", "desc": "4 Strahlen gleichzeitig" },
+          "heat": {
+            "name": "Überhitzung",
+            "desc": "Der Schaden auf ein Ziel steigt über 4 s auf bis zu ×8, Reichweite ×1,3"
+          }
+        }
+      },
+      "plasma": {
+        "name": "Plasma",
+        "desc": "Plasmageschosse setzen das Ziel in Brand. Brand durchschlägt Panzerung.",
+        "ults": {
+          "nova": {
+            "name": "Supernova",
+            "desc": "Das Geschoss explodiert und entzündet alles in der Nähe, Schaden und Brand ×2"
+          },
+          "plague": { "name": "Seuche", "desc": "Brand ×6 und er springt auf Nachbarn über" }
+        }
+      },
+      "rail": {
+        "name": "Railgun",
+        "desc": "Ein Sofortschuss durchschlägt jeden Gegner in einer Linie.",
+        "ults": {
+          "gauss": { "name": "Gauß", "desc": "Schaden ×2,5, dreifach breiter Strahl, Reichweite ×1,2" },
+          "auto": { "name": "Schnelllader", "desc": "Feuerrate ×5" }
+        }
+      },
+      "artillery": {
+        "name": "Haubitze",
+        "desc": "2×2-Turm. Weitreichendes Feuer auf den zähesten Gegner, durchschlägt Panzerung.",
+        "ults": {
+          "salvo": { "name": "Salve", "desc": "5 Granaten auf verschiedene Ziele" },
+          "nuke": { "name": "Atomgranate", "desc": "Schaden ×7, Explosionsradius 3,5, dreimal langsamer" }
+        }
+      }
+    },
+    "enemies": {
+      "crawler": { "name": "Kriecher" },
+      "runner": { "name": "Läufer" },
+      "swarm": { "name": "Schwarm" },
+      "armored": { "name": "Gepanzerte" },
+      "flyer": { "name": "Flieger" },
+      "healer": { "name": "Heiler" },
+      "blinker": { "name": "Springer" },
+      "boss": { "name": "Brutmutter" },
+      "queen": { "name": "Schwarmkönigin" }
+    },
+    "difficulties": {
+      "easy": { "name": "Leicht", "desc": "Die ursprüngliche Balance. Keine Heiler oder Springer." },
+      "normal": {
+        "name": "Normal",
+        "desc": "Gegnerleben bis ×1,9 zur Spielmitte, +1 Panzerung. Ab Welle 30: Heiler, Springer und Flieger mischen sich in Bodenwellen."
+      },
+      "hard": {
+        "name": "Schwer",
+        "desc": "Leben bis ×2,5, Panzerung +2 und wächst schneller, schnellere Gegner, Belohnungen −20 %. Neue Gegner ab Welle 20."
+      },
+      "insane": {
+        "name": "Unmöglich",
+        "desc": "Leben bis ×3,4, Panzerung +4 und wächst schneller, Belohnungen −30 %, 15 Leben. Alles beginnt fast sofort."
+      }
+    },
+    "abilities": {
+      "stasis": {
+        "name": "Stasis",
+        "short": "Stasis",
+        "desc": "Jeder Gegner wird 8 s lang um 75 % verlangsamt (Brutmütter um 40 %)"
+      },
+      "meteor": { "name": "Meteore", "short": "Meteore", "desc": "15 Meteore über dem gewählten Bereich" },
+      "napalm": {
+        "name": "Napalm",
+        "short": "Napalm",
+        "desc": "Eine Feuerzone für 10 s, Brand durchschlägt Panzerung"
+      },
+      "carpet": {
+        "name": "Flächenbombardement",
+        "short": "Bomben",
+        "desc": "Ein Bomber fliegt die gewählte Reihe entlang"
+      },
+      "nuke": {
+        "name": "Atomschlag",
+        "short": "Atom",
+        "desc": "Nach 1,5 s: 35 % der Lebenspunkte (Brutmütter 10 %) plus schwerer Schaden an allem im Radius 4"
+      }
+    },
+    "routes": {
+      "h": { "label": "links → rechts" },
+      "v": { "label": "oben → unten" }
+    }
+  }
+}

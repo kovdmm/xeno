@@ -48,7 +48,9 @@ export function loadXT(files, { seed = 1, globals = {} } = {}) {
     rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) },
     env: { setTimeout, now: () => 0 },
   };
-  for (const f of files) INSTALL[f](XT);
+  // the core adapter reads its texts from XT.i18n, so that is always installed first
+  const order = files.includes("core") && !files.includes("i18n") ? ["i18n", ...files] : files;
+  for (const f of order) INSTALL[f](XT);
   return XT;
 }
 

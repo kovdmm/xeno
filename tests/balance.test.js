@@ -31,7 +31,7 @@ describe("balance.json", () => {
     expect(() => parseBalance(clone())).not.toThrow();
   });
 
-  it("contains no text meant for the player (that lives in src/content)", () => {
+  it("contains no text meant for the player (that lives in src/i18n)", () => {
     const text = readFileSync(new URL("../src/game/data/balance.json", import.meta.url), "utf8");
     expect(text).not.toMatch(/"(name|name_en|desc|desc_en|short|short_en|label|label_en)"/);
   });

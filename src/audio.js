@@ -3,28 +3,13 @@
 // Temporary: it goes away once main.js wires these parts itself.
 import { createAudioSystem } from "./audio/system";
 import { createHowlerOut } from "./audio/howlerOut";
-
-/** localStorage that never throws (private windows, blocked storage). */
-const storage = {
-  get(k) {
-    try {
-      return localStorage.getItem(k);
-    } catch (e) {
-      return null;
-    }
-  },
-  set(k, v) {
-    try {
-      localStorage.setItem(k, v);
-    } catch (e) {}
-  },
-};
+import { localStorageStore } from "./storage";
 
 export function installAudio(XT) {
   const g = globalThis;
   const A = createAudioSystem({
     out: createHowlerOut({ Howl: g.Howl, Howler: g.Howler, addEventListener: (t, f) => g.addEventListener(t, f) }),
-    storage,
+    storage: localStorageStore(),
     // randomness comes from XT.rng.audio when set (tests seed it)
     rng: (XT.rng && XT.rng.audio) || Math.random,
     schedule: (XT.env && XT.env.setTimeout) || ((fn, ms) => setTimeout(fn, ms)),

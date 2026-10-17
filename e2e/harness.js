@@ -43,11 +43,14 @@ export const tick = (page, n = 1) => page.evaluate((n) => window.__tick(n), n);
 
 /** Run code against XT.core inside the page: `await core(page, (C, arg) => {...}, arg)`. */
 export const core = (page, fn, arg) =>
-  page.evaluate(([src, arg]) => new Function("C", "arg", "return (" + src + ")(C, arg)")(window.XT.core, arg), [
-    // object-method shorthand `name(C) {…}` is not an expression: turn it into `function name(C) {…}`
-    /^(function|async|\(|[\w$]+\s*=>)/.test(fn.toString()) ? fn.toString() : "function " + fn.toString(),
-    arg,
-  ]);
+  page.evaluate(
+    ([src, arg]) => new Function("C", "arg", "return (" + src + ")(C, arg)")(window.XT.core, arg),
+    [
+      // object-method shorthand `name(C) {…}` is not an expression: turn it into `function name(C) {…}`
+      /^(function|async|\(|[\w$]+\s*=>)/.test(fn.toString()) ? fn.toString() : "function " + fn.toString(),
+      arg,
+    ],
+  );
 
 /** Client coordinates of a board point (cell units, may be fractional), whatever the board orientation. */
 export async function cellToClient(page, [x, y]) {

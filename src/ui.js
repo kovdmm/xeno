@@ -246,6 +246,7 @@ export function installUi(XT) {
     е: "t",
     г: "u",
     ы: "s",
+    і: "s", // Ukrainian layout
     т: "n",
     а: "f",
     ь: "m",
@@ -545,11 +546,23 @@ export function installUi(XT) {
       b.addEventListener("click", () => selectAbility(k));
       abEl.appendChild(b);
     }
+    fitNames();
   }
+  // Long words ("Maschinengewehr", "Flächenbombardement") must not be cut off in the narrow palette: shrink
+  // the font of a name that does not fit, down to a readable minimum.
+  function fitNames() {
+    for (const el of document.querySelectorAll(".tb .nm, .ab .sn")) {
+      el.style.fontSize = "";
+      if (!el.offsetParent) continue; // not shown in this layout
+      let px = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth + 1 && px > 9) el.style.fontSize = (px -= 0.5) + "px";
+    }
+  }
+  document.fonts?.ready.then(fitNames); // the real font is wider or narrower than the fallback
 
   /* ---------- language ---------- */
   function applyLang() {
-    document.documentElement.lang = I.lang;
+    document.documentElement.lang = I.htmlLang;
     document.title = t("title");
     document.querySelectorAll("[data-i]").forEach((e) => {
       e.innerHTML = t(e.dataset.i);
@@ -571,10 +584,10 @@ export function installUi(XT) {
     lastNext = "";
     refreshUI();
   }
+  // the language selector lists every language by its own name, so it is readable whatever language is on
   function renderLangs() {
-    $("langs").innerHTML = I.LANGS.map(
-      (k) =>
-        `<button class="lcard${k === I.lang ? " on" : ""}" data-l="${k}">${k === "ru" ? "Русский" : "English"}</button>`,
+    $("langSel").innerHTML = I.LANGUAGES.map(
+      (l) => `<option value="${l.code}" lang="${l.html}"${l.code === I.lang ? " selected" : ""}>${l.name}</option>`,
     ).join("");
   }
 
@@ -632,10 +645,8 @@ export function installUi(XT) {
     show("help");
   }
   $("overDiff").addEventListener("click", openSettings);
-  $("langs").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-l]");
-    if (!b) return;
-    I.setLang(b.dataset.l);
+  $("langSel").addEventListener("change", (e) => {
+    if (!I.setLang(e.target.value)) return;
     applyLang();
     renderLangs();
     renderDiffs();
@@ -914,6 +925,7 @@ export function installUi(XT) {
     }
     fw.style.width = Math.floor(w) + "px";
     fw.style.height = Math.floor(h) + "px";
+    fitNames(); // the palette may have changed size with the layout
   }
   new ResizeObserver(fitField).observe(app);
   portrait.addEventListener?.("change", () => requestAnimationFrame(fitField));

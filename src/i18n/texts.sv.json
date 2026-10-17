@@ -1,0 +1,287 @@
+{
+  "ui": {
+    "crHint": "Klicka för att stänga",
+    "credits": [
+      ["", "Xeno<span>-</span>Taktik"],
+      ["Ursprunglig idé", "Dmitry Kovalev"],
+      ["Speldesign", "Claude Code"],
+      ["Programmering", "Claude Code"],
+      ["Spellogik och balans för 200 vågor", "Claude Code"],
+      ["Grafik och animation", "Claude Code"],
+      ["Gränssnitt", "Claude Code"],
+      ["Musik", "Claude Code"],
+      ["Ljudeffekter", "Claude Code"],
+      ["Lokalisering", "Claude Code"],
+      ["Testning", "Claude Code<br><small>och dess outtröttliga botar</small>"],
+      ["Utomjordingar", "Claude Code"],
+      ["Inspirerat av", "Xeno Tactic"],
+      ["", "Tack för att du spelade!"]
+    ],
+    "title": "Xeno-Taktik",
+    "brand": "Xeno<span>-</span>Taktik",
+    "sub": "Tower defense med labyrint, inspirerat av Xeno Tactic · 200 vågor",
+    "cCred": "Krediter",
+    "cLives": "Liv",
+    "cWave": "Våg",
+    "cScore": "Poäng",
+    "cBest": "Rekord",
+    "help": "Så spelar du",
+    "settings": "Inställningar",
+    "field": "Spelplan",
+    "restart": "Spela igen",
+    "hWaves": "Vågor",
+    "hTowers": "Torn",
+    "hAbil": "Förmågor",
+    "pause": "Paus",
+    "pauseT": "Paus (mellanslag)",
+    "close": "Stäng",
+    "setTitle": "Inställningar",
+    "langH": "Språk",
+    "diffH": "Svårighetsgrad",
+    "diffNote": "Om du byter svårighetsgrad startar ett nytt spel. Rekord sparas separat för varje nivå.",
+    "startOver": "Börja om",
+    "cancel": "Avbryt",
+    "help1": "<b>Så spelar du.</b> Utomjordingarna kryper fram ur två genombrott i boet (det röda skenet) och styr mot basens portar (gul-svarta ränder). Tornen fungerar som väggar: bygg en labyrint så att fienderna är under eld längre. Den streckade linjen visar vägen. Flygare ignorerar labyrinten och flyger rakt längs den markerade banan: placera missiler, kulsprutor, lasrar eller rälskanoner intill den. Pansar minskar skadan från varje träff; laser, rälskanon, haubits, brand, förmågor och alla ultimata torn går igenom det.",
+    "help2": "<b>Uppgraderingar.</b> Nivå 1–4 gör ett torn starkare. På nivå 5 väljer du en av två ultimata specialiseringar, unika för varje torn; den kostar tre gånger så mycket som nivå 4. Därefter följer oändlig överklockning: varje nivå ger skada ×1,25 och kostar 1,45 gånger mer.",
+    "help3": "<b>Fiender.</b> Från mitten av spelet på Normal och högre dyker Helare (läker sina grannar, farliga i långa labyrinter) och Hoppare (hoppar framåt längs vägen) upp, och flygare ansluter till markvågorna. Bedövning och frysning gör fienden immun i några sekunder.",
+    "help4": "<b>Förmågor</b> blir dyrare för varje våg men träffar också hårdare. Du vinner genom att överleva våg 200 med Svärmdrottningen.",
+    "help5": "<b>Styrning.</b> Välj ett torn och tryck på planen. Tryck på ett byggt torn för att uppgradera eller sälja det. För en förmåga med mål trycker du på dess knapp och sedan på en plats på planen.",
+    "help6": "Tangenter: <kbd>1</kbd>–<kbd>8</kbd> torn, <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> förmågor, <kbd>U</kbd> uppgradera eller överklocka, <kbd>S</kbd> sälj, <kbd>Mellanslag</kbd> eller <kbd>Esc</kbd> paus, <kbd>N</kbd> nästa våg, <kbd>F</kbd> snabbspolning, <kbd>M</kbd> ljud. Högerklick eller att välja igen tar bort markeringen.",
+    "banner": "Svårighetsgrad: {d}. Bygg en labyrint av torn och överlev 200 vågor.",
+    "pcEdge": "Får inte plats vid kanten",
+    "pc22": "Kräver en ledig yta på 2×2",
+    "pcRes": "Här är en ingång eller utgång",
+    "pcEnemy": "En fiende står på rutan",
+    "pcBlock": "Du får inte blockera vägen",
+    "pcTrap": "Du får inte spärra in fienderna",
+    "early": "Tidigt anrop: +{b} kr.",
+    "finalToast": "Sista vågen: Svärmdrottningen!",
+    "cleared": "Våg {n} avvärjd: +{b} kr.",
+    "won": "Seger",
+    "lost": "Basen är förstörd",
+    "wonTxt": "Svärmdrottningen är besegrad och alla 200 vågor är avvärjda på ”{d}”.<br>Poäng: <b>{s}</b>. Liv kvar: <b>{l}</b>.",
+    "lostTxt": "Du höll ut till våg <b>{w}</b> av 200. Poäng: <b>{s}</b>.<br>Rekord på ”{d}”: våg {b}.",
+    "cdToast": "{a}: redo om {s} s",
+    "noCred": "Inte tillräckligt med krediter",
+    "pickUlt": "Välj en ultimat specialisering",
+    "pickUltPanel": "Välj en ultimat specialisering i panelen",
+    "pickTarget": "Välj ett mål för ”{a}”",
+    "diffIs": "Svårighetsgrad: {d}",
+    "bestShort": " Rekord: våg {b}.",
+    "confirm": "Det aktuella spelet (våg {w}) går förlorat. Börja om på ”{d}”?",
+    "bestLine": "Svårighetsgrad: <b>{d}</b>. Rekord: våg <b>{b}</b> av {f}.",
+    "dmg": "Skada",
+    "dps": "Skada/s",
+    "range": "Räckvidd",
+    "reload": "Omladdning",
+    "blast": "Explosion",
+    "slow": "Nedsaktning",
+    "burn": "Brand/s",
+    "dead": "Död zon",
+    "targets": "Mål",
+    "tBoth": "mark och luft",
+    "tAir": "endast luft",
+    "tGround": "endast mark",
+    "tough": ", tuffaste först",
+    "armor": "Pansar",
+    "pierces": "går igenom",
+    "reduces": "minskar skadan",
+    "s": "s",
+    "cr": "kr.",
+    "lvl": "nivå {l}/5",
+    "upTo": "Uppgradera till {l} · {c}",
+    "ultHead": "Ultimat nivå 5 · <b>{c}</b> kr.",
+    "piercesArmor": "Går igenom pansar",
+    "lvl5": "nivå 5",
+    "oc": " · överklockning {n}",
+    "ocBtn": "Överklocka {n} · skada ×1,25 · {c}",
+    "sell": "Sälj +{v}",
+    "tap": "Tryck på planen.",
+    "finalWave": "<b>Sista vågen.</b> Döda Svärmdrottningen.",
+    "both": "från båda sidor",
+    "bossWave": "Yngelmödrar och krypare",
+    "nextWave": "Våg {n}: <b>{nm}</b>, {r}. Om <em>{t} s</em>",
+    "firstWave": "Första vågen: <b>{nm}</b>, {r}. Bygg ditt försvar och starta sedan.",
+    "start": "Starta",
+    "noMore": "Inga fler vågor",
+    "callNow": "Kalla nu",
+    "call": "Kalla",
+    "size": "Storlek",
+    "size22": "2×2 rutor",
+    "price": "Pris",
+    "ultsList": "Ultimata: {l}.",
+    "clickBuild": "Klicka på planen för att bygga.",
+    "clickCast": "Klicka på planen för att använda den.",
+    "cooldown": "Nedkylning",
+    "soundH": "Ljud",
+    "volume": "Effekter",
+    "music": "Musik",
+    "soundOn": "Ljud på",
+    "soundOff": "Ljud av",
+    "sndBtn": "Ljud",
+    "noAudio": "Ljud är inte tillgängligt: howler.js laddades inte",
+    "rTB": "uppifrån → ned",
+    "rRL": "höger → vänster",
+    "fsOn": "Helskärm",
+    "fsAskT": "Spela i helskärm?",
+    "fsAskTxt": "Planen blir större och webbläsarens fält ligger inte i vägen. Du kan ändra det senare i Inställningar.",
+    "fsLater": "Inte nu",
+    "fsOff": "Lämna helskärm",
+    "fsFail": "Webbläsaren tillät inte helskärm",
+    "screenH": "Skärm",
+    "fsNo": "Helskärm är inte tillgängligt i den här webbläsaren",
+    "cheatOk": "HESOYAM: liv {l}, +250 000 kr.",
+    "cheatBad": "Okänd kod",
+    "play": "Spela",
+    "newGame": "Nytt spel",
+    "contWave": "Fortsätt · våg {w}",
+    "resume": "Återgå",
+    "mainMenu": "Huvudmeny",
+    "paused": "Pausad",
+    "speed": "Hastighet",
+    "tagline": "Kolonin har fallit. Boet närmar sig.",
+    "menuBest": "Rekord på ”{d}”: våg {b} av {f}",
+    "airHint": " Flygare hoppar över labyrinten: du behöver luftvärn längs deras bana.",
+    "cmdTtl": "Kommandocentral",
+    "cmdTxt": "Svårighetsgrad: {d}. Välj ett torn och placera det på planen. Klicka på ett byggt torn för att uppgradera eller sälja det (70 % tillbaka)."
+  },
+  "game": {
+    "towers": {
+      "gun": {
+        "name": "Kulspruta",
+        "desc": "Billig och snabbskjutande, träffar allt. Svag mot pansar.",
+        "ults": {
+          "mini": { "name": "Minigun", "desc": "Eldhastighet ×6" },
+          "sniper": {
+            "name": "Prickskytt",
+            "desc": "Räckvidd ×1,7, skada ×6, halva eldhastigheten. Siktar på den tuffaste fienden"
+          }
+        }
+      },
+      "cannon": {
+        "name": "Kanon",
+        "desc": "Splittergranater på nära håll. Endast markmål.",
+        "ults": {
+          "cluster": { "name": "Klustervapen", "desc": "Granaten sprider 6 submunitioner, skada ×2" },
+          "shock": {
+            "name": "Chock",
+            "desc": "Skada ×2,5, explosion ×1,4, bedövar i 0,5 s (därefter 2,5 s bedövningsimmunitet)"
+          }
+        }
+      },
+      "frost": {
+        "name": "Kryo",
+        "desc": "En puls saktar ner varje fiende inom räckvidd.",
+        "ults": {
+          "zero": {
+            "name": "Absolut nollpunkt",
+            "desc": "Var 3:e puls fryser i 1,2 s (med immunitet), 80 % nedsaktning, räckvidd ×1,4"
+          },
+          "brittle": {
+            "name": "Skör",
+            "desc": "Fiender inom räckvidd tar +60 % skada av allt, räckvidd ×1,6"
+          }
+        }
+      },
+      "missile": {
+        "name": "Missiler",
+        "desc": "Målsökande missiler mot flygare.",
+        "ults": {
+          "swarm": { "name": "Missilsvärm", "desc": "Salva mot 8 olika flygare" },
+          "sam": { "name": "Mark-luft", "desc": "Träffar även markenheter, områdesskada" }
+        }
+      },
+      "laser": {
+        "name": "Laser",
+        "desc": "Kontinuerlig stråle som går igenom pansar. Skada per sekund.",
+        "ults": {
+          "prism": { "name": "Prisma", "desc": "4 strålar samtidigt" },
+          "heat": {
+            "name": "Överhettning",
+            "desc": "Skadan på ett mål ökar upp till ×8 över 4 s, räckvidd ×1,3"
+          }
+        }
+      },
+      "plasma": {
+        "name": "Plasma",
+        "desc": "Plasmaskott sätter målet i brand. Brand går igenom pansar.",
+        "ults": {
+          "nova": {
+            "name": "Supernova",
+            "desc": "Skottet exploderar och tänder eld på allt i närheten, skada och brand ×2"
+          },
+          "plague": { "name": "Pest", "desc": "Brand ×6 och den sprids till grannar" }
+        }
+      },
+      "rail": {
+        "name": "Rälskanon",
+        "desc": "Ett ögonblickligt skott går igenom alla fiender på en linje.",
+        "ults": {
+          "gauss": { "name": "Gauss", "desc": "Skada ×2,5, tre gånger bredare stråle, räckvidd ×1,2" },
+          "auto": { "name": "Automatladdare", "desc": "Eldhastighet ×5" }
+        }
+      },
+      "artillery": {
+        "name": "Haubits",
+        "desc": "Torn på 2×2. Långräckviddig eld mot den tuffaste fienden, går igenom pansar.",
+        "ults": {
+          "salvo": { "name": "Salva", "desc": "5 granater mot olika mål" },
+          "nuke": { "name": "Kärnvapengranat", "desc": "Skada ×7, explosionsradie 3,5, tre gånger långsammare" }
+        }
+      }
+    },
+    "enemies": {
+      "crawler": { "name": "Krypare" },
+      "runner": { "name": "Löpare" },
+      "swarm": { "name": "Svärm" },
+      "armored": { "name": "Pansrade" },
+      "flyer": { "name": "Flygare" },
+      "healer": { "name": "Helare" },
+      "blinker": { "name": "Hoppare" },
+      "boss": { "name": "Yngelmoder" },
+      "queen": { "name": "Svärmdrottning" }
+    },
+    "difficulties": {
+      "easy": { "name": "Lätt", "desc": "Den ursprungliga balansen. Inga helare eller hoppare." },
+      "normal": {
+        "name": "Normal",
+        "desc": "Fiendernas hälsa upp till ×1,9 vid mitten av spelet, +1 pansar. Från våg 30: helare, hoppare och flygare blandas in i markvågorna."
+      },
+      "hard": {
+        "name": "Svår",
+        "desc": "Hälsa upp till ×2,5, pansar +2 och växer snabbare, snabbare fiender, belöningar −20 %. Nya fiender från våg 20."
+      },
+      "insane": {
+        "name": "Omöjlig",
+        "desc": "Hälsa upp till ×3,4, pansar +4 och växer snabbare, belöningar −30 %, 15 liv. Allt börjar nästan på en gång."
+      }
+    },
+    "abilities": {
+      "stasis": {
+        "name": "Stasis",
+        "short": "Stasis",
+        "desc": "Varje fiende saktas ner med 75 % i 8 s (yngelmödrar med 40 %)"
+      },
+      "meteor": { "name": "Meteorer", "short": "Meteorer", "desc": "15 meteorer över det valda området" },
+      "napalm": {
+        "name": "Napalm",
+        "short": "Napalm",
+        "desc": "En brandzon i 10 s, brand går igenom pansar"
+      },
+      "carpet": {
+        "name": "Mattbombning",
+        "short": "Bomber",
+        "desc": "Ett bombplan flyger längs den valda raden"
+      },
+      "nuke": {
+        "name": "Kärnvapenanfall",
+        "short": "Kärnvapen",
+        "desc": "Efter 1,5 s: 35 % av hälsan (yngelmödrar 10 %) plus kraftig skada på allt inom radie 4"
+      }
+    },
+    "routes": {
+      "h": { "label": "vänster → höger" },
+      "v": { "label": "uppifrån → ned" }
+    }
+  }
+}

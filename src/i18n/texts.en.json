@@ -1,0 +1,346 @@
+{
+  "ui": {
+    "crHint": "Click to close",
+    "credits": [
+      ["", "Xeno<span>-</span>Tactics"],
+      ["Original idea", "Dmitry Kovalev"],
+      ["Game design", "Claude Code"],
+      ["Programming", "Claude Code"],
+      ["Game logic & 200-wave balance", "Claude Code"],
+      ["Graphics & animation", "Claude Code"],
+      ["Interface", "Claude Code"],
+      ["Music", "Claude Code"],
+      ["Sound effects", "Claude Code"],
+      ["Localization", "Claude Code"],
+      ["Testing", "Claude Code<br><small>and its tireless bots</small>"],
+      ["Aliens", "Claude Code"],
+      ["Inspired by", "Xeno Tactic"],
+      ["", "Thanks for playing!"]
+    ],
+    "title": "Xeno Tactics",
+    "brand": "Xeno<span>-</span>Tactics",
+    "sub": "Maze tower defense inspired by Xeno Tactic · 200 waves",
+    "cCred": "Credits",
+    "cLives": "Lives",
+    "cWave": "Wave",
+    "cScore": "Score",
+    "cBest": "Best",
+    "help": "How to play",
+    "settings": "Settings",
+    "field": "Game field",
+    "restart": "Play again",
+    "hWaves": "Waves",
+    "hTowers": "Towers",
+    "hAbil": "Abilities",
+    "pause": "Pause",
+    "pauseT": "Pause (Space)",
+    "close": "Close",
+    "setTitle": "Settings",
+    "langH": "Language",
+    "diffH": "Difficulty",
+    "diffNote": "Changing difficulty starts a new game. Best results are kept separately for each level.",
+    "startOver": "Start over",
+    "cancel": "Cancel",
+    "help1": "<b>How to play.</b> Aliens crawl out of two hive breaches (the red glow) and head for the base gates (yellow-and-black stripes). Towers act as walls: build a maze so enemies spend longer under fire. The dashed line shows the route. Flyers ignore the maze and fly straight along the highlighted lane: keep missiles, machine guns, lasers or railguns next to it. Armor reduces the damage of every hit; the laser, railgun, howitzer, burning, abilities and every ultimate tower pierce it.",
+    "help2": "<b>Upgrades.</b> Levels 1–4 strengthen a tower. At level 5 you pick one of two ultimate specializations, unique to each tower; it costs three times the level-4 upgrade. After that comes endless overclocking: each level gives damage ×1.25 and costs 1.45 times more.",
+    "help3": "<b>Enemies.</b> From midgame on Normal and above, Healers (heal their neighbors, dangerous in long mazes) and Blinkers (jump ahead along the route) appear, and flyers join ground waves. Stuns and freezes leave the enemy immune for a few seconds.",
+    "help4": "<b>Abilities</b> cost more with every wave but hit harder too. You win by surviving wave 200 and the Swarm Queen.",
+    "help5": "<b>Controls.</b> Pick a tower and tap the field. Tap a built tower to upgrade or sell it. For a targeted ability, press its button, then a spot on the field.",
+    "help6": "Keys: <kbd>1</kbd>–<kbd>8</kbd> towers, <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> abilities, <kbd>U</kbd> upgrade or overclock, <kbd>S</kbd> sell, <kbd>Space</kbd> or <kbd>Esc</kbd> pause, <kbd>N</kbd> next wave, <kbd>F</kbd> fast-forward, <kbd>M</kbd> sound. Right-click or picking again clears the selection.",
+    "banner": "Difficulty: {d}. Build a maze of towers and survive 200 waves.",
+    "pcEdge": "Does not fit at the edge",
+    "pc22": "Needs a free 2×2 space",
+    "pcRes": "This is an entrance or an exit",
+    "pcEnemy": "An enemy is on this cell",
+    "pcBlock": "You cannot block the path",
+    "pcTrap": "You cannot trap enemies",
+    "early": "Early call: +{b} cr.",
+    "finalToast": "Final wave: the Swarm Queen!",
+    "cleared": "Wave {n} cleared: +{b} cr.",
+    "won": "Victory",
+    "lost": "Base destroyed",
+    "wonTxt": "The Swarm Queen is dead and all 200 waves are cleared on {d}.<br>Score: <b>{s}</b>. Lives left: <b>{l}</b>.",
+    "lostTxt": "You held out until wave <b>{w}</b> of 200. Score: <b>{s}</b>.<br>Best on {d}: wave {b}.",
+    "cdToast": "{a}: ready in {s} s",
+    "noCred": "Not enough credits",
+    "pickUlt": "Choose an ultimate specialization",
+    "pickUltPanel": "Choose an ultimate specialization in the panel",
+    "pickTarget": "Pick a target for {a}",
+    "diffIs": "Difficulty: {d}",
+    "bestShort": " Best: wave {b}.",
+    "confirm": "The current game (wave {w}) will be lost. Start over on {d}?",
+    "bestLine": "Difficulty: <b>{d}</b>. Best: wave <b>{b}</b> of {f}.",
+    "dmg": "Damage",
+    "dps": "Damage/s",
+    "range": "Range",
+    "reload": "Reload",
+    "blast": "Blast",
+    "slow": "Slow",
+    "burn": "Burn/s",
+    "dead": "Dead zone",
+    "targets": "Targets",
+    "tBoth": "ground and air",
+    "tAir": "air only",
+    "tGround": "ground only",
+    "tough": ", toughest first",
+    "armor": "Armor",
+    "pierces": "pierces",
+    "reduces": "reduces damage",
+    "s": "s",
+    "cr": "cr.",
+    "lvl": "lvl {l}/5",
+    "upTo": "Upgrade to {l} · {c}",
+    "ultHead": "Ultimate level 5 · <b>{c}</b> cr.",
+    "piercesArmor": "Pierces armor",
+    "lvl5": "lvl 5",
+    "oc": " · overclock {n}",
+    "ocBtn": "Overclock {n} · damage ×1.25 · {c}",
+    "sell": "Sell +{v}",
+    "tap": "Tap the field.",
+    "finalWave": "<b>Final wave.</b> Kill the Swarm Queen.",
+    "both": "from both sides",
+    "bossWave": "Brood Mothers and crawlers",
+    "nextWave": "Wave {n}: <b>{nm}</b>, {r}. In <em>{t} s</em>",
+    "firstWave": "First wave: <b>{nm}</b>, {r}. Build your defense, then start.",
+    "start": "Start",
+    "noMore": "No more waves",
+    "callNow": "Call now",
+    "call": "Call",
+    "size": "Size",
+    "size22": "2×2 cells",
+    "price": "Cost",
+    "ultsList": "Ultimates: {l}.",
+    "clickBuild": "Click the field to build.",
+    "clickCast": "Click the field to use it.",
+    "cooldown": "Cooldown",
+    "soundH": "Sound",
+    "volume": "Effects",
+    "music": "Music",
+    "soundOn": "Sound on",
+    "soundOff": "Sound off",
+    "sndBtn": "Sound",
+    "noAudio": "Sound unavailable: howler.js did not load",
+    "rTB": "top → bottom",
+    "rRL": "right → left",
+    "fsOn": "Fullscreen",
+    "fsAskT": "Play fullscreen?",
+    "fsAskTxt": "The field gets bigger and the browser bars stay out of the way. You can switch it later in Settings.",
+    "fsLater": "Not now",
+    "fsOff": "Exit fullscreen",
+    "fsFail": "The browser did not allow fullscreen",
+    "screenH": "Screen",
+    "fsNo": "Fullscreen is not available in this browser",
+    "cheatOk": "HESOYAM: lives {l}, +250,000 cr.",
+    "cheatBad": "Unknown code",
+    "play": "Play",
+    "newGame": "New game",
+    "contWave": "Continue · wave {w}",
+    "resume": "Resume",
+    "mainMenu": "Main menu",
+    "paused": "Paused",
+    "speed": "Speed",
+    "tagline": "The colony has fallen. The hive is coming.",
+    "menuBest": "Best on {d}: wave {b} of {f}",
+    "airHint": " Flyers skip the maze: you need anti-air along their lane.",
+    "cmdTtl": "Command post",
+    "cmdTxt": "Difficulty: {d}. Pick a tower and place it on the field. Click a built tower to upgrade or sell it (70% refund)."
+  },
+  "game": {
+    "towers": {
+      "gun": {
+        "name": "Machine Gun",
+        "desc": "Cheap and fast-firing, hits everything. Weak against armor.",
+        "ults": {
+          "mini": {
+            "name": "Minigun",
+            "desc": "Fire rate ×6"
+          },
+          "sniper": {
+            "name": "Sniper",
+            "desc": "Range ×1.7, damage ×6, half the fire rate. Targets the toughest enemy"
+          }
+        }
+      },
+      "cannon": {
+        "name": "Cannon",
+        "desc": "Close-range splash shells. Ground targets only.",
+        "ults": {
+          "cluster": {
+            "name": "Cluster",
+            "desc": "Shell scatters 6 bomblets, damage ×2"
+          },
+          "shock": {
+            "name": "Concussion",
+            "desc": "Damage ×2.5, blast ×1.4, stuns for 0.5 s (then 2.5 s of stun immunity)"
+          }
+        }
+      },
+      "frost": {
+        "name": "Cryo",
+        "desc": "A pulse slows every enemy in range.",
+        "ults": {
+          "zero": {
+            "name": "Absolute Zero",
+            "desc": "Every 3rd pulse freezes for 1.2 s (with immunity), 80% slow, range ×1.4"
+          },
+          "brittle": {
+            "name": "Brittle",
+            "desc": "Enemies in range take +60% damage from everything, range ×1.6"
+          }
+        }
+      },
+      "missile": {
+        "name": "Missiles",
+        "desc": "Homing missiles against flyers.",
+        "ults": {
+          "swarm": {
+            "name": "Missile Swarm",
+            "desc": "Salvo at 8 different flyers"
+          },
+          "sam": {
+            "name": "Surface-to-Air",
+            "desc": "Also hits ground units, splash damage"
+          }
+        }
+      },
+      "laser": {
+        "name": "Laser",
+        "desc": "Continuous beam that pierces armor. Damage per second.",
+        "ults": {
+          "prism": {
+            "name": "Prism",
+            "desc": "4 beams at once"
+          },
+          "heat": {
+            "name": "Overheat",
+            "desc": "Damage on one target ramps up to ×8 over 4 s, range ×1.3"
+          }
+        }
+      },
+      "plasma": {
+        "name": "Plasma",
+        "desc": "Plasma bolts set the target on fire. Burning pierces armor.",
+        "ults": {
+          "nova": {
+            "name": "Supernova",
+            "desc": "The bolt explodes and ignites everything nearby, damage and burn ×2"
+          },
+          "plague": {
+            "name": "Plague",
+            "desc": "Burn ×6 and it spreads to neighbors"
+          }
+        }
+      },
+      "rail": {
+        "name": "Railgun",
+        "desc": "An instant shot pierces every enemy in a line.",
+        "ults": {
+          "gauss": {
+            "name": "Gauss",
+            "desc": "Damage ×2.5, triple-width beam, range ×1.2"
+          },
+          "auto": {
+            "name": "Autoloader",
+            "desc": "Fire rate ×5"
+          }
+        }
+      },
+      "artillery": {
+        "name": "Howitzer",
+        "desc": "2×2 tower. Long-range fire at the toughest enemy, pierces armor.",
+        "ults": {
+          "salvo": {
+            "name": "Salvo",
+            "desc": "5 shells at different targets"
+          },
+          "nuke": {
+            "name": "Nuclear Shell",
+            "desc": "Damage ×7, blast radius 3.5, three times slower"
+          }
+        }
+      }
+    },
+    "enemies": {
+      "crawler": {
+        "name": "Crawlers"
+      },
+      "runner": {
+        "name": "Runners"
+      },
+      "swarm": {
+        "name": "Swarm"
+      },
+      "armored": {
+        "name": "Armored"
+      },
+      "flyer": {
+        "name": "Flyers"
+      },
+      "healer": {
+        "name": "Healers"
+      },
+      "blinker": {
+        "name": "Blinkers"
+      },
+      "boss": {
+        "name": "Brood Mother"
+      },
+      "queen": {
+        "name": "Swarm Queen"
+      }
+    },
+    "difficulties": {
+      "easy": {
+        "name": "Easy",
+        "desc": "The original balance. No healers or blinkers."
+      },
+      "normal": {
+        "name": "Normal",
+        "desc": "Enemy health up to ×1.9 by midgame, +1 armor. From wave 30: healers, blinkers and flyers mixed into ground waves."
+      },
+      "hard": {
+        "name": "Hard",
+        "desc": "Health up to ×2.5, armor +2 and grows faster, faster enemies, rewards −20%. New enemies from wave 20."
+      },
+      "insane": {
+        "name": "Impossible",
+        "desc": "Health up to ×3.4, armor +4 and grows faster, rewards −30%, 15 lives. Everything starts almost at once."
+      }
+    },
+    "abilities": {
+      "stasis": {
+        "name": "Stasis",
+        "short": "Stasis",
+        "desc": "Every enemy is slowed by 75% for 8 s (Brood Mothers by 40%)"
+      },
+      "meteor": {
+        "name": "Meteors",
+        "short": "Meteors",
+        "desc": "15 meteors over the chosen area"
+      },
+      "napalm": {
+        "name": "Napalm",
+        "short": "Napalm",
+        "desc": "A fire zone for 10 s, burning pierces armor"
+      },
+      "carpet": {
+        "name": "Carpet Bombing",
+        "short": "Bombs",
+        "desc": "A bomber flies along the chosen row"
+      },
+      "nuke": {
+        "name": "Nuclear Strike",
+        "short": "Nuke",
+        "desc": "After 1.5 s: 35% of health (Brood Mothers 10%) plus heavy damage to everything within radius 4"
+      }
+    },
+    "routes": {
+      "h": {
+        "label": "left → right"
+      },
+      "v": {
+        "label": "top → bottom"
+      }
+    }
+  }
+}

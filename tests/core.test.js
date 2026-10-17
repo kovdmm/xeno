@@ -24,7 +24,7 @@ describe("data tables", () => {
       const d = C.TT[k];
       for (const f of ["cost", "dmg", "rate", "range"]) expect(d[f], `${k}.${f}`).toHaveLength(4);
       expect(Object.keys(d.ults), k).toHaveLength(2);
-      expect(d.name && d.name_en && d.desc && d.desc_en, k).toBeTruthy();
+      expect(d.name && d.desc, k).toBeTruthy(); // the texts of the current language
     }
   });
 
@@ -35,8 +35,8 @@ describe("data tables", () => {
   });
 
   it("every difficulty and ability is localised", () => {
-    for (const k of C.DKEYS) expect(C.DIFF[k].name_en && C.DIFF[k].desc_en, k).toBeTruthy();
-    for (const k of C.AKEYS) expect(C.AB[k].name_en && C.AB[k].desc_en && C.AB[k].short_en, k).toBeTruthy();
+    for (const k of C.DKEYS) expect(C.DIFF[k].name && C.DIFF[k].desc, k).toBeTruthy();
+    for (const k of C.AKEYS) expect(C.AB[k].name && C.AB[k].desc && C.AB[k].short, k).toBeTruthy();
   });
 });
 
