@@ -7,7 +7,7 @@ type Updater<P extends Projectile> = (g: Game, p: P, dt: number) => void;
 
 /** A shell lands: splash damage, optionally scattering bomblets (the cluster ultimate). */
 function explode(g: Game, p: Shell): void {
-  areaHit(g, p.tx, p.ty, p.sp, p.dmg, p.pierce, false, p.stun ? (c) => stun(c, p.stun!) : null);
+  areaHit(g, p.tx, p.ty, p.sp, p.dmg, p.pierce, false, p.stun ? (c) => stun(g, c, p.stun!) : null);
   g.emit({
     type: "explode",
     kind: p.src === "bomblet" ? "bomblet" : "shell",
@@ -15,10 +15,11 @@ function explode(g: Game, p: Shell): void {
     y: p.ty,
     r: p.sp,
   });
-  if (p.cluster)
+  if (p.cluster) {
+    const bm = g.B.projectiles.shell.bomblet;
     for (let k = 0; k < p.cluster; k++) {
       const a = g.rand() * 6.28,
-        r = 0.6 + g.rand() * 1;
+        r = bm.scatterMin + g.rand() * bm.scatterRange;
       g.S.proj.push({
         k: "s",
         src: "bomblet",
@@ -27,13 +28,14 @@ function explode(g: Game, p: Shell): void {
         tgt: null,
         tx: p.tx + Math.cos(a) * r,
         ty: p.ty + Math.sin(a) * r,
-        dmg: p.dmg * 0.4,
-        sp: 0.75,
-        spd: 5,
+        dmg: p.dmg * bm.damageFraction,
+        sp: bm.splash,
+        spd: bm.speed,
         big: false,
         pierce: p.pierce,
       });
     }
+  }
 }
 
 /** machine-gun bullet: straight to the target */
@@ -46,7 +48,7 @@ const bullet: Updater<Bullet> = (g, p, dt) => {
     dy = ey(p.tgt) - p.y,
     d = Math.hypot(dx, dy),
     s = p.spd * dt;
-  if (d <= s + 0.1) {
+  if (d <= s + g.B.projectiles.bullet.hitRadius) {
     hit(g, p.tgt, p.dmg, p.pierce);
     p.dead = true;
     return;
@@ -76,6 +78,7 @@ const shell: Updater<Shell> = (g, p, dt) => {
 
 /** homing missile: turns towards the target, retargets the nearest creep it can hit if it dies */
 const missile: Updater<Missile> = (g, p, dt) => {
+  const M = g.B.projectiles.missile;
   p.life -= dt;
   if (p.life <= 0) {
     p.dead = true;
@@ -83,7 +86,7 @@ const missile: Updater<Missile> = (g, p, dt) => {
   }
   if (p.tgt.dead) {
     let b = null,
-      bd = 100;
+      bd = M.retargetRange * M.retargetRange;
     for (const c of g.S.creeps) {
       if (c.dead || !(c.fly ? p.air : p.ground)) continue;
       const q = (ex(c) - p.x) ** 2 + (ey(c) - p.y) ** 2;
@@ -104,14 +107,14 @@ const missile: Updater<Missile> = (g, p, dt) => {
   let da = Math.atan2(dy, dx) - p.ang;
   while (da > Math.PI) da -= 6.283;
   while (da < -Math.PI) da += 6.283;
-  p.ang += da * Math.min(1, dt * 7);
-  p.v = Math.min(10, p.v + dt * 12);
+  p.ang += da * Math.min(1, dt * M.turnRate);
+  p.v = Math.min(M.maxSpeed, p.v + dt * M.accel);
   const s = p.v * dt;
-  if (d <= s + 0.15) {
+  if (d <= s + M.hitRadius) {
     if (p.sp) areaHit(g, p.x, p.y, p.sp, p.dmg, p.pierce, true);
     else hit(g, p.tgt, p.dmg, p.pierce);
     p.dead = true;
-    g.emit({ type: "explode", kind: "missile", x: p.x, y: p.y, r: p.sp || 0.35 });
+    g.emit({ type: "explode", kind: "missile", x: p.x, y: p.y, r: p.sp || M.defaultBlast });
     return;
   }
   p.x += Math.cos(p.ang) * s;
@@ -120,6 +123,7 @@ const missile: Updater<Missile> = (g, p, dt) => {
 
 /** plasma bolt: ignites the target; the nova ultimate also ignites everything around it */
 const plasma: Updater<Plasma> = (g, p, dt) => {
+  const P = g.B.projectiles.plasma;
   if (p.tgt.dead) {
     p.dead = true;
     return;
@@ -128,12 +132,13 @@ const plasma: Updater<Plasma> = (g, p, dt) => {
     dy = ey(p.tgt) - p.y,
     d = Math.hypot(dx, dy),
     s = p.spd * dt;
-  if (d <= s + 0.12) {
+  if (d <= s + P.hitRadius) {
     const c = p.tgt;
     hit(g, c, p.dmg, p.pierce);
-    ignite(c, p.burn, !!p.plague);
-    if (p.nova) areaHit(g, p.x, p.y, p.nova, p.dmg * 0.6, p.pierce, true, (e) => ignite(e, p.burn, false));
-    g.emit({ type: "explode", kind: "plasma", x: p.x, y: p.y, r: p.nova || 0.3 });
+    ignite(g, c, p.burn, !!p.plague);
+    if (p.nova)
+      areaHit(g, p.x, p.y, p.nova, p.dmg * P.novaDamageFraction, p.pierce, true, (e) => ignite(g, e, p.burn, false));
+    g.emit({ type: "explode", kind: "plasma", x: p.x, y: p.y, r: p.nova || P.defaultBlast });
     p.dead = true;
     return;
   }
@@ -151,7 +156,7 @@ const howitzer: Updater<Howitzer> = (g, p, dt) => {
   const f = Math.max(0, Math.min(1, p.f));
   p.x = p.sx + (p.tx - p.sx) * f;
   p.y = p.sy + (p.ty - p.sy) * f;
-  p.h = Math.sin(Math.PI * f) * 1.8;
+  p.h = Math.sin(Math.PI * f) * g.B.projectiles.howitzer.arcHeight;
   if (p.f >= 1) {
     p.dead = true;
     areaHit(g, p.tx, p.ty, p.sp, p.dmg, true, false);

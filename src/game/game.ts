@@ -1,17 +1,15 @@
 // A running game: state, event bus, commands and the tick. No DOM, canvas, sound or UI text in here.
 import { abCost, cast as castAbility, stepAbilities } from "./abilities";
-import { H, W } from "./constants";
-import { AKEYS } from "./data/abilities";
-import { DIFF } from "./data/difficulty";
-import { TT } from "./data/towers";
+import { BALANCE } from "./balance";
 import { buildOrigin, footprint, placeCheck, recompute, routePath, towerAt } from "./grid";
 import { moveCreep } from "./movement";
 import { updateProjectile } from "./projectiles";
-import { statsOf, unitHP, upCost } from "./rules";
+import { statsOf, towerStats, unitHP, upCost } from "./rules";
 import { updateTower } from "./towers";
 import { makeWave, sendWave, stepSpawners } from "./waves";
 import type {
   AbilityKey,
+  Balance,
   CastResult,
   DiffKey,
   Game,
@@ -29,12 +27,15 @@ import type {
 } from "./types";
 
 export interface GameOptions {
+  /** all numbers of the game; defaults to data/balance.json */
+  balance?: Balance;
   /** source of randomness for the simulation; tests pass a seeded one */
   rng?: Rng;
   difficulty?: DiffKey;
 }
 
 export interface GameApi {
+  readonly balance: Balance;
   /** the current state; replaced by a new object on every `newGame` */
   readonly S: State;
   on(fn: (e: GameEvent) => void): () => void;
@@ -49,6 +50,9 @@ export interface GameApi {
   cheat(code: string): { lives: number; credits: number } | null;
   // queries (read-only)
   stats(t: Tower): TowerStats;
+  /** stats of a hypothetical tower: type, level, ultimate, overclock */
+  towerStats(type: TowerType, lvl: number, ult?: string, oc?: number): TowerStats;
+  upCost(t: Pick<Tower, "type" | "lvl" | "oc">): number;
   abCost(k: AbilityKey): number;
   makeWave(n: number): Wave;
   placeCheck(x: number, y: number, sz?: number): ReturnType<typeof placeCheck>;
@@ -60,7 +64,8 @@ export interface GameApi {
 }
 
 function initialState(g: Game): State {
-  const D = g.D();
+  const D = g.D(),
+    { width: W, height: H } = g.B.board;
   const S: State = {
     diff: g.diff,
     credits: D.credits,
@@ -86,26 +91,28 @@ function initialState(g: Game): State {
     nukes: [],
     stasisT: 0,
   };
-  for (const k of AKEYS) S.cd[k] = 0;
+  for (const k of Object.keys(g.B.abilities) as AbilityKey[]) S.cd[k] = 0;
   return S;
 }
 
 export function createGame(opts: GameOptions = {}): GameApi {
   const listeners: ((e: GameEvent) => void)[] = [];
   let nextId = 1;
+  const B = opts.balance ?? BALANCE;
   const g: Game = {
     S: undefined as unknown as State,
-    diff: opts.difficulty && DIFF[opts.difficulty] ? opts.difficulty : "easy",
+    B,
+    diff: opts.difficulty && Object.hasOwn(B.difficulty, opts.difficulty) ? opts.difficulty : "easy",
     rand: opts.rng ?? Math.random,
     emit: (e) => {
       for (const fn of listeners) fn(e);
     },
     newId: () => nextId++,
-    D: () => DIFF[g.diff],
+    D: () => B.difficulty[g.diff],
   };
 
   function newGame(difficulty?: string): State {
-    if (difficulty && Object.hasOwn(DIFF, difficulty)) g.diff = difficulty as DiffKey;
+    if (difficulty && Object.hasOwn(B.difficulty, difficulty)) g.diff = difficulty as DiffKey;
     g.S = initialState(g);
     recompute(g);
     g.emit({ type: "reset" });
@@ -114,7 +121,8 @@ export function createGame(opts: GameOptions = {}): GameApi {
 
   function place(type: TowerType, x: number, y: number): PlaceResult {
     const S = g.S,
-      d = TT[type],
+      d = B.towers[type],
+      W = B.board.width,
       z = d.size || 1;
     if (S.over) return { ok: false, code: "over" };
     if (S.credits < d.cost[0]) return { ok: false, code: "noCred" };
@@ -146,8 +154,8 @@ export function createGame(opts: GameOptions = {}): GameApi {
   function upgrade(t: Tower | null, u?: string): UpgradeResult {
     const S = g.S;
     if (!t || S.over) return { ok: false, code: "over" };
-    if (t.lvl === 3 && !TT[t.type].ults[u as string]) return { ok: false, code: "pickUlt" };
-    const c = upCost(t);
+    if (t.lvl === 3 && !B.towers[t.type].ults[u as string]) return { ok: false, code: "pickUlt" };
+    const c = upCost(B, t);
     if (S.credits < c) return { ok: false, code: "noCred" };
     S.credits -= c;
     t.inv += c;
@@ -165,7 +173,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
   function sell(t: Tower | null): number {
     if (!t) return 0;
     const S = g.S;
-    const v = Math.floor(t.inv * 0.7);
+    const v = Math.floor(t.inv * B.economy.sellRefund);
     S.credits += v;
     for (let i = 0; i < S.grid.length; i++) if (S.grid[i] === t) S.grid[i] = null;
     S.towers = S.towers.filter((x) => x !== t);
@@ -179,15 +187,14 @@ export function createGame(opts: GameOptions = {}): GameApi {
     code = String(code || "")
       .trim()
       .toLowerCase();
-    if (code === "hesoyam") {
-      const S = g.S;
-      S.lives = Math.max(S.lives, 100);
-      S.credits += 250000;
-      S.cheated = true;
-      g.emit({ type: "cheat", code });
-      return { lives: S.lives, credits: 250000 };
-    }
-    return null;
+    const ch = Object.hasOwn(B.economy.cheats, code) ? B.economy.cheats[code] : null;
+    if (!ch) return null;
+    const S = g.S;
+    S.lives = Math.max(S.lives, ch.minLives);
+    S.credits += ch.credits;
+    S.cheated = true;
+    g.emit({ type: "cheat", code });
+    return { lives: S.lives, credits: ch.credits };
   }
 
   /** Advances the simulation by dt seconds (the UI calls it in steps of at most 25 ms). */
@@ -207,6 +214,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
   newGame();
 
   return {
+    balance: B,
     get S() {
       return g.S;
     },
@@ -225,14 +233,16 @@ export function createGame(opts: GameOptions = {}): GameApi {
     sendWave: (early) => sendWave(g, early),
     cast: (k, pt) => castAbility(g, k, pt),
     cheat,
-    stats: statsOf,
+    stats: (t) => statsOf(B, t),
+    towerStats: (type, lvl, ult, oc) => towerStats(B, type, lvl, ult, oc),
+    upCost: (t) => upCost(B, t),
     abCost: (k) => abCost(g, k),
     makeWave: (n) => makeWave(g, n),
     placeCheck: (x, y, sz) => placeCheck(g, x, y, sz),
-    buildOrigin,
+    buildOrigin: (type, pt) => buildOrigin(B, type, pt),
     towerAt: (x, y) => towerAt(g, x, y),
     routePath: (r) => routePath(g, r),
-    unitHP: (n) => unitHP(g.D(), n),
+    unitHP: (n) => unitHP(B, g.D(), n),
     difficulty: () => g.diff,
   };
 }

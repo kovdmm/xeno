@@ -1,7 +1,5 @@
 // Creep movement along the pathfinding field, plus the per-creep abilities that act while walking
 // (burning, healing, blinking).
-import { W } from "./constants";
-import { ROUTES } from "./data/routes";
 import { ex, ey, hit, ignite, leak } from "./combat";
 import { pickNext } from "./grid";
 import type { Creep, Game } from "./types";
@@ -15,6 +13,7 @@ export function progress(g: Game, c: Creep): number {
 
 /** Walks `sp` cells along the field, turning at cell centres. */
 export function travel(g: Game, c: Creep, sp: number): void {
+  const { width: W, routes: ROUTES } = g.B.board;
   let guard = 0;
   while (sp > 0 && !c.dead && guard++ < 12) {
     const dx = c.tx - c.x,
@@ -45,7 +44,7 @@ export function travel(g: Game, c: Creep, sp: number): void {
       c.leaving = true;
       continue;
     }
-    const nx = pickNext(f, c.tx, c.ty, c.dx, c.dy);
+    const nx = pickNext(g, f, c.tx, c.ty, c.dx, c.dy);
     if (!nx) break;
     c.dx = nx[0] - c.tx;
     c.dy = nx[1] - c.ty;
@@ -57,7 +56,8 @@ export function travel(g: Game, c: Creep, sp: number): void {
 }
 
 export function moveCreep(g: Game, c: Creep, dt: number): void {
-  const S = g.S;
+  const S = g.S,
+    K = g.B.combat;
   if (c.burnT > 0) {
     c.burnT -= dt;
     hit(g, c, c.burn * dt, true);
@@ -65,11 +65,11 @@ export function moveCreep(g: Game, c: Creep, dt: number): void {
     if (c.plague) {
       c.spreadT = (c.spreadT || 0) - dt;
       if (c.spreadT <= 0) {
-        c.spreadT = 0.5;
+        c.spreadT = K.plague.interval;
         for (const e of S.creeps) {
           if (e === c || e.dead) continue;
-          if (Math.hypot(ex(e) - ex(c), ey(e) - ey(c)) < 1.1 && (e.burnT <= 0 || e.burn < c.burn))
-            ignite(e, c.burn, true);
+          if (Math.hypot(ex(e) - ex(c), ey(e) - ey(c)) < K.plague.radius && (e.burnT <= 0 || e.burn < c.burn))
+            ignite(g, e, c.burn, true);
         }
       }
     }
@@ -97,25 +97,25 @@ export function moveCreep(g: Game, c: Creep, dt: number): void {
   if (c.type === "healer") {
     c.healT -= dt;
     if (c.healT <= 0) {
-      c.healT = 0.5;
-      // Healing does not stack: each creep takes at most one heal per half-second.
+      c.healT = K.healer.interval;
+      // Healing does not stack: each creep takes at most one heal per interval.
       for (const e of S.creeps) {
-        if (e.dead || e.hp >= e.max || (e.healedAt || -1) > S.t - 0.49) continue;
-        if (Math.hypot(ex(e) - ex(c), ey(e) - ey(c)) <= 1.6) {
-          e.hp = Math.min(e.max, e.hp + e.max * (e === c ? 0.01 : 0.02));
+        if (e.dead || e.hp >= e.max || (e.healedAt || -1) > S.t - K.healer.window) continue;
+        if (Math.hypot(ex(e) - ex(c), ey(e) - ey(c)) <= K.healer.radius) {
+          e.hp = Math.min(e.max, e.hp + e.max * (e === c ? K.healer.selfHeal : K.healer.allyHeal));
           e.healedAt = S.t;
         }
       }
-      g.emit({ type: "heal", x: ex(c), y: ey(c), r: 1.6 });
+      g.emit({ type: "heal", x: ex(c), y: ey(c), r: K.healer.radius });
     }
   }
   if (c.type === "blinker" && !c.leaving) {
     c.blinkT -= dt;
     if (c.blinkT <= 0) {
-      c.blinkT = 3.5;
+      c.blinkT = K.blinker.interval;
       const x0 = ex(c),
         y0 = ey(c);
-      travel(g, c, 4);
+      travel(g, c, K.blinker.distance);
       if (c.dead) return;
       g.emit({ type: "blink", x: x0, y: y0, x2: ex(c), y2: ey(c) });
     }
@@ -125,5 +125,5 @@ export function moveCreep(g: Game, c: Creep, dt: number): void {
   let da = ta - c.ang;
   while (da > Math.PI) da -= 6.283;
   while (da < -Math.PI) da += 6.283;
-  c.ang += da * Math.min(1, dt * 12);
+  c.ang += da * Math.min(1, dt * K.creepTurnRate);
 }

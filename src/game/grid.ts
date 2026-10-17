@@ -1,11 +1,23 @@
 // The board: pathfinding fields, route paths and placement rules.
-import { DIRS, H, INF, W } from "./constants";
-import { RESERVED, ROUTES } from "./data/routes";
-import { TT } from "./data/towers";
-import type { Game, PlaceCode, RouteKey, Tower, TowerType, Vec } from "./types";
+import { DIRS, INF, mid } from "./constants";
+import type { Balance, Game, PlaceCode, RouteKey, Tower, TowerType, Vec } from "./types";
+
+/** Cells (y * width + x) where nothing may be built: gates and spawns of both routes. */
+const reservedCache = new WeakMap<Balance, Set<number>>();
+function reserved(B: Balance): Set<number> {
+  let set = reservedCache.get(B);
+  if (!set) {
+    set = new Set<number>();
+    for (const r of Object.values(B.board.routes))
+      for (const [x, y] of [...r.spawn, ...r.exit]) set.add(y * B.board.width + x);
+    reservedCache.set(B, set);
+  }
+  return set;
+}
 
 /** Distance to the exit of route `r` for every cell; `blocked` cells are treated as walls. */
 export function bfs(g: Game, r: RouteKey, blocked: number[] | null): Int32Array {
+  const { width: W, height: H, routes: ROUTES } = g.B.board;
   const d = new Int32Array(W * H).fill(INF),
     q: number[] = [];
   for (const [x, y] of ROUTES[r].exit) {
@@ -36,7 +48,8 @@ export function recompute(g: Game): void {
 }
 
 /** Next cell downhill in field `f`, preferring to keep going straight. */
-export function pickNext(f: Int32Array, x: number, y: number, ldx: number, ldy: number): Vec | null {
+export function pickNext(g: Game, f: Int32Array, x: number, y: number, ldx: number, ldy: number): Vec | null {
+  const { width: W, height: H } = g.B.board;
   let bx = -1,
     by = -1,
     bd = INF,
@@ -60,9 +73,10 @@ export function pickNext(f: Int32Array, x: number, y: number, ldx: number, ldy: 
 
 /** Cells the creeps of a route currently walk, from the middle entrance to the exit (for drawing). */
 export function routePath(g: Game, r: RouteKey): Vec[] {
+  const { width: W, height: H, routes: ROUTES } = g.B.board;
   const f = g.S.fields[r],
     R = ROUTES[r];
-  let [x, y] = R.spawn[1],
+  let [x, y] = mid(R.spawn),
     ldx = R.dir[0],
     ldy = R.dir[1],
     guard = 0;
@@ -71,7 +85,7 @@ export function routePath(g: Game, r: RouteKey): Vec[] {
     [x, y],
   ];
   while (f[y * W + x] > 0 && guard++ < W * H) {
-    const n = pickNext(f, x, y, ldx, ldy);
+    const n = pickNext(g, f, x, y, ldx, ldy);
     if (!n) break;
     ldx = n[0] - x;
     ldy = n[1] - y;
@@ -92,16 +106,18 @@ export function footprint(x: number, y: number, sz: number): Vec[] {
 /* Returns '' when a tower of size sz fits at (x,y); otherwise a reason code:
    out, busy (silent) · pcEdge, pc22, pcRes, pcEnemy, pcBlock, pcTrap (shown to the player). */
 export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
+  const { width: W, height: H, routes: ROUTES } = g.B.board;
   const S = g.S;
   const cells = footprint(x, y, sz);
   for (const [cx, cy] of cells) if (cx < 0 || cy < 0 || cx >= W || cy >= H) return sz > 1 ? "pcEdge" : "out";
   const idx = cells.map(([cx, cy]) => cy * W + cx);
   for (const i of idx) if (S.grid[i]) return sz > 1 ? "pc22" : "busy";
-  for (const i of idx) if (RESERVED.has(i)) return "pcRes";
+  for (const i of idx) if (reserved(g.B).has(i)) return "pcRes";
   for (const c of S.creeps) {
     if (c.fly || c.dead) continue;
     for (const i of idx) {
-      if (c.ti === i || (c.ci === i && Math.hypot(c.x - (i % W), c.y - ((i / W) | 0)) < 0.75)) return "pcEnemy";
+      if (c.ti === i || (c.ci === i && Math.hypot(c.x - (i % W), c.y - ((i / W) | 0)) < g.B.board.enemyBlockRadius))
+        return "pcEnemy";
     }
   }
   const f = { h: bfs(g, "h", idx), v: bfs(g, "v", idx) };
@@ -115,10 +131,12 @@ export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
 }
 
 /** Top-left cell for a tower of this type centred on a point given in cell units. */
-export function buildOrigin(type: TowerType, pt: Vec): Vec {
-  const z = TT[type].size || 1;
+export function buildOrigin(B: Balance, type: TowerType, pt: Vec): Vec {
+  const z = B.towers[type].size || 1;
   return z === 1 ? [Math.floor(pt[0]), Math.floor(pt[1])] : [Math.round(pt[0] - z / 2), Math.round(pt[1] - z / 2)];
 }
 
-export const towerAt = (g: Game, x: number, y: number): Tower | null =>
-  x < 0 || y < 0 || x >= W || y >= H ? null : g.S.grid[y * W + x];
+export const towerAt = (g: Game, x: number, y: number): Tower | null => {
+  const { width: W, height: H } = g.B.board;
+  return x < 0 || y < 0 || x >= W || y >= H ? null : g.S.grid[y * W + x];
+};

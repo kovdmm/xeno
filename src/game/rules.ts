@@ -1,10 +1,17 @@
-// Pure formulas: tower stats by level, upgrade prices, enemy health curve.
-import { TT } from "./data/towers";
-import type { Difficulty, Tower, TowerStats, TowerType } from "./types";
+// Pure formulas: tower stats by level, upgrade prices, enemy health curve. Every number comes from the balance.
+import type { Balance, Difficulty, Tower, TowerStats, TowerType, UltEffect } from "./types";
+
+/** Applies an ultimate to a stat block: first `set`, then `mul`, then `div`. */
+function applyEffect(s: TowerStats, e: UltEffect): void {
+  const stats = s as unknown as Record<string, number | string | boolean | undefined>;
+  for (const [k, v] of Object.entries(e.set ?? {})) stats[k] = v;
+  for (const [k, v] of Object.entries(e.mul ?? {})) (stats[k] as number) *= v!;
+  for (const [k, v] of Object.entries(e.div ?? {})) (stats[k] as number) /= v!;
+}
 
 /** Stats of a tower of this type at a given level; `ult` applies from level 4, `oc` is the overclock count. */
-export function towerStats(type: TowerType, lvl: number, ult?: string, oc?: number): TowerStats {
-  const d = TT[type],
+export function towerStats(B: Balance, type: TowerType, lvl: number, ult?: string, oc?: number): TowerStats {
+  const d = B.towers[type],
     L = Math.min(lvl, 3);
   const s: TowerStats = {
     dmg: d.dmg[L],
@@ -24,40 +31,43 @@ export function towerStats(type: TowerType, lvl: number, ult?: string, oc?: numb
   };
   if (lvl >= 4 && ult && d.ults[ult]) {
     s.pierce = true;
-    d.ults[ult].f(s);
+    applyEffect(s, d.ults[ult]);
   }
   if (oc) {
-    const m = Math.pow(1.25, oc);
+    const m = Math.pow(B.economy.overclock.damageGrowth, oc);
     s.dmg *= m;
     s.burn *= m;
   }
   return s;
 }
 
-export const statsOf = (t: Pick<Tower, "type" | "lvl" | "ult" | "oc">): TowerStats =>
-  towerStats(t.type, t.lvl, t.ult, t.oc);
+export const statsOf = (B: Balance, t: Pick<Tower, "type" | "lvl" | "ult" | "oc">): TowerStats =>
+  towerStats(B, t.type, t.lvl, t.ult, t.oc);
 
 /** Price of the next upgrade. */
-export function upCost(t: Pick<Tower, "type" | "lvl" | "oc">): number {
-  const c = TT[t.type].cost;
+export function upCost(B: Balance, t: Pick<Tower, "type" | "lvl" | "oc">): number {
+  const c = B.towers[t.type].cost,
+    o = B.economy.overclock;
   if (t.lvl < 3) return c[t.lvl + 1];
-  if (t.lvl === 3) return c[3] * 3;
-  return Math.round(c[3] * 1.5 * Math.pow(1.45, t.oc));
+  if (t.lvl === 3) return c[3] * B.economy.ultimateCostMultiplier;
+  return Math.round(c[3] * o.costBase * Math.pow(o.costGrowth, t.oc));
 }
 
-/** 0 → 1 smoothstep over waves 8..60: how far into the midgame ramp we are. */
-export function ramp(n: number): number {
-  const t = Math.max(0, Math.min(1, (n - 8) / 52));
+/** 0 → 1 smoothstep over the midgame ramp: how far into it wave n is. */
+export function ramp(B: Balance, n: number): number {
+  const t = Math.max(0, Math.min(1, (n - B.scaling.rampFromWave) / B.scaling.rampLength));
   return t * t * (3 - 2 * t);
 }
-export const diffHP = (D: Difficulty, n: number): number => 1 + (D.hp - 1) * ramp(n);
+export const diffHP = (B: Balance, D: Difficulty, n: number): number => 1 + (D.hp - 1) * ramp(B, n);
 
-/** Quadratic growth, plus an exponential factor after wave 100 so the wall arrives near the end. */
-export function hpScale(n: number): number {
-  let m = 1 + 0.24 * (n - 1) + 0.02 * (n - 1) * (n - 1);
-  if (n > 100) m *= Math.pow(1.013, n - 100);
+/** Quadratic growth, plus an exponential factor in the late game so the wall arrives near the end. */
+export function hpScale(B: Balance, n: number): number {
+  const c = B.scaling;
+  let m = 1 + c.linear * (n - 1) + c.quadratic * (n - 1) * (n - 1);
+  if (n > c.lateFromWave) m *= Math.pow(c.lateGrowth, n - c.lateFromWave);
   return m;
 }
 
 /** Health of a basic unit of wave n (also the damage scale of abilities). */
-export const unitHP = (D: Difficulty, n: number): number => 32 * hpScale(Math.max(1, n)) * diffHP(D, Math.max(1, n));
+export const unitHP = (B: Balance, D: Difficulty, n: number): number =>
+  B.scaling.unitHp * hpScale(B, Math.max(1, n)) * diffHP(B, D, Math.max(1, n));

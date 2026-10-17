@@ -41,10 +41,10 @@ export function findTargets(g: Game, t: Tower, s: TowerStats, n: number): Creep[
 }
 
 /** Turns the tower towards creep c, at a finite speed. */
-export function aimAt(t: Tower, c: Creep, dt: number): void {
+export function aimAt(g: Game, t: Tower, c: Creep, dt: number): void {
   const ta = Math.atan2(ey(c) - t.y, ex(c) - t.x);
   let da = ta - t.ang;
   while (da > Math.PI) da -= 6.283;
   while (da < -Math.PI) da += 6.283;
-  t.ang += da * Math.min(1, dt * 14);
+  t.ang += da * Math.min(1, dt * g.B.shooting.aimRate);
 }

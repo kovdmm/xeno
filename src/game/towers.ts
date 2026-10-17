@@ -11,30 +11,32 @@ type Continuous = (g: Game, t: Tower, s: TowerStats, dt: number) => void;
 /** Called once per shot with the first target; a tower may fire several shots per tick when it is fast. */
 const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
   gun(g, t, s, c, big) {
+    const P = g.B.projectiles.bullet;
     g.S.proj.push({
       k: "b",
-      x: t.x + Math.cos(t.ang) * 0.4,
-      y: t.y + Math.sin(t.ang) * 0.4,
+      x: t.x + Math.cos(t.ang) * P.muzzle,
+      y: t.y + Math.sin(t.ang) * P.muzzle,
       tgt: c,
       dmg: s.dmg,
-      spd: s.prio === "strong" ? 30 : 16,
+      spd: s.prio === "strong" ? P.strongSpeed : P.speed,
       big,
       pierce: s.pierce,
     });
   },
 
   cannon(g, t, s, c, big) {
+    const P = g.B.projectiles.shell;
     g.S.proj.push({
       k: "s",
       src: "cannon",
-      x: t.x + Math.cos(t.ang) * 0.4,
-      y: t.y + Math.sin(t.ang) * 0.4,
+      x: t.x + Math.cos(t.ang) * P.muzzle,
+      y: t.y + Math.sin(t.ang) * P.muzzle,
       tgt: c,
       tx: ex(c),
       ty: ey(c),
       dmg: s.dmg,
       sp: s.splash,
-      spd: 9,
+      spd: P.speed,
       big,
       pierce: s.pierce,
       cluster: s.cluster,
@@ -43,18 +45,19 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
   },
 
   missile(g, t, s, c) {
+    const P = g.B.projectiles.missile;
     const targets = s.multi ? findTargets(g, t, s, s.multi) : [c, c];
     targets.forEach((target, k) => {
       const side = k % 2 ? 1 : -1;
       g.S.proj.push({
         k: "m",
-        x: t.x + Math.cos(t.ang + side * 1.2) * 0.25,
-        y: t.y + Math.sin(t.ang + side * 1.2) * 0.25,
+        x: t.x + Math.cos(t.ang + side * P.sideAngle) * P.sideOffset,
+        y: t.y + Math.sin(t.ang + side * P.sideAngle) * P.sideOffset,
         tgt: target,
-        dmg: s.multi ? s.dmg : s.dmg / 2,
-        v: 2,
-        ang: t.ang + side * (0.4 + k * 0.15),
-        life: 6,
+        dmg: s.multi ? s.dmg : s.dmg / P.pairDamageDivisor,
+        v: P.speed,
+        ang: t.ang + side * (P.spread + k * P.spreadStep),
+        life: P.life,
         pierce: s.pierce,
         air: s.air,
         ground: s.ground,
@@ -64,14 +67,15 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
   },
 
   plasma(g, t, s, c, big) {
+    const P = g.B.projectiles.plasma;
     g.S.proj.push({
       k: "pl",
-      x: t.x + Math.cos(t.ang) * 0.4,
-      y: t.y + Math.sin(t.ang) * 0.4,
+      x: t.x + Math.cos(t.ang) * P.muzzle,
+      y: t.y + Math.sin(t.ang) * P.muzzle,
       tgt: c,
       dmg: s.dmg,
       burn: s.burn,
-      spd: 7,
+      spd: P.speed,
       big,
       pierce: s.pierce,
       nova: s.nova,
@@ -91,15 +95,17 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
         py = ey(e) - t.y,
         proj = px * Math.cos(a) + py * Math.sin(a);
       if (proj < 0 || proj > s.range) continue;
-      if (Math.abs(-px * Math.sin(a) + py * Math.cos(a)) <= e.r + 0.15 * s.width) hit(g, e, s.dmg, true);
+      if (Math.abs(-px * Math.sin(a) + py * Math.cos(a)) <= e.r + g.B.projectiles.rail.halfWidth * s.width)
+        hit(g, e, s.dmg, true);
     }
     g.emit({ type: "rail", tower: t, x: t.x, y: t.y, x2, y2, width: s.width, big });
   },
 
   artillery(g, t, s, c) {
+    const P = g.B.projectiles.howitzer;
     const targets = s.multi ? findTargets(g, t, s, s.multi) : [c];
-    const ox = t.x + Math.cos(t.ang) * 0.7,
-      oy = t.y + Math.sin(t.ang) * 0.7;
+    const ox = t.x + Math.cos(t.ang) * P.muzzle,
+      oy = t.y + Math.sin(t.ang) * P.muzzle;
     targets.forEach((target, k) => {
       g.S.proj.push({
         k: "a",
@@ -110,13 +116,13 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
         tgt: target,
         tx: ex(target),
         ty: ey(target),
-        f: -k * 0.12,
-        dur: 1.1,
+        f: -k * P.stagger,
+        dur: P.flightTime,
         h: 0,
         dmg: s.dmg,
         sp: s.splash,
         pierce: true,
-        nuke: s.splash > 3,
+        nuke: s.splash > P.nukeSplash,
       });
     });
     g.emit({ type: "muzzle", tower: t, x: ox, y: oy });
@@ -140,11 +146,11 @@ const CONTINUOUS: Partial<Record<TowerType, Continuous>> = {
         t.heatTgt = prev[0] || null;
       }
     }
-    const mult = s.heat ? 1 + 7 * Math.min(1, t.heatT! / s.heat) : 1;
+    const mult = s.heat ? 1 + g.B.shooting.laserHeatBonus * Math.min(1, t.heatT! / s.heat) : 1;
     t.heatM = mult;
     t.tgts = prev;
     if (prev.length) {
-      aimAt(t, prev[0], dt);
+      aimAt(g, t, prev[0], dt);
       t.beam = prev;
       for (const c of prev) hit(g, c, s.dmg * mult * dt, true);
     }
@@ -153,23 +159,24 @@ const CONTINUOUS: Partial<Record<TowerType, Continuous>> = {
   /** a pulse that slows (and with the ultimates freezes or weakens) everything in range */
   frost(g, t, s) {
     if (t.cd > 0) return;
+    const F = g.B.shooting.frost;
     let any = false;
     t.pulse = (t.pulse || 0) + 1;
-    const freeze = s.freeze && t.pulse % 3 === 0;
+    const freeze = s.freeze && t.pulse % F.freezeEvery === 0;
     for (const c of g.S.creeps) {
       if (c.dead || !inR(t, c, s.range)) continue;
       any = true;
       c.slow = Math.max(c.slowT > 0 ? c.slow : 0, s.slow);
-      c.slowT = 1.6;
+      c.slowT = F.slowTime;
       if (s.vuln) {
         c.vuln = Math.max(c.vulnT > 0 ? c.vuln : 0, s.vuln);
-        c.vulnT = 2;
+        c.vulnT = F.vulnTime;
       }
-      if (freeze) stun(c, s.freeze!);
+      if (freeze) stun(g, c, s.freeze!);
       hit(g, c, s.dmg, s.pierce);
     }
     if (any) {
-      t.cd = Math.max(t.cd + s.rate, s.rate * 0.5);
+      t.cd = Math.max(t.cd + s.rate, s.rate * F.minCooldown);
       g.emit({ type: "pulse", tower: t, r: s.range, freeze: !!freeze });
     } else {
       t.cd = 0;
@@ -180,7 +187,7 @@ const CONTINUOUS: Partial<Record<TowerType, Continuous>> = {
 
 /** One tick of one tower. */
 export function updateTower(g: Game, t: Tower, dt: number): void {
-  const s = statsOf(t);
+  const s = statsOf(g.B, t);
   t.cd -= dt;
   t.beam = null;
   const continuous = CONTINUOUS[t.type];
@@ -190,11 +197,11 @@ export function updateTower(g: Game, t: Tower, dt: number): void {
     if (t.cd < 0) t.cd = 0;
     return;
   }
-  aimAt(t, c, dt);
+  aimAt(g, t, c, dt);
   if (t.cd > 0) return;
   const big = t.lvl >= 4;
   g.emit({ type: "shot", tower: t });
-  for (let shot = 0; t.cd <= 0 && shot < 6; shot++) {
+  for (let shot = 0; t.cd <= 0 && shot < g.B.shooting.maxShotsPerTick; shot++) {
     t.cd += s.rate;
     SHOOTERS[t.type]!(g, t, s, c, big);
   }

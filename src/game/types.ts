@@ -45,9 +45,13 @@ export interface TowerStats {
   plague?: number;
 }
 
-export interface UltDef {
-  /** mutates the level-4 stats */
-  f: (s: TowerStats) => void;
+export type StatKey = keyof TowerStats;
+
+/** An ultimate as data: applied to the level-4 stats in the order set → mul → div. */
+export interface UltEffect {
+  set?: Partial<Record<StatKey, number | string>>;
+  mul?: Partial<Record<StatKey, number>>;
+  div?: Partial<Record<StatKey, number>>;
 }
 
 export interface TowerDef {
@@ -66,7 +70,7 @@ export interface TowerDef {
   ground: number;
   pierce?: number;
   prio?: Priority;
-  ults: Record<string, UltDef>;
+  ults: Record<string, UltEffect>;
 }
 
 export interface EnemyDef {
@@ -106,6 +110,25 @@ export interface AbilityDef {
   cd: number;
   aim: 0 | "circle" | "row";
   r?: number;
+  // what the ability does once cast; each ability uses its own subset
+  duration?: number;
+  slow?: number;
+  bossSlow?: number;
+  count?: number;
+  interval?: number;
+  fall?: number;
+  /** damage as a multiple of the health of a basic unit of the current wave */
+  damageUnits?: number;
+  dpsUnits?: number;
+  impactRadius?: number;
+  speed?: number;
+  bombInterval?: number;
+  spread?: number;
+  startX?: number;
+  exitMargin?: number;
+  delay?: number;
+  hpFraction?: number;
+  bossHpFraction?: number;
 }
 
 /* ---------- state ---------- */
@@ -364,9 +387,122 @@ export type CastResult = { ok: true } | { ok: false; code: string; s?: number };
 /** Everything a system needs from the running game. Systems are plain functions of `(g, …)`. */
 export interface Game {
   S: State;
+  /** all numbers of the game: see data/balance.json */
+  readonly B: Balance;
   diff: DiffKey;
   rand: Rng;
   emit(e: GameEvent): void;
   newId(): number;
   D(): Difficulty;
+}
+
+/* ---------- balance: the shape of data/balance.json ---------- */
+
+export interface Balance {
+  board: {
+    width: number;
+    height: number;
+    finalWave: number;
+    /** a walking enemy closer than this to a cell (centre to centre) blocks building there */
+    enemyBlockRadius: number;
+    routes: Record<RouteKey, Route>;
+  };
+  economy: {
+    /** share of the invested credits returned on sale */
+    sellRefund: number;
+    /** the level-5 upgrade costs this many times the level-4 one */
+    ultimateCostMultiplier: number;
+    overclock: { damageGrowth: number; costBase: number; costGrowth: number };
+    /** credits for clearing wave n: base + perWave * n */
+    waveClearBonus: { base: number; perWave: number };
+    earlyBonusPerSecond: number;
+    /** score for a kill: reward * perReward + current wave * perWave */
+    score: { perReward: number; perWave: number };
+    cheats: Record<string, { minLives: number; credits: number }>;
+  };
+  /** how enemy health and rewards grow with the wave number */
+  scaling: {
+    unitHp: number;
+    linear: number;
+    quadratic: number;
+    lateFromWave: number;
+    lateGrowth: number;
+    rampFromWave: number;
+    rampLength: number;
+    flyerHpExponent: number;
+    rewardGrowth: number;
+  };
+  combat: {
+    armorFloor: number;
+    splashCore: number;
+    splashEdge: number;
+    splashPad: number;
+    burnDuration: number;
+    stunBossFactor: number;
+    stunImmunity: number;
+    stunImmunityBoss: number;
+    plague: { interval: number; radius: number };
+    healer: { interval: number; radius: number; selfHeal: number; allyHeal: number; window: number };
+    blinker: { interval: number; distance: number; firstMin: number; firstSpread: number };
+    creepTurnRate: number;
+    spawnJitter: number;
+    flyerLane: { width: number; margin: number };
+  };
+  shooting: {
+    maxShotsPerTick: number;
+    aimRate: number;
+    laserHeatBonus: number;
+    frost: { freezeEvery: number; slowTime: number; vulnTime: number; minCooldown: number };
+  };
+  projectiles: {
+    bullet: { speed: number; strongSpeed: number; muzzle: number; hitRadius: number };
+    shell: {
+      speed: number;
+      muzzle: number;
+      bomblet: { damageFraction: number; splash: number; speed: number; scatterMin: number; scatterRange: number };
+    };
+    missile: {
+      sideAngle: number;
+      sideOffset: number;
+      spread: number;
+      spreadStep: number;
+      speed: number;
+      accel: number;
+      maxSpeed: number;
+      turnRate: number;
+      life: number;
+      hitRadius: number;
+      pairDamageDivisor: number;
+      retargetRange: number;
+      defaultBlast: number;
+    };
+    plasma: { speed: number; muzzle: number; hitRadius: number; novaDamageFraction: number; defaultBlast: number };
+    howitzer: { muzzle: number; flightTime: number; stagger: number; arcHeight: number; nukeSplash: number };
+    rail: { halfWidth: number };
+  };
+  waves: {
+    alternateUntil: number;
+    bothEvery: number[];
+    bossEvery: number;
+    cycle: EnemyType[];
+    cycleNew: EnemyType[];
+    /** units in a wave: base + n / divisor (capped by `caps`) */
+    counts: Partial<Record<EnemyType, { base: number; divisor: number }>>;
+    caps: { default: number } & Partial<Record<EnemyType, number>>;
+    boss: { escorts: number; escortGap: number; maxPerWave: number; gap: number };
+    final: {
+      armored: number;
+      armoredGap: number;
+      armoredMultiplier: number;
+      queenGap: number;
+      queenMultiplier: number;
+    };
+    mixedFlyers: { fraction: number; min: number; gap: number; multiplier: number };
+    escortHealers: { fraction: number; min: number; gap: number };
+    gap: { perWave: number; margin: number };
+  };
+  towers: Record<TowerType, TowerDef>;
+  enemies: Record<EnemyType, EnemyDef>;
+  difficulty: Record<DiffKey, Difficulty>;
+  abilities: Record<AbilityKey, AbilityDef>;
 }
