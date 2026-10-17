@@ -1,0 +1,55 @@
+// Loads the legacy `window.XT` IIFE scripts into an isolated vm context, so tests can run them in Node
+// without a browser. Math.random is replaced by a seeded generator: runs are fully reproducible.
+import { readFileSync } from "node:fs";
+import { createContext, runInContext } from "node:vm";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+
+export function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** @param files script names under js/ in load order, e.g. ["core"]
+ *  @param opts.seed Math.random seed  @param opts.globals extra globals for the context */
+export function loadXT(files, { seed = 1, globals = {} } = {}) {
+  const win = {
+    addEventListener() {},
+    devicePixelRatio: 1,
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+  };
+  const sandbox = {
+    window: win,
+    navigator: { languages: ["en"], language: "en" },
+    matchMedia: win.matchMedia,
+    setTimeout: () => 0,
+    addEventListener() {},
+    performance: { now: () => 0 },
+    console,
+    btoa: (s) => Buffer.from(s, "binary").toString("base64"),
+    ...globals,
+  };
+  sandbox.globalThis = sandbox;
+  const ctx = createContext(sandbox);
+  runInContext("Math.random = __rand", Object.assign(ctx, { __rand: mulberry32(seed) }));
+  for (const f of files) {
+    runInContext(readFileSync(resolve(ROOT, "js", f + ".js"), "utf8"), ctx, { filename: f + ".js" });
+  }
+  return win.XT;
+}
+
+/** Runs the simulation for `seconds` of game time in the same 25 ms steps the UI loop uses. */
+export function run(core, seconds) {
+  for (let t = 0; t < seconds; t += 0.025) {
+    if (core.S.over) break;
+    core.step(0.025);
+  }
+}

@@ -5,10 +5,14 @@
   "private": true,
   "scripts": {
     "start": "npx --yes serve -l 3000 .",
-    "deploy": "scp -r index.html style.css js root@46.101.198.82:/var/www/xeno.kovalev.app/"
+    "deploy": "scp -r index.html style.css js root@46.101.198.82:/var/www/xeno.kovalev.app/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   },
   "prettier": {
     "trailingComma": "all",
