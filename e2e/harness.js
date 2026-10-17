@@ -33,6 +33,7 @@ export async function openGame(page, { seed = 1 } = {}) {
     };
   }, seed);
   await page.goto("/");
+  await page.waitForSelector("#boot", { state: "hidden" }); // the loading screen
   await page.addStyleTag({ content: ".banner,.toast{visibility:hidden!important}" });
   await tick(page, 3);
   await page.click("#mPlay");
