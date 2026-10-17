@@ -1,0 +1,87 @@
+// Reusable game setups. Every scene runs in the page against XT.core and leaves the game running.
+// Scenes are serialised with Function#toString, so they must not use closures over module scope.
+
+export const SCENES = {
+  /** every tower type at every look: level 1, level 4, both ultimates, overclocked */
+  towers(C) {
+    C.newGame("easy");
+    C.cheat("hesoyam");
+    C.TKEYS.forEach((type, i) => {
+      const x = 1 + i * 2;
+      const ults = Object.keys(C.TT[type].ults);
+      const rows = [
+        [2, 0, null, 0],
+        [5, 3, null, 0],
+        [9, 3, ults[0], 0],
+        [12, 3, ults[1], 3],
+      ];
+      for (const [y, lvl, ult, oc] of rows) {
+        const r = C.place(type, x, y);
+        if (!r.ok) throw new Error(`place ${type} ${x},${y}: ${r.code}`);
+        for (let l = 0; l < lvl; l++) C.upgrade(r.tower);
+        if (ult) C.upgrade(r.tower, ult);
+        for (let o = 0; o < oc; o++) C.upgrade(r.tower);
+      }
+    });
+  },
+
+  /** a defended maze with a ground wave on its way */
+  groundBattle(C) {
+    C.newGame("normal");
+    C.cheat("hesoyam");
+    const plan = [
+      ["gun", 4, 5, 2],
+      ["gun", 4, 9, 2],
+      ["cannon", 7, 5, 2],
+      ["frost", 7, 9, 1],
+      ["plasma", 10, 5, 3],
+      ["rail", 10, 9, 2],
+      ["laser", 13, 5, 3],
+      ["artillery", 13, 9, 1],
+    ];
+    for (const [type, x, y, lvl] of plan) {
+      const r = C.place(type, x, y);
+      for (let l = 0; l < lvl; l++) C.upgrade(r.tower);
+    }
+    C.S.wave = 3; // wave 4: armoured
+    C.sendWave();
+  },
+
+  /** flyers against missiles and lasers */
+  airBattle(C) {
+    C.newGame("easy");
+    C.cheat("hesoyam");
+    for (const [type, x, y, lvl] of [
+      ["missile", 5, 4, 3],
+      ["missile", 5, 10, 3],
+      ["laser", 9, 4, 2],
+      ["gun", 9, 10, 2],
+      ["missile", 14, 4, 1],
+      ["frost", 14, 10, 1],
+    ]) {
+      const r = C.place(type, x, y);
+      for (let l = 0; l < lvl; l++) C.upgrade(r.tower);
+    }
+    C.S.wave = 4; // wave 5: flyers
+    C.sendWave();
+  },
+
+  /** a boss wave on hard */
+  bossBattle(C) {
+    C.newGame("hard");
+    C.cheat("hesoyam");
+    for (const [type, x, y, lvl] of [
+      ["rail", 4, 4, 3],
+      ["rail", 4, 10, 3],
+      ["plasma", 8, 5, 3],
+      ["plasma", 8, 9, 3],
+      ["laser", 12, 4, 3],
+      ["frost", 12, 10, 3],
+    ]) {
+      const r = C.place(type, x, y);
+      for (let l = 0; l < lvl; l++) C.upgrade(r.tower);
+    }
+    C.S.wave = 19; // wave 20: boss
+    C.sendWave();
+  },
+};
