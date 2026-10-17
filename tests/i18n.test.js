@@ -159,8 +159,9 @@ describe("the code only asks for strings that exist", () => {
     for (const k of keys) expect(en[k], k).toBeDefined();
   });
 
-  it("every literal t('key') used by ui.js", () => {
-    const keys = new Set([...read("src/ui.js").matchAll(/\bt\(\s*"([A-Za-z0-9_]+)"/g)].map((m) => m[1]));
+  it("every literal t('key') used by the interface (src/ui)", () => {
+    const ui = readdirSync(new URL("../src/ui/", import.meta.url)).map((f) => read("src/ui/" + f)).join(" ");
+    const keys = new Set([...ui.matchAll(/\bt\(\s*"([A-Za-z0-9_]+)"/g)].map((m) => m[1]));
     expect(keys.size).toBeGreaterThan(30);
     for (const k of keys) expect(en[k], k).toBeDefined();
   });

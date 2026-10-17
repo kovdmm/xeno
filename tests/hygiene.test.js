@@ -81,6 +81,21 @@ describe("source hygiene", () => {
         expect(f.name === "render/layers/floor.ts" && /\.\/towers"/.test(line), `${f.name}: ${line}`).toBe(true);
   });
 
+  it("the interface (src/ui): the text and logic modules are free of the DOM, nothing but the entry point builds the parts", () => {
+    const PURE = ["cards", "keys", "format", "state", "progress", "view", "difficulty", "icons", "types", "context"];
+    for (const n of PURE) {
+      const f = files.find((x) => x.name === `ui/${n}.ts`);
+      expect(f, n).toBeDefined();
+      expect(code(f), f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia"));
+    }
+    for (const f of under("ui")) {
+      expect(code(f), f.name).not.toMatch(word("Howl", "Howler", "localStorage"));
+      expect(code(f), f.name).not.toMatch(/Math\.random/);
+      // the game is reached through `core`: from src/game only types are imported
+      expect(f.text, f.name).not.toMatch(/import (?!type)[^;]*from "\.\.\/game\//);
+    }
+  });
+
   it("the music composer knows no sound and the renderer no tunes", () => {
     const get = (n) => code(files.find((f) => f.name === n));
     expect(get("audio/music/composer.ts")).not.toMatch(/Math\.(sin|exp|pow)|Float32Array/);
