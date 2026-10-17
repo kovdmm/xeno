@@ -1,6 +1,10 @@
 # dependencies
 node_modules/
+
+# build output
 dist/
+
+# test results
 test-results/
 playwright-report/
 coverage/

@@ -8,8 +8,24 @@ const walk = (dir) =>
     e.isDirectory() ? walk(join(dir, e.name)) : /\.(js|ts)$/.test(e.name) ? [join(dir, e.name)] : [],
   );
 const files = walk(ROOT).map((f) => ({ name: relative(ROOT, f).replaceAll("\\", "/"), text: readFileSync(f, "utf8") }));
+const under = (dir) => files.filter((f) => f.name.startsWith(dir + "/"));
+const code = (f) => f.text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, ""); // without comments
+
+// A whole word that is not a property access or an object/type key (`healer.window`, `window: number` are fine,
+// a bare `window` is the browser's).
+const word = (...names) => new RegExp("(?<![.\\w])(" + names.join("|") + ")(?![\\w])(?!\\s*:)");
+const BROWSER = word("document", "window", "localStorage", "canvas", "requestAnimationFrame", "i18n");
 
 describe("source hygiene", () => {
+  it("the checks below can fail: the word matcher recognises what it is meant to", () => {
+    expect(BROWSER.test("const x = window.innerWidth")).toBe(true);
+    expect(BROWSER.test("document.getElementById")).toBe(true);
+    expect(BROWSER.test("K.healer.window")).toBe(false);
+    expect(BROWSER.test("  window: number;")).toBe(false);
+    expect(BROWSER.test("windowed")).toBe(false);
+    expect(word("Howl", "Howler").test("new Howl({})")).toBe(true);
+  });
+
   it("Math.random appears only as the default random stream of the three subsystems, once each", () => {
     const allowed = { "game/game.ts": 1, "render.js": 1, "audio.js": 1 };
     for (const f of files) expect((f.text.match(/Math\.random/g) || []).length, f.name).toBe(allowed[f.name] ?? 0);
@@ -26,10 +42,31 @@ describe("source hygiene", () => {
     }
   });
 
+  it("no stray control characters in the sources (a backspace once replaced a regex escape)", () => {
+    for (const f of files) expect(f.text, f.name).not.toMatch(/[\x00-\x08\x0b\x0c\x0e-\x1f]/);
+  });
+
   it("the simulation (src/game) knows nothing about the browser, texts or colours", () => {
-    for (const f of files.filter((f) => f.name.startsWith("game/"))) {
-      expect(f.text, f.name).not.toMatch(/(document|window|localStorage|canvas|requestAnimationFrame|i18n)/);
-      expect(f.text, f.name).not.toMatch(/name_en|desc_en|#[0-9a-fA-F]{6}/);
+    for (const f of under("game")) {
+      expect(code(f), f.name).not.toMatch(BROWSER);
+      expect(code(f), f.name).not.toMatch(word("name_en", "desc_en"));
+      expect(code(f), f.name).not.toMatch(/#[0-9a-fA-F]{6}(?![\w])/);
     }
+  });
+
+  it("the audio layer is separated: only howlerOut touches howler, nothing touches the DOM or game state", () => {
+    for (const f of under("audio")) {
+      if (f.name !== "audio/howlerOut.ts") expect(code(f), f.name).not.toMatch(word("Howl", "Howler"));
+      expect(code(f), f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame"));
+      // game types are fine (events), game code is not
+      for (const line of f.text.split("\n").filter((l) => /from "\.\.\/(\.\.\/)?game\//.test(l)))
+        expect(line, f.name).toMatch(/^import type /);
+    }
+  });
+
+  it("the music composer knows no sound and the renderer no tunes", () => {
+    const get = (n) => code(files.find((f) => f.name === n));
+    expect(get("audio/music/composer.ts")).not.toMatch(/Math\.(sin|exp|pow)|Float32Array/);
+    expect(get("audio/music/render.ts")).not.toMatch(/progression|chords/);
   });
 });

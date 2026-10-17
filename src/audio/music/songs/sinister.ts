@@ -1,0 +1,92 @@
+// "Sinister": the game's loop. D minor with Phrygian turns (Eb) and the harmonic-minor A major, 96 BPM,
+// 16 bars ≈ 40 s. Triangle bass, thin pulse arpeggio, square lead, noise drums. It builds up: bass and drone
+// from bar 1, arpeggio from bar 3, drums and lead from bar 5, hi-hats from bar 9, a fill in bar 16.
+import type { SongSpec } from "../composer";
+
+export const SINISTER: SongSpec = {
+  bpm: 96,
+  beatsPerBar: 4,
+  chords: {
+    D: { bass: 38, arp: 62, minor: true },
+    Bb: { bass: 34, arp: 58, minor: false },
+    A: { bass: 33, arp: 57, minor: false },
+    Eb: { bass: 39, arp: 63, minor: false },
+    G: { bass: 31, arp: 55, minor: true },
+  },
+  progression: ["D", "D", "Bb", "A", "D", "D", "Eb", "A", "G", "G", "D", "D", "Bb", "Eb", "A", "A"],
+
+  // eighth notes: R R R' R R R R5 R
+  bass: { steps: [0, 0, 12, 0, 0, 0, 7, 0], stepBeats: 0.5, octave: 12, vol: 0.3, gate: 0.8 },
+  arp: { fromBar: 2, stepBeats: 0.25, gate: 0.6, vol: 0.045, louderVol: 0.065, louderFromBar: 4, liftSemitones: 12 },
+  drone: { octave: 24, vol: 0.05, gate: 0.98 },
+
+  drums: [
+    { instrument: "kick", beats: [0, 2] },
+    { instrument: "snare", beats: [1, 3], fromBar: 4 },
+    { instrument: "hat", beats: [0.25, 0.75, 1.25, 1.75, 2.25, 2.75, 3.25, 3.75], fromBar: 8 },
+  ],
+  fills: [
+    {
+      bar: 15,
+      hits: [
+        ["snare", 3.5],
+        ["snare", 3.75],
+        ["kick", 2.5],
+      ],
+    },
+  ],
+
+  lead: {
+    fromBar: 4,
+    vol: 0.13,
+    gate: 0.92,
+    echo: { delaySeconds: 0.19, vol: 0.035, gate: 0.8 },
+    lines: [
+      [
+        [74, 2],
+        [77, 1],
+        [76, 1],
+      ],
+      [
+        [74, 3],
+        [69, 1],
+      ],
+      [
+        [75, 2],
+        [74, 1],
+        [72, 1],
+      ],
+      [[73, 4]],
+      [
+        [70, 2],
+        [69, 1],
+        [67, 1],
+      ],
+      [
+        [74, 2],
+        [72, 1],
+        [70, 1],
+      ],
+      [
+        [69, 3],
+        [65, 1],
+      ],
+      [[69, 4]],
+      [
+        [77, 2],
+        [76, 1],
+        [74, 1],
+      ],
+      [
+        [75, 2],
+        [74, 1],
+        [70, 1],
+      ],
+      [
+        [73, 2],
+        [76, 2],
+      ],
+      [[69, 4]],
+    ],
+  },
+};
