@@ -64,6 +64,23 @@ describe("source hygiene", () => {
     }
   });
 
+  it("the renderer (src/render) gets the browser, time and randomness from outside, and only reads the game", () => {
+    for (const f of under("render")) {
+      const c = code(f);
+      expect(c, f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia", "i18n"));
+      expect(c, f.name).not.toMatch(/Math\.random|performance\.now/);
+      // from the game: types, and the gate helper
+      for (const line of f.text.split("\n").filter((l) => /from "\.\.\/(\.\.\/)?game\//.test(l)))
+        expect(line, f.name).toMatch(/^import type |game\/constants"/);
+    }
+  });
+
+  it("layers are independent: they never import each other (only the floor needs the tower plates)", () => {
+    for (const f of under("render/layers"))
+      for (const line of f.text.split("\n").filter((l) => /from "\.\/[a-zA-Z]+"/.test(l)))
+        expect(f.name === "render/layers/floor.ts" && /\.\/towers"/.test(line), `${f.name}: ${line}`).toBe(true);
+  });
+
   it("the music composer knows no sound and the renderer no tunes", () => {
     const get = (n) => code(files.find((f) => f.name === n));
     expect(get("audio/music/composer.ts")).not.toMatch(/Math\.(sin|exp|pow)|Float32Array/);

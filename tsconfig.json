@@ -8,6 +8,7 @@
     "checkJs": false,
     "noEmit": true,
     "strict": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "resolveJsonModule": true

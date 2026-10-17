@@ -7,7 +7,8 @@ export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
   reporter: [["list"], ["html", { open: "never" }]],
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.002, animations: "disabled" } },
+  // no tolerance: baselines are per machine, and a small recolouring must not slip through
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0, threshold: 0.02, animations: "disabled" } },
   use: { baseURL: "http://127.0.0.1:4173", viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
   webServer: {
     command: "npx vite --host 127.0.0.1 --port 4173 --strictPort",

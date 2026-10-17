@@ -28,7 +28,7 @@ function stubContext(calls) {
   });
 }
 
-function setup({ seed = 3 } = {}) {
+function setup({ seed = 3, options } = {}) {
   const calls = {};
   const canvases = [];
   const makeCanvas = () => {
@@ -45,7 +45,7 @@ function setup({ seed = 3 } = {}) {
   };
   const XT = loadXT(["core", "render"], { seed, globals: { document: { createElement: makeCanvas } } });
   const main = makeCanvas();
-  const R = XT.createRenderer(main);
+  const R = XT.createRenderer(main, options);
   R.resize();
   return { XT, C: XT.core, R, main, calls, canvases };
 }
@@ -245,5 +245,47 @@ describe("renderer smoke test", () => {
       });
     };
     expect(sim(true)).toBe(sim(false));
+  });
+});
+
+describe("layer composition", () => {
+  const draws = (options) => {
+    const { C, R } = setup({ options });
+    C.newGame("easy");
+    R.draw(view(0), 0.016);
+    return R;
+  };
+
+  it("exposes the layers, bottom to top", () => {
+    const R = draws();
+    expect(R.layers.map((l) => l.id).slice(0, 3)).toEqual(["floor", "breaches", "fireZones"]);
+  });
+
+  it("only the given layers are drawn, in the given order", () => {
+    const seen = [];
+    const spy = (id) => ({ id, draw: () => seen.push(id) });
+    const only = [spy("a"), spy("b"), spy("c")];
+    draws({ layers: only });
+    expect(seen).toEqual(["a", "b", "c"]);
+  });
+
+  it("a layer can be swapped at run time", () => {
+    const { C, R } = setup();
+    C.newGame("easy");
+    const seen = [];
+    R.setLayers([{ id: "x", draw: (f) => seen.push([f.t, f.dt, typeof f.ctx.fillRect]) }]);
+    R.draw(view(1.5), 0.02);
+    expect(seen).toEqual([[1.5, 0.02, "function"]]);
+  });
+
+  it("every layer leaves the canvas state as it found it (save and restore are balanced)", () => {
+    const { C, R, main } = setup();
+    C.newGame("normal");
+    C.cheat("hesoyam");
+    C.place("laser", 6, 5);
+    C.sendWave();
+    for (let i = 0; i < 200; i++) C.step(0.025);
+    R.draw(view(1), 0.05);
+    expect(main.ctx.depth).toBe(0);
   });
 });
