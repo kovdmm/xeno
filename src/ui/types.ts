@@ -55,11 +55,18 @@ export interface Core extends Pick<
   | "towerAt"
   | "difficulty"
 > {
+  /** starts a game; a level id changes the board */
+  newGame(difficulty?: string, level?: string): State;
   readonly S: State;
   readonly W: number;
   readonly H: number;
   readonly FINAL: number;
-  readonly ROUTES: Record<RouteKey, WithText<Route>>;
+  /** the routes of the level being played */
+  readonly ROUTES: Record<RouteKey, Route>;
+  /** the id of the level being played, the levels with their texts, and their ids in order */
+  readonly LEVEL: string;
+  readonly LEVELS: Record<string, LevelInfo>;
+  readonly LKEYS: string[];
   readonly TT: Record<TowerType, TowerInfo>;
   readonly TKEYS: TowerType[];
   readonly ET: Record<EnemyType, WithText<EnemyDef>>;
@@ -69,6 +76,14 @@ export interface Core extends Pick<
   readonly AKEYS: AbilityKey[];
   /** stats of a hypothetical tower: type, level, ultimate, overclock */
   st: GameApi["towerStats"];
+}
+
+/** A level as the interface shows it. */
+export interface LevelInfo extends Texted {
+  id: string;
+  finalWave: number;
+  width: number;
+  height: number;
 }
 
 export interface Language {

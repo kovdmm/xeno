@@ -128,10 +128,9 @@ describe("the texts of the game data cover the balance", () => {
     enemies: Object.keys(BALANCE.enemies),
     difficulties: Object.keys(BALANCE.difficulty),
     abilities: Object.keys(BALANCE.abilities),
-    routes: Object.keys(BALANCE.board.routes),
   };
 
-  it.each(CODES)("%s has a text for every tower, ultimate, enemy, difficulty, ability and route", (c) => {
+  it.each(CODES)("%s has a text for every tower, ultimate, enemy, difficulty and ability", (c) => {
     const g = TEXTS[c].game;
     for (const [section, list] of Object.entries(ids))
       expect(Object.keys(g[section]).sort(), `${c}.${section}`).toEqual([...list].sort());
@@ -146,7 +145,6 @@ describe("the texts of the game data cover the balance", () => {
     for (const d of ids.difficulties) expect(g.difficulties[d].name && g.difficulties[d].desc, d).toBeTruthy();
     for (const a of ids.abilities)
       expect(g.abilities[a].name && g.abilities[a].short && g.abilities[a].desc, a).toBeTruthy();
-    for (const r of ids.routes) expect(g.routes[r].label, r).toBeTruthy();
   });
 });
 
@@ -285,7 +283,6 @@ describe("the app facade (XT.i18n and the texts on XT.core data)", () => {
     expect(core.ET.queen.name).toBe("Schwarmkönigin");
     expect(core.DIFF.insane.name).toBe("Unmöglich");
     expect(core.AB.carpet.short).toBe("Bomben");
-    expect(core.ROUTES.h.label).toBe("links → rechts");
     i18n.setLang("ua");
     expect(core.TT.gun.name).toBe("Кулемет");
     expect(core.ET.queen.name).toBe("Королева рою");
@@ -319,36 +316,24 @@ describe("the app facade (XT.i18n and the texts on XT.core data)", () => {
 
 describe("texts that depend on how the board is turned", () => {
   // The board is turned 90° in portrait: board x runs top → bottom on screen, board y runs right → left.
-  it("only the route labels and the carpet-bombing description have a rotated form", () => {
+  it("only the carpet-bombing description has a rotated form (route labels come from the geometry)", () => {
     const rotated = paths(TEXTS.en.game, "game.").filter((p) => p.endsWith("Rotated"));
-    expect(rotated.sort()).toEqual([
-      "game.abilities.carpet.descRotated",
-      "game.routes.h.labelRotated",
-      "game.routes.v.labelRotated",
-    ]);
+    expect(rotated).toEqual(["game.abilities.carpet.descRotated"]);
+    for (const c of CODES) expect(TEXTS[c].game.routes, c).toBeUndefined();
   });
 
-  it.each(CODES)("%s: the rotated texts differ from the plain ones and agree with each other", (c) => {
-    const g = TEXTS[c].game;
-    for (const r of ["h", "v"]) expect(g.routes[r].labelRotated, r).not.toBe(g.routes[r].label);
-    // turning the board makes the horizontal route run top → bottom, i.e. exactly how the vertical one reads now
-    expect(g.routes.h.labelRotated).toBe(g.routes.v.label);
-    expect(g.abilities.carpet.descRotated).not.toBe(g.abilities.carpet.desc);
+  it.each(CODES)("%s: the four directions read differently, and the carpet text changes with the board", (c) => {
+    const ui = TEXTS[c].ui;
+    const dirs = [ui.dirRight, ui.dirLeft, ui.dirDown, ui.dirUp];
+    expect(new Set(dirs).size).toBe(4);
+    for (const d of dirs) expect(d, c).toMatch(/→/);
+    expect(TEXTS[c].game.abilities.carpet.descRotated).not.toBe(TEXTS[c].game.abilities.carpet.desc);
   });
 
-  it("the old separate keys are gone: directions live with the route data", () => {
-    for (const c of CODES) {
-      expect(TEXTS[c].ui.rTB, c).toBeUndefined();
-      expect(TEXTS[c].ui.rRL, c).toBeUndefined();
-    }
-  });
-
-  it("the rotated texts are live properties of the core data, in every language", () => {
+  it("the rotated carpet text is a live property of the core data, in every language", () => {
     const { core, i18n } = loadXT(["i18n", "core"], { globals: {} });
-    expect(core.ROUTES.h.labelRotated).toBe("top → bottom");
     expect(core.AB.carpet.descRotated).toMatch(/column/);
     i18n.setLang("de");
-    expect(core.ROUTES.v.labelRotated).toBe("rechts → links");
     expect(core.AB.carpet.descRotated).toMatch(/Spalte/);
     expect(core.AB.carpet.desc).toMatch(/Reihe/);
     expect(core.TT.gun.labelRotated).toBeUndefined(); // nothing else has one

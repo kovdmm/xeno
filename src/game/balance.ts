@@ -43,6 +43,110 @@ type Obj = Record<string, any>;
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
+const isCell = (c: unknown): c is [number, number] =>
+  Array.isArray(c) && c.length === 2 && Number.isInteger(c[0]) && Number.isInteger(c[1]);
+const isStep = (d: unknown): d is [number, number] =>
+  Array.isArray(d) && d.length === 2 && isNum(d[0]) && isNum(d[1]) && Math.abs(d[0]) + Math.abs(d[1]) === 1;
+
+/** One level: a board, its routes and walls. Also checks that every spawn can reach its exit. */
+function validateLevel(
+  p: string,
+  id: string,
+  L: Obj,
+  bad: (path: string, why: string) => void,
+  num: (path: string, v: unknown, min?: number, int?: boolean) => void,
+) {
+  if (!/^[a-z][a-z0-9_-]*$/.test(id))
+    bad(p, "the id must be lower case letters, digits, - or _ (it names texts and saved records)");
+  if (!isObj(L) || !isObj(L.map)) return bad(p, "expected { finalWave, map }");
+  num(`${p}.finalWave`, L.finalWave, 1, true);
+  const M = L.map;
+  num(`${p}.map.width`, M.width, 3, true);
+  num(`${p}.map.height`, M.height, 3, true);
+  if (!isNum(M.width) || !isNum(M.height)) return;
+  const { width: W, height: H } = M;
+  const inside = ([x, y]: number[]) => x >= 0 && y >= 0 && x < W && y < H;
+  const cells = (path: string, v: unknown, what: string): [number, number][] => {
+    if (!Array.isArray(v) || !v.length) return (bad(path, `expected a non-empty list of ${what}`), []);
+    const out: [number, number][] = [];
+    v.forEach((c, i) => {
+      if (!isCell(c)) return bad(`${path}[${i}]`, "expected [x, y] with whole numbers");
+      if (!inside(c)) return bad(`${path}[${i}]`, "outside the board");
+      out.push(c);
+    });
+    return out;
+  };
+  const gates = new Set<number>();
+  const routes = M.routes;
+  if (!isObj(routes) || !Object.keys(routes).length) return bad(`${p}.map.routes`, "expected at least one route");
+  for (const [r, R] of Object.entries<Obj>(routes)) {
+    const rp = `${p}.map.routes.${r}`;
+    if (!/^[a-z][a-z0-9_-]*$/.test(r)) bad(rp, "the route name must be lower case letters, digits, - or _");
+    if (!isObj(R)) {
+      bad(rp, "expected an object");
+      continue;
+    }
+    const spawn = cells(`${rp}.spawn`, R.spawn, "cells"),
+      exit = cells(`${rp}.exit`, R.exit, "cells");
+    if (!isStep(R.dir)) bad(`${rp}.dir`, "expected a unit step like [1, 0]");
+    if (R.exitDir !== undefined && !isStep(R.exitDir)) bad(`${rp}.exitDir`, "expected a unit step like [1, 0]");
+    if (isStep(R.dir))
+      for (const [x, y] of spawn)
+        if (inside([x - R.dir[0], y - R.dir[1]]))
+          bad(`${rp}.spawn`, `[${x}, ${y}] is not on the edge: enemies come in against dir`);
+    const xd = isStep(R.exitDir) ? R.exitDir : isStep(R.dir) ? R.dir : null;
+    if (xd)
+      for (const [x, y] of exit)
+        if (inside([x + xd[0], y + xd[1]]))
+          bad(`${rp}.exit`, `[${x}, ${y}] is not on the edge: enemies leave along exitDir`);
+    for (const [x, y] of [...spawn, ...exit]) {
+      if (gates.has(y * W + x)) bad(rp, `the cell [${x}, ${y}] is a gate twice`);
+      gates.add(y * W + x);
+    }
+  }
+  const walls = new Set<number>();
+  if (M.walls !== undefined) {
+    if (!Array.isArray(M.walls)) bad(`${p}.map.walls`, "expected a list of cells");
+    else
+      M.walls.forEach((c: unknown, i: number) => {
+        const wp = `${p}.map.walls[${i}]`;
+        if (!isCell(c)) return bad(wp, "expected [x, y] with whole numbers");
+        if (!inside(c)) return bad(wp, "outside the board");
+        const k = c[1] * W + c[0];
+        if (gates.has(k)) bad(wp, "a wall on a gate");
+        if (walls.has(k)) bad(wp, "listed twice");
+        walls.add(k);
+      });
+  }
+  // every spawn cell must be able to reach an exit of its route (nothing is built yet)
+  for (const [r, R] of Object.entries<Obj>(routes)) {
+    if (!isObj(R) || !Array.isArray(R.exit) || !Array.isArray(R.spawn)) continue;
+    const d = new Map<number, number>();
+    const q: number[] = [];
+    for (const c of R.exit) if (isCell(c) && inside(c)) (d.set(c[1] * W + c[0], 0), q.push(c[1] * W + c[0]));
+    for (let h = 0; h < q.length; h++) {
+      const x = q[h] % W,
+        y = (q[h] / W) | 0;
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = x + dx,
+          ny = y + dy,
+          j = ny * W + nx;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H || d.has(j) || walls.has(j)) continue;
+        d.set(j, 1);
+        q.push(j);
+      }
+    }
+    for (const c of R.spawn)
+      if (isCell(c) && inside(c) && !d.has(c[1] * W + c[0]))
+        bad(`${p}.map.routes.${r}.spawn`, `[${c[0]}, ${c[1]}] cannot reach the exit`);
+  }
+}
+
 /** Lists everything wrong with a balance document; an empty list means it is usable. */
 export function validateBalance(b: unknown): string[] {
   const errs: string[] = [];
@@ -73,29 +177,10 @@ export function validateBalance(b: unknown): string[] {
   for (const s of sections) if (!isObj(b[s])) bad(s, "missing section");
   if (errs.length) return errs;
 
-  // board
-  const { width, height, routes } = b.board;
-  num("board.width", width, 1, true);
-  num("board.height", height, 1, true);
-  num("board.finalWave", b.board.finalWave, 1, true);
+  // board and levels
   num("board.enemyBlockRadius", b.board.enemyBlockRadius, 0);
-  if (keys("board.routes", routes, ["h", "v"]))
-    for (const r of ["h", "v"]) {
-      const R = routes[r];
-      if (!isObj(R)) continue;
-      for (const f of ["spawn", "exit"]) {
-        if (!Array.isArray(R[f]) || !R[f].length) bad(`board.routes.${r}.${f}`, "expected a non-empty list of cells");
-        else
-          R[f].forEach((c: unknown, i: number) => {
-            const ok = Array.isArray(c) && c.length === 2 && isNum(c[0]) && isNum(c[1]);
-            if (!ok) return bad(`board.routes.${r}.${f}[${i}]`, "expected [x, y]");
-            const [x, y] = c as number[];
-            if (x < 0 || y < 0 || x >= width || y >= height) bad(`board.routes.${r}.${f}[${i}]`, "outside the board");
-          });
-      }
-      if (!Array.isArray(R.dir) || R.dir.length !== 2 || Math.abs(R.dir[0]) + Math.abs(R.dir[1]) !== 1)
-        bad(`board.routes.${r}.dir`, "expected a unit step like [1, 0]");
-    }
+  if (!isObj(b.levels) || !Object.keys(b.levels).length) bad("levels", "expected at least one level");
+  else for (const [id, L] of Object.entries<Obj>(b.levels)) validateLevel(`levels.${id}`, id, L, bad, num);
 
   // plain number sections
   for (const s of ["economy", "scaling", "combat", "shooting", "projectiles"]) leaves(s, b[s]);

@@ -2,6 +2,7 @@
 // (burning, healing, blinking).
 import { ex, ey, hit, ignite, leak } from "./combat";
 import { pickNext } from "./grid";
+import { exitDir } from "./level";
 import type { Creep, Game } from "./types";
 
 /** How far a creep still has to go: smaller is closer to the exit. */
@@ -13,7 +14,7 @@ export function progress(g: Game, c: Creep): number {
 
 /** Walks `sp` cells along the field, turning at cell centres. */
 export function travel(g: Game, c: Creep, sp: number): void {
-  const { width: W, routes: ROUTES } = g.B.board;
+  const { width: W } = g.L;
   let guard = 0;
   while (sp > 0 && !c.dead && guard++ < 12) {
     const dx = c.tx - c.x,
@@ -31,16 +32,16 @@ export function travel(g: Game, c: Creep, sp: number): void {
       leak(g, c);
       return;
     }
-    const R = ROUTES[c.route],
+    const X = exitDir(g.L, c.route),
       f = g.S.fields[c.route],
       i = c.ty * W + c.tx;
     if (f[i] === 0) {
       c.ci = i;
       c.ti = -1;
-      c.tx += R.dir[0];
-      c.ty += R.dir[1];
-      c.dx = R.dir[0];
-      c.dy = R.dir[1];
+      c.tx += X[0];
+      c.ty += X[1];
+      c.dx = X[0];
+      c.dy = X[1];
       c.leaving = true;
       continue;
     }

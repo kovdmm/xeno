@@ -1,23 +1,12 @@
 // The board: pathfinding fields, route paths and placement rules.
 import { DIRS, INF, mid } from "./constants";
+import { exitDir, reservedCells, routeKeys, wallSet } from "./level";
 import type { Balance, Game, PlaceCode, RouteKey, Tower, TowerType, Vec } from "./types";
-
-/** Cells (y * width + x) where nothing may be built: gates and spawns of both routes. */
-const reservedCache = new WeakMap<Balance, Set<number>>();
-function reserved(B: Balance): Set<number> {
-  let set = reservedCache.get(B);
-  if (!set) {
-    set = new Set<number>();
-    for (const r of Object.values(B.board.routes))
-      for (const [x, y] of [...r.spawn, ...r.exit]) set.add(y * B.board.width + x);
-    reservedCache.set(B, set);
-  }
-  return set;
-}
 
 /** Distance to the exit of route `r` for every cell; `blocked` cells are treated as walls. */
 export function bfs(g: Game, r: RouteKey, blocked: number[] | null): Int32Array {
-  const { width: W, height: H, routes: ROUTES } = g.B.board;
+  const { width: W, height: H, routes: ROUTES } = g.L,
+    walls = wallSet(g.L);
   const d = new Int32Array(W * H).fill(INF),
     q: number[] = [];
   for (const [x, y] of ROUTES[r].exit) {
@@ -34,7 +23,7 @@ export function bfs(g: Game, r: RouteKey, blocked: number[] | null): Int32Array 
         ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
       const j = ny * W + nx;
-      if (d[j] !== INF || g.S.grid[j] || (blocked && blocked.includes(j))) continue;
+      if (d[j] !== INF || g.S.grid[j] || walls.has(j) || (blocked && blocked.includes(j))) continue;
       d[j] = d[i] + 1;
       q.push(j);
     }
@@ -43,13 +32,12 @@ export function bfs(g: Game, r: RouteKey, blocked: number[] | null): Int32Array 
 }
 
 export function recompute(g: Game): void {
-  g.S.fields.h = bfs(g, "h", null);
-  g.S.fields.v = bfs(g, "v", null);
+  for (const r of routeKeys(g.L)) g.S.fields[r] = bfs(g, r, null);
 }
 
 /** Next cell downhill in field `f`, preferring to keep going straight. */
 export function pickNext(g: Game, f: Int32Array, x: number, y: number, ldx: number, ldy: number): Vec | null {
-  const { width: W, height: H } = g.B.board;
+  const { width: W, height: H } = g.L;
   let bx = -1,
     by = -1,
     bd = INF,
@@ -73,9 +61,10 @@ export function pickNext(g: Game, f: Int32Array, x: number, y: number, ldx: numb
 
 /** Cells the creeps of a route currently walk, from the middle entrance to the exit (for drawing). */
 export function routePath(g: Game, r: RouteKey): Vec[] {
-  const { width: W, height: H, routes: ROUTES } = g.B.board;
+  const { width: W, height: H, routes: ROUTES } = g.L;
   const f = g.S.fields[r],
-    R = ROUTES[r];
+    R = ROUTES[r],
+    X = exitDir(g.L, r);
   let [x, y] = mid(R.spawn),
     ldx = R.dir[0],
     ldy = R.dir[1],
@@ -93,7 +82,7 @@ export function routePath(g: Game, r: RouteKey): Vec[] {
     y = n[1];
     p.push([x, y]);
   }
-  p.push([x + R.dir[0], y + R.dir[1]]);
+  p.push([x + X[0], y + X[1]]);
   return p;
 }
 
@@ -106,13 +95,13 @@ export function footprint(x: number, y: number, sz: number): Vec[] {
 /* Returns '' when a tower of size sz fits at (x,y); otherwise a reason code:
    out, busy (silent) · pcEdge, pc22, pcRes, pcEnemy, pcBlock, pcTrap (shown to the player). */
 export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
-  const { width: W, height: H, routes: ROUTES } = g.B.board;
+  const { width: W, height: H, routes: ROUTES } = g.L;
   const S = g.S;
   const cells = footprint(x, y, sz);
   for (const [cx, cy] of cells) if (cx < 0 || cy < 0 || cx >= W || cy >= H) return sz > 1 ? "pcEdge" : "out";
   const idx = cells.map(([cx, cy]) => cy * W + cx);
   for (const i of idx) if (S.grid[i]) return sz > 1 ? "pc22" : "busy";
-  for (const i of idx) if (reserved(g.B).has(i)) return "pcRes";
+  for (const i of idx) if (reservedCells(g.L).has(i)) return "pcRes";
   for (const c of S.creeps) {
     if (c.fly || c.dead) continue;
     for (const i of idx) {
@@ -120,9 +109,11 @@ export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
         return "pcEnemy";
     }
   }
-  const f = { h: bfs(g, "h", idx), v: bfs(g, "v", idx) };
-  for (const r of ["h", "v"] as const)
+  const f: Record<RouteKey, Int32Array> = {};
+  for (const r of routeKeys(g.L)) {
+    f[r] = bfs(g, r, idx);
     for (const [sx, sy] of ROUTES[r].spawn) if (f[r][sy * W + sx] >= INF) return "pcBlock";
+  }
   for (const c of S.creeps) {
     if (c.fly || c.dead || c.ti < 0) continue;
     if (f[c.route][c.ti] >= INF) return "pcTrap";
@@ -137,6 +128,6 @@ export function buildOrigin(B: Balance, type: TowerType, pt: Vec): Vec {
 }
 
 export const towerAt = (g: Game, x: number, y: number): Tower | null => {
-  const { width: W, height: H } = g.B.board;
+  const { width: W, height: H } = g.L;
   return x < 0 || y < 0 || x >= W || y >= H ? null : g.S.grid[y * W + x];
 };

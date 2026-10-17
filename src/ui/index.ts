@@ -19,6 +19,7 @@ import { createSession } from "./session";
 import { installSettings } from "./settings";
 import { installSoundControls } from "./soundControls";
 import { createState } from "./state";
+import { routeLabelKey } from "./routes";
 import type { Sound, UiDeps } from "./types";
 
 /** Used when there is no sound backend: the game runs silently. */
@@ -50,7 +51,13 @@ export function createUi(deps: UiDeps) {
     const rotated = (o as Record<string, string | null | undefined>)[f + "Rotated"];
     return state.rotated && rotated != null ? rotated : i18n.L(o, f);
   };
-  const cards: CardEnv = { core, t, L, tierColor: (l, type, ult) => renderer.tierColor(l, type, ult) };
+  const cards: CardEnv = {
+    core,
+    t,
+    L,
+    routeLabel: (r) => t(routeLabelKey(core.ROUTES[r], state.rotated)),
+    tierColor: (l, type, ult) => renderer.tierColor(l, type, ult),
+  };
 
   let toastTimer: ReturnType<typeof setTimeout>;
   const ui: UiContext = {

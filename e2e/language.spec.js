@@ -171,8 +171,8 @@ test.describe("layout in every language", () => {
 test.describe("texts follow the board's orientation", () => {
   const TXT = (page) =>
     page.evaluate(() => ({
-      h: XT.i18n.gameText("routes.h.label"),
-      hRot: XT.i18n.gameText("routes.h.labelRotated"),
+      h: XT.i18n.t("dirRight"),
+      hRot: XT.i18n.t("dirDown"),
       desc: XT.i18n.gameText("abilities.carpet.desc"),
       descRot: XT.i18n.gameText("abilities.carpet.descRotated"),
     }));
@@ -261,8 +261,8 @@ test.describe("texts follow the board's orientation", () => {
     expect(Math.abs(hTo.x - hFrom.x)).toBeLessThan(5);
     expect(vTo.x).toBeLessThan(vFrom.x - 100);
     expect(Math.abs(vTo.y - vFrom.y)).toBeLessThan(5);
-    expect(await page.evaluate(() => XT.i18n.gameText("routes.h.labelRotated"))).toBe("top → bottom");
-    expect(await page.evaluate(() => XT.i18n.gameText("routes.v.labelRotated"))).toBe("right → left");
+    expect(await page.evaluate(() => XT.i18n.t("dirDown"))).toBe("top → bottom");
+    expect(await page.evaluate(() => XT.i18n.t("dirLeft"))).toBe("right → left");
     // the carpet bomber follows a board row; on the turned board that is a vertical line on the screen
     const rowA = await at(2.5, 5.5),
       rowB = await at(18.5, 5.5);

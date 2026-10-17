@@ -217,6 +217,7 @@ describe("text panels and the view, on the real game", () => {
       core: C,
       t: (k, v) => XT.i18n.t(k, v),
       L: (o, f = "name") => o[f],
+      routeLabel: (r) => r,
       tierColor: (l) => "#" + l + l + l,
     };
     return { C, env };

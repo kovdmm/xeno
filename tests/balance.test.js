@@ -74,8 +74,8 @@ describe("validation catches mistakes with a path to the culprit", () => {
   });
 
   it("routes that leave the board or are not unit steps", () => {
-    expect(problems((b) => (b.board.routes.h.exit[0] = [99, 0]))[0]).toMatch(/outside the board/);
-    expect(problems((b) => (b.board.routes.v.dir = [1, 1]))[0]).toMatch(/unit step/);
+    expect(problems((b) => (b.levels.crossroads.map.routes.h.exit[0] = [99, 0]))[0]).toMatch(/outside the board/);
+    expect(problems((b) => (b.levels.crossroads.map.routes.v.dir = [1, 1]))[0]).toMatch(/unit step/);
   });
 
   it("nonsensical economy values", () => {
@@ -128,11 +128,13 @@ describe("the numbers really drive the game (an injected balance changes behavio
 
   it("the board size (an injected 10x8 board with its own routes)", () => {
     const g = game((b) => {
-      b.board.width = 10;
-      b.board.height = 8;
-      b.board.routes = {
-        h: { spawn: [[0, 3]], exit: [[9, 3]], dir: [1, 0] },
-        v: { spawn: [[4, 0]], exit: [[4, 7]], dir: [0, 1] },
+      b.levels.crossroads.map = {
+        width: 10,
+        height: 8,
+        routes: {
+          h: { spawn: [[0, 3]], exit: [[9, 3]], dir: [1, 0] },
+          v: { spawn: [[4, 0]], exit: [[4, 7]], dir: [0, 1] },
+        },
       };
     });
     expect(g.S.grid).toHaveLength(80);

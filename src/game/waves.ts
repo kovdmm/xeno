@@ -1,5 +1,6 @@
 // Wave composition, spawning and the wave timer. Every number comes from balance.waves / scaling / combat.
 import { mid } from "./constants";
+import { exitDir, routeKeys } from "./level";
 import { diffHP, hpScale } from "./rules";
 import type { Creep, EnemyType, Game, RouteKey, Wave, WaveEntry, WaveRoute } from "./types";
 
@@ -7,15 +8,19 @@ export function makeWave(g: Game, n: number): Wave {
   const D = g.D(),
     B = g.B,
     WV = B.waves;
+  // The routes take turns: odd waves use the first, even ones the second (and so on); every so often a wave
+  // comes through all of them. A level with one route has nothing to alternate.
+  const keys = routeKeys(g.L),
+    alternate = keys[(n - 1) % keys.length];
   const route: WaveRoute =
-    n <= WV.alternateUntil ? (n % 2 ? "h" : "v") : WV.bothEvery.some((k) => n % k === 0) ? "both" : n % 2 ? "h" : "v";
-  const rt = (k: number): RouteKey => (route === "both" ? (k % 2 ? "v" : "h") : route);
+    n <= WV.alternateUntil || keys.length < 2 ? alternate : WV.bothEvery.some((k) => n % k === 0) ? "both" : alternate;
+  const rt = (k: number): RouteKey => (route === "both" ? keys[k % keys.length] : route);
   const list: WaveEntry[] = [];
-  if (n === B.board.finalWave) {
+  if (n === g.L.finalWave) {
     for (let k = 0; k < WV.final.armored; k++)
       list.push({ type: "armored", route: rt(k), gap: WV.final.armoredGap, m: WV.final.armoredMultiplier });
-    list.push({ type: "queen", route: "h", gap: WV.final.queenGap, m: WV.final.queenMultiplier });
-    return { type: "queen", route: "both", list };
+    list.push({ type: "queen", route: keys[0], gap: WV.final.queenGap, m: WV.final.queenMultiplier });
+    return { type: "queen", route: keys.length > 1 ? "both" : keys[0], list };
   }
   const cyc = n >= D.newFrom ? WV.cycleNew : WV.cycle;
   const type: EnemyType = n % WV.bossEvery === 0 ? "boss" : cyc[(n - 1) % cyc.length];
@@ -74,9 +79,10 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
   // Flyers skip the maze and spend far less time under fire, so their HP grows slower.
   const B = g.B,
     K = B.combat,
-    { width: W, routes: ROUTES } = B.board;
+    { width: W, routes: ROUTES } = g.L;
   const T = B.enemies[e.type],
     R = ROUTES[e.route],
+    X = exitDir(g.L, e.route),
     Df = g.D(),
     dh = diffHP(B, Df, n),
     hs = T.fly ? Math.pow(hpScale(B, n), B.scaling.flyerHpExponent) : hpScale(B, n);
@@ -127,8 +133,8 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
       mg = K.flyerLane.margin;
     c.x = s[0] - R.dir[0] * mg + R.dir[1] * off;
     c.y = s[1] - R.dir[1] * mg + R.dir[0] * off;
-    c.gx = ex[0] + R.dir[0] * mg + R.dir[1] * off;
-    c.gy = ex[1] + R.dir[1] * mg + R.dir[0] * off;
+    c.gx = ex[0] + X[0] * mg + X[1] * off;
+    c.gy = ex[1] + X[1] * mg + X[0] * off;
   } else {
     const s = R.spawn[(g.rand() * R.spawn.length) | 0];
     c.x = s[0] - R.dir[0];
@@ -147,7 +153,7 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
 /** Calls the next wave now or when the timer runs out; calling early pays the time left as a bonus. */
 export function sendWave(g: Game, early?: boolean): void {
   const S = g.S,
-    FINAL = g.B.board.finalWave;
+    FINAL = g.L.finalWave;
   if (S.wave >= FINAL || S.over) return;
   if (early && S.timer > 0) {
     const b = Math.floor(S.timer * g.B.economy.earlyBonusPerSecond);

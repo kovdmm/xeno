@@ -11,6 +11,8 @@ export interface CardEnv {
   t(key: string, vars?: Record<string, string | number>): string;
   /** the name/desc/... of a data entry in the current language (and orientation) */
   L(o: unknown, f?: string): string;
+  /** how a route reads on the screen right now ("left → right"), whichever way the board is turned */
+  routeLabel(route: string): string;
   /** colour of a tower level (and specialisation) */
   tierColor(level: number, type: TowerType, ult?: string): string;
 }
@@ -99,7 +101,7 @@ export function nextLine(env: CardEnv, st: Pick<UiState, "build" | "aim">): stri
   }
   if (s.wave >= C.FINAL) return t("finalWave");
   const w = C.makeWave(s.wave + 1),
-    rl = w.route === "both" ? t("both") : L(C.ROUTES[w.route], "label");
+    rl = w.route === "both" ? t("both") : env.routeLabel(w.route);
   const nm = w.type === "queen" ? L(C.ET.queen) : w.type === "boss" ? t("bossWave") : L(C.ET[w.type]);
   let nx = s.started
     ? t("nextWave", { n: s.wave + 1, nm, r: rl, t: Math.ceil(s.timer) })

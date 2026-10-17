@@ -55,7 +55,7 @@ export function areaHit(
 function waveTick(g: Game, n: number): void {
   const S = g.S;
   if (--S.left[n] === 0) {
-    if (n === g.B.board.finalWave) {
+    if (n === g.L.finalWave) {
       if (S.lives > 0) endGame(g, true);
       return;
     }

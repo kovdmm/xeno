@@ -146,7 +146,11 @@
     "installBtn": "Install the app",
     "installDone": "Installed as an app",
     "installNo": "Installing is not available in this browser",
-    "installIos": "In Safari tap Share, then “Add to Home Screen”."
+    "installIos": "In Safari tap Share, then “Add to Home Screen”.",
+    "dirRight": "left → right",
+    "dirDown": "top → bottom",
+    "dirLeft": "right → left",
+    "dirUp": "bottom → top"
   },
   "game": {
     "towers": {
@@ -336,16 +340,6 @@
         "name": "Nuclear Strike",
         "short": "Nuke",
         "desc": "After 1.5 s: 35% of health (Brood Mothers 10%) plus heavy damage to everything within radius 4"
-      }
-    },
-    "routes": {
-      "h": {
-        "label": "left → right",
-        "labelRotated": "top → bottom"
-      },
-      "v": {
-        "label": "top → bottom",
-        "labelRotated": "right → left"
       }
     }
   }

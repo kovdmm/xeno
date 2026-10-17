@@ -61,7 +61,7 @@ export function cast(g: Game, k: AbilityKey, pt?: Vec): CastResult {
 /** Cooldowns and everything the abilities have put on the field. */
 export function stepAbilities(g: Game, dt: number): void {
   const S = g.S,
-    W = g.B.board.width,
+    W = g.L.width,
     CARPET = g.B.abilities.carpet,
     NUKE = g.B.abilities.nuke;
   for (const k of Object.keys(g.B.abilities) as AbilityKey[]) if (S.cd[k] > 0) S.cd[k] = Math.max(0, S.cd[k] - dt);

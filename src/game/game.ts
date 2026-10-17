@@ -2,6 +2,7 @@
 import { abCost, cast as castAbility, stepAbilities } from "./abilities";
 import { BALANCE } from "./balance";
 import { buildOrigin, footprint, placeCheck, recompute, routePath, towerAt } from "./grid";
+import { levelIds, makeLevel } from "./level";
 import { moveCreep } from "./movement";
 import { updateProjectile } from "./projectiles";
 import { statsOf, towerStats, unitHP, upCost } from "./rules";
@@ -14,6 +15,7 @@ import type {
   DiffKey,
   Game,
   GameEvent,
+  Level,
   PlaceResult,
   Rng,
   RouteKey,
@@ -32,6 +34,8 @@ export interface GameOptions {
   /** source of randomness for the simulation; tests pass a seeded one */
   rng?: Rng;
   difficulty?: DiffKey;
+  /** the level to start on; the first of the balance data by default */
+  level?: string;
 }
 
 export interface GameApi {
@@ -39,7 +43,7 @@ export interface GameApi {
   /** the current state; replaced by a new object on every `newGame` */
   readonly S: State;
   on(fn: (e: GameEvent) => void): () => void;
-  newGame(difficulty?: string): State;
+  newGame(difficulty?: string, level?: string): State;
   step(dt: number): void;
   // commands
   place(type: TowerType, x: number, y: number): PlaceResult;
@@ -61,13 +65,17 @@ export interface GameApi {
   routePath(r: RouteKey): Vec[];
   unitHP(n: number): number;
   difficulty(): DiffKey;
+  /** the level being played, and the ids of all of them */
+  readonly level: Level;
+  readonly levelIds: string[];
 }
 
 function initialState(g: Game): State {
   const D = g.D(),
-    { width: W, height: H } = g.B.board;
+    { width: W, height: H } = g.L;
   const S: State = {
     diff: g.diff,
+    level: g.L.id,
     credits: D.credits,
     lives: D.lives,
     wave: 0,
@@ -83,7 +91,7 @@ function initialState(g: Game): State {
     spawners: [],
     left: {},
     timer: 0,
-    fields: { h: new Int32Array(0), v: new Int32Array(0) },
+    fields: {},
     cd: { stasis: 0, meteor: 0, napalm: 0, carpet: 0, nuke: 0 },
     meteors: [],
     zones: [],
@@ -101,6 +109,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
   const B = opts.balance ?? BALANCE;
   const g: Game = {
     S: undefined as unknown as State,
+    L: makeLevel(B, opts.level && Object.hasOwn(B.levels, opts.level) ? opts.level : levelIds(B)[0]),
     B,
     diff: opts.difficulty && Object.hasOwn(B.difficulty, opts.difficulty) ? opts.difficulty : "easy",
     rand: opts.rng ?? Math.random,
@@ -111,8 +120,9 @@ export function createGame(opts: GameOptions = {}): GameApi {
     D: () => B.difficulty[g.diff],
   };
 
-  function newGame(difficulty?: string): State {
+  function newGame(difficulty?: string, level?: string): State {
     if (difficulty && Object.hasOwn(B.difficulty, difficulty)) g.diff = difficulty as DiffKey;
+    if (level && Object.hasOwn(B.levels, level) && level !== g.L.id) g.L = makeLevel(B, level);
     g.S = initialState(g);
     recompute(g);
     g.emit({ type: "reset" });
@@ -122,7 +132,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
   function place(type: TowerType, x: number, y: number): PlaceResult {
     const S = g.S,
       d = B.towers[type],
-      W = B.board.width,
+      W = g.L.width,
       z = d.size || 1;
     if (S.over) return { ok: false, code: "over" };
     if (S.credits < d.cost[0]) return { ok: false, code: "noCred" };
@@ -244,5 +254,9 @@ export function createGame(opts: GameOptions = {}): GameApi {
     routePath: (r) => routePath(g, r),
     unitHP: (n) => unitHP(B, g.D(), n),
     difficulty: () => g.diff,
+    get level() {
+      return g.L;
+    },
+    levelIds: levelIds(B),
   };
 }

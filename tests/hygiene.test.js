@@ -95,8 +95,8 @@ describe("source hygiene", () => {
     for (const f of under("ui")) {
       expect(code(f), f.name).not.toMatch(word("Howl", "Howler", "localStorage"));
       expect(code(f), f.name).not.toMatch(/Math\.random/);
-      // the game is reached through `core`: from src/game only types are imported
-      expect(f.text, f.name).not.toMatch(/import (?!type)[^;]*from "\.\.\/game\//);
+      // the game is reached through `core`: from src/game only types (and the pure constants) are imported
+      expect(f.text, f.name).not.toMatch(/import (?!type)[^;]*from "\.\.\/game\/(?!constants")/);
     }
   });
 

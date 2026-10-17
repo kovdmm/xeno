@@ -146,7 +146,11 @@
     "installBtn": "Installera appen",
     "installDone": "Installerad som app",
     "installNo": "Installation är inte tillgänglig i den här webbläsaren",
-    "installIos": "I Safari: tryck på Dela och sedan ”Lägg till på hemskärmen”."
+    "installIos": "I Safari: tryck på Dela och sedan ”Lägg till på hemskärmen”.",
+    "dirRight": "vänster → höger",
+    "dirDown": "uppifrån → ned",
+    "dirLeft": "höger → vänster",
+    "dirUp": "nedifrån → upp"
   },
   "game": {
     "towers": {
@@ -336,16 +340,6 @@
         "name": "Kärnvapenanfall",
         "short": "Kärnvapen",
         "desc": "Efter 1,5 s: 35 % av hälsan (yngelmödrar 10 %) plus kraftig skada på allt inom radie 4"
-      }
-    },
-    "routes": {
-      "h": {
-        "label": "vänster → höger",
-        "labelRotated": "uppifrån → ned"
-      },
-      "v": {
-        "label": "uppifrån → ned",
-        "labelRotated": "höger → vänster"
       }
     }
   }

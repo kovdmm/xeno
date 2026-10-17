@@ -3,7 +3,8 @@
 export type Rng = () => number;
 export type Vec = [number, number];
 
-export type RouteKey = "h" | "v";
+/** The name of a route in a level (a level has one or more). */
+export type RouteKey = string;
 export type WaveRoute = RouteKey | "both";
 export type TowerType = "gun" | "cannon" | "frost" | "missile" | "laser" | "plasma" | "rail" | "artillery";
 export type EnemyType = "crawler" | "runner" | "swarm" | "armored" | "flyer" | "healer" | "blinker" | "boss" | "queen";
@@ -14,9 +15,40 @@ export type Priority = "first" | "strong";
 /* ---------- balance data ---------- */
 
 export interface Route {
+  /** the cells enemies enter through: on the edge of the board, side by side */
   spawn: Vec[];
+  /** the cells they must reach */
   exit: Vec[];
+  /** the unit step enemies take when they come in (from outside the board, through the spawn cells) */
   dir: Vec;
+  /** the unit step they take when they leave through the exit; the same as `dir` when absent */
+  exitDir?: Vec;
+}
+
+/** The shape of a level's board. */
+export interface MapDef {
+  width: number;
+  height: number;
+  routes: Record<RouteKey, Route>;
+  /** cells that cannot be built on or walked through */
+  walls?: Vec[];
+}
+
+/** A level as written in the balance data. */
+export interface LevelDef {
+  map: MapDef;
+  /** the last wave: clearing it wins the game */
+  finalWave: number;
+}
+
+/** The level being played, with its id and the walls always present. */
+export interface Level {
+  id: string;
+  width: number;
+  height: number;
+  finalWave: number;
+  routes: Record<RouteKey, Route>;
+  walls: Vec[];
 }
 
 /** Everything a tower does in a given shape; derived from the tables by `towerStats`. */
@@ -323,6 +355,8 @@ export interface Nuke {
 
 export interface State {
   diff: DiffKey;
+  /** the id of the level being played */
+  level: string;
   credits: number;
   lives: number;
   wave: number;
@@ -387,6 +421,8 @@ export type CastResult = { ok: true } | { ok: false; code: string; s?: number };
 /** Everything a system needs from the running game. Systems are plain functions of `(g, …)`. */
 export interface Game {
   S: State;
+  /** the level being played */
+  L: Level;
   /** all numbers of the game: see data/balance.json */
   readonly B: Balance;
   diff: DiffKey;
@@ -400,13 +436,11 @@ export interface Game {
 
 export interface Balance {
   board: {
-    width: number;
-    height: number;
-    finalWave: number;
     /** a walking enemy closer than this to a cell (centre to centre) blocks building there */
     enemyBlockRadius: number;
-    routes: Record<RouteKey, Route>;
   };
+  /** the levels, in the order the player meets them; the first is the default */
+  levels: Record<string, LevelDef>;
   economy: {
     /** share of the invested credits returned on sale */
     sellRefund: number;

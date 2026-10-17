@@ -146,7 +146,11 @@
     "installBtn": "App installieren",
     "installDone": "Als App installiert",
     "installNo": "Installation ist in diesem Browser nicht verfügbar",
-    "installIos": "In Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“."
+    "installIos": "In Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“.",
+    "dirRight": "links → rechts",
+    "dirDown": "oben → unten",
+    "dirLeft": "rechts → links",
+    "dirUp": "unten → oben"
   },
   "game": {
     "towers": {
@@ -336,16 +340,6 @@
         "name": "Atomschlag",
         "short": "Atom",
         "desc": "Nach 1,5 s: 35 % der Lebenspunkte (Brutmütter 10 %) plus schwerer Schaden an allem im Radius 4"
-      }
-    },
-    "routes": {
-      "h": {
-        "label": "links → rechts",
-        "labelRotated": "oben → unten"
-      },
-      "v": {
-        "label": "oben → unten",
-        "labelRotated": "rechts → links"
       }
     }
   }
