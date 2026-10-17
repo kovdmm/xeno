@@ -14,13 +14,16 @@
     "test:coverage": "vitest run --coverage",
     "build": "vite build",
     "preview": "vite preview --port 3000",
-    "typecheck": "tsc"
+    "typecheck": "tsc && tsc -p tsconfig.test.json && tsc -p tsconfig.sw.json",
+    "icons": "tsx scripts/make-icons.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "5.0.5",
     "howler": "2.2.4",
     "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.5"

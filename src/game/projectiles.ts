@@ -1,7 +1,7 @@
 // How each kind of projectile flies and what it does on arrival. Adding a kind: a type in types.ts and an
 // entry in UPDATE below.
 import { areaHit, ex, ey, hit, ignite, stun } from "./combat";
-import type { Bullet, Game, Howitzer, Missile, Plasma, Projectile, ProjKind, Shell } from "./types";
+import type { Bullet, Creep, Game, Howitzer, Missile, Plasma, Projectile, ProjKind, Shell } from "./types";
 
 type Updater<P extends Projectile> = (g: Game, p: P, dt: number) => void;
 
@@ -85,7 +85,7 @@ const missile: Updater<Missile> = (g, p, dt) => {
     return;
   }
   if (p.tgt.dead) {
-    let b = null,
+    let b: Creep | null = null,
       bd = M.retargetRange * M.retargetRange;
     for (const c of g.S.creeps) {
       if (c.dead || !(c.fly ? p.air : p.ground)) continue;

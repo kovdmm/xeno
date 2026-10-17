@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`determinism (golden run) > matches the recorded baseline (update deliberately if balance changes) 1`] = `
+{
+  "credits": 99425,
+  "creeps": 3,
+  "kinds": {
+    "built": 14,
+    "explode": 436,
+    "kill": 362,
+    "leak": 10,
+    "muzzle": 6,
+    "pulse": 176,
+    "rail": 120,
+    "reset": 1,
+    "shot": 1660,
+    "toast": 34,
+    "upgraded": 12,
+    "wave": 24,
+  },
+  "lives": 2,
+  "score": 14771,
+  "wave": 24,
+}
+`;

@@ -22,7 +22,7 @@ export function createBrowserI18n(storage: KeyValueStore) {
     gameText: tr.gameText,
     gameFields: tr.gameFields,
     /** the name/desc/short/label of a data entry; entries from the core read the current language live */
-    L: (o: Record<string, string>, f = "name") => o[f],
+    L: (o: unknown, f = "name") => (o as Record<string, string>)[f],
   };
 }
 

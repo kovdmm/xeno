@@ -20,7 +20,7 @@ export interface Texts {
   /** interface strings with {placeholders}; `credits` is a list of [role, name] rows */
   ui: { credits: [string, string][] } & Record<string, string | [string, string][]>;
   /** texts of the game data, by section and id (the ids of src/game/data/balance.json) */
-  game: Record<"towers" | "enemies" | "difficulties" | "abilities" | "routes", Record<string, TextEntry>>;
+  game: Record<"towers" | "enemies" | "difficulties" | "abilities" | "levels", Record<string, TextEntry>>;
 }
 
 export const TEXTS = { en, ru, de, ua, sv } as unknown as Record<Lang, Texts>;
