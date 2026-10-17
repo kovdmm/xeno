@@ -8,8 +8,7 @@ function stubContext(calls) {
   return new Proxy(target, {
     get(t, p) {
       if (p in t) return t[p];
-      if (p === "createLinearGradient" || p === "createRadialGradient")
-        return () => ({ addColorStop() {} });
+      if (p === "createLinearGradient" || p === "createRadialGradient") return () => ({ addColorStop() {} });
       return (...a) => {
         calls[p] = (calls[p] || 0) + 1;
         if (p === "save") {
@@ -85,81 +84,85 @@ describe("renderer smoke test", () => {
     for (const k of C.TKEYS) expect(() => R.towerIcon(main.ctx, k), k).not.toThrow();
   });
 
-  it.each([false, true])("plays a long game with everything on screen (rotated=%s)", (rot) => {
-    const { C, R, main, calls } = setup();
-    R.setRotated(rot);
-    R.resize();
-    C.newGame("hard");
-    C.cheat("hesoyam");
+  it.each([false, true])(
+    "plays a long game with everything on screen (rotated=%s)",
+    (rot) => {
+      const { C, R, main, calls } = setup();
+      R.setRotated(rot);
+      R.resize();
+      C.newGame("hard");
+      C.cheat("hesoyam");
 
-    // every tower at every stage: levels 0–3, both ultimates of each, overclocked
-    let x = 1;
-    for (const type of C.TKEYS) {
-      const z = C.TT[type].size || 1;
-      let row = 0;
-      for (const ult of [null, ...Object.keys(C.TT[type].ults)]) {
-        for (let lvl = 0; lvl <= 3; lvl += ult ? 3 : 1) {
-          const y = 1 + (row++ % 3) * (z + 1) + (row > 2 ? 6 : 0);
-          const r = C.place(type, x, y);
-          if (!r.ok) continue;
-          for (let i = 0; i < lvl; i++) C.upgrade(r.tower);
-          if (ult) {
-            C.upgrade(r.tower, ult);
-            C.upgrade(r.tower);
+      // every tower at every stage: levels 0–3, both ultimates of each, overclocked
+      let x = 1;
+      for (const type of C.TKEYS) {
+        const z = C.TT[type].size || 1;
+        let row = 0;
+        for (const ult of [null, ...Object.keys(C.TT[type].ults)]) {
+          for (let lvl = 0; lvl <= 3; lvl += ult ? 3 : 1) {
+            const y = 1 + (row++ % 3) * (z + 1) + (row > 2 ? 6 : 0);
+            const r = C.place(type, x, y);
+            if (!r.ok) continue;
+            for (let i = 0; i < lvl; i++) C.upgrade(r.tower);
+            if (ult) {
+              C.upgrade(r.tower, ult);
+              C.upgrade(r.tower);
+            }
           }
         }
+        x += z === 2 ? 2 : 1;
       }
-      x += z === 2 ? 2 : 1;
-    }
-    expect(C.S.towers.length).toBeGreaterThan(20);
+      expect(C.S.towers.length).toBeGreaterThan(20);
 
-    const w = { sel: C.S.towers[0], t: 0 };
-    let t = 0,
-      frames = 0;
-    const seen = new Set(),
-      kinds = new Set(),
-      projs = new Set();
-    C.on((e) => e.type === "explode" && kinds.add(e.kind));
-    const checkState = () => {
-      // a frame must leave the context clean for the next one
-      expect(main.ctx.globalAlpha).toBe(1);
-      expect(main.ctx.globalCompositeOperation).toBe("source-over");
-      expect(main.ctx.lineDash).toEqual([]);
-      expect(main.ctx.depth).toBe(0); // save/restore balanced
-    };
-    for (let n = 1; n <= 45; n++) {
-      C.S.lives = 1e6; // keep the run going: the point is to draw 45 waves
-      C.sendWave(true);
-      if (n === 8) {
-        for (const a of C.AKEYS) C.cast(a, [8, 7]);
+      const w = { sel: C.S.towers[0], t: 0 };
+      let t = 0,
+        frames = 0;
+      const seen = new Set(),
+        kinds = new Set(),
+        projs = new Set();
+      C.on((e) => e.type === "explode" && kinds.add(e.kind));
+      const checkState = () => {
+        // a frame must leave the context clean for the next one
+        expect(main.ctx.globalAlpha).toBe(1);
+        expect(main.ctx.globalCompositeOperation).toBe("source-over");
+        expect(main.ctx.lineDash).toEqual([]);
+        expect(main.ctx.depth).toBe(0); // save/restore balanced
+      };
+      for (let n = 1; n <= 45; n++) {
+        C.S.lives = 1e6; // keep the run going: the point is to draw 45 waves
+        C.sendWave(true);
+        if (n === 8) {
+          for (const a of C.AKEYS) C.cast(a, [8, 7]);
+        }
+        for (let s = 0; s < 240; s++) {
+          C.step(0.025);
+          t += 0.025;
+          if (s % 4) continue;
+          const v = view(t, {
+            sel: w.sel,
+            preview: n % 2 ? { type: "artillery", x: 3, y: 3, size: 2, ok: n % 3 > 0, range: 5, minR: 1.2 } : null,
+            aim: n % 3 === 0 ? { shape: n % 2 ? "row" : "circle", x: 8, y: 7, r: 3 } : null,
+          });
+          R.draw(v, 0.1);
+          for (const c of C.S.creeps) seen.add(c.type);
+          for (const p of C.S.proj) projs.add(p.k);
+          frames++;
+          checkState();
+        }
       }
-      for (let s = 0; s < 240; s++) {
-        C.step(0.025);
-        t += 0.025;
-        if (s % 4) continue;
-        const v = view(t, {
-          sel: w.sel,
-          preview: n % 2 ? { type: "artillery", x: 3, y: 3, size: 2, ok: n % 3 > 0, range: 5, minR: 1.2 } : null,
-          aim: n % 3 === 0 ? { shape: n % 2 ? "row" : "circle", x: 8, y: 7, r: 3 } : null,
-        });
-        R.draw(v, 0.1);
-        for (const c of C.S.creeps) seen.add(c.type);
-        for (const p of C.S.proj) projs.add(p.k);
-        frames++;
-        checkState();
-      }
-    }
-    // the run actually exercised the interesting paths
-    for (const type of ["crawler", "runner", "swarm", "armored", "flyer", "healer", "blinker", "boss"])
-      expect(seen.has(type), `enemy ${type} was drawn`).toBe(true);
-    for (const k of ["b", "s", "m", "pl", "a"]) expect(projs.has(k), `projectile ${k} was drawn`).toBe(true);
-    for (const k of ["shell", "missile", "plasma", "artillery", "meteor", "bomb", "nuke"])
-      expect(kinds.has(k), `explosion ${k} happened`).toBe(true);
-    expect(frames).toBeGreaterThan(2000);
-    expect(calls.fill + calls.stroke + calls.drawImage).toBeGreaterThan(50000);
-    expect(C.S.over).toBe(false);
-    expect(C.S.wave).toBe(45);
-  }, 60000);
+      // the run actually exercised the interesting paths
+      for (const type of ["crawler", "runner", "swarm", "armored", "flyer", "healer", "blinker", "boss"])
+        expect(seen.has(type), `enemy ${type} was drawn`).toBe(true);
+      for (const k of ["b", "s", "m", "pl", "a"]) expect(projs.has(k), `projectile ${k} was drawn`).toBe(true);
+      for (const k of ["shell", "missile", "plasma", "artillery", "meteor", "bomb", "nuke"])
+        expect(kinds.has(k), `explosion ${k} happened`).toBe(true);
+      expect(frames).toBeGreaterThan(2000);
+      expect(calls.fill + calls.stroke + calls.drawImage).toBeGreaterThan(50000);
+      expect(C.S.over).toBe(false);
+      expect(C.S.wave).toBe(45);
+    },
+    60000,
+  );
 
   it("draws bosses, flyers, healers and the final queen without throwing", () => {
     const { C, R } = setup();
@@ -190,5 +193,35 @@ describe("renderer smoke test", () => {
       C.newGame("easy");
       R.draw(view(0), 0.016);
     }).not.toThrow();
+  });
+
+  it("drawing never changes the simulation (separate random streams)", () => {
+    const sim = (withRenderer) => {
+      const { C, R } = setup({ seed: 11 });
+      C.newGame("normal");
+      C.cheat("hesoyam");
+      for (const [type, x, y] of [
+        ["gun", 4, 5],
+        ["cannon", 7, 5],
+        ["plasma", 10, 5],
+        ["artillery", 13, 9],
+      ])
+        C.place(type, x, y);
+      C.cast("meteor", [8, 6]);
+      C.sendWave();
+      for (let s = 0; s < 900; s++) {
+        C.step(0.025);
+        if (withRenderer && s % 2 === 0) R.draw(view(s * 0.025), 0.05);
+      }
+      const snap = (c) => [c.type, +c.x.toFixed(6), +c.y.toFixed(6), +c.hp.toFixed(6), +c.ox.toFixed(6)];
+      return JSON.stringify({
+        t: C.S.t,
+        score: C.S.score,
+        credits: C.S.credits,
+        lives: C.S.lives,
+        creeps: C.S.creeps.map(snap),
+      });
+    };
+    expect(sim(true)).toBe(sim(false));
   });
 });

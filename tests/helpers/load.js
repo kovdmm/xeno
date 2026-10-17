@@ -1,5 +1,7 @@
 // Loads the legacy `window.XT` IIFE scripts into an isolated vm context, so tests can run them in Node
-// without a browser. Math.random is replaced by a seeded generator: runs are fully reproducible.
+// without a browser. Each module gets its own seeded random stream (XT.rng.core / fx / audio), so cosmetic
+// randomness in the renderer can never shift the simulation. Math.random itself throws inside the sandbox:
+// any use that bypasses XT.rng is a bug.
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 import { fileURLToPath } from "node:url";
@@ -19,9 +21,10 @@ export function mulberry32(seed) {
 }
 
 /** @param files script names under js/ in load order, e.g. ["core"]
- *  @param opts.seed Math.random seed  @param opts.globals extra globals for the context */
+ *  @param opts.seed seed of the core stream (fx = seed+1, audio = seed+2)  @param opts.globals extra globals */
 export function loadXT(files, { seed = 1, globals = {} } = {}) {
   const win = {
+    XT: { rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) } },
     addEventListener() {},
     devicePixelRatio: 1,
     matchMedia: () => ({ matches: false, addEventListener() {} }),
@@ -39,7 +42,7 @@ export function loadXT(files, { seed = 1, globals = {} } = {}) {
   };
   sandbox.globalThis = sandbox;
   const ctx = createContext(sandbox);
-  runInContext("Math.random = __rand", Object.assign(ctx, { __rand: mulberry32(seed) }));
+  runInContext('Math.random = () => { throw new Error("Math.random used: take it from XT.rng"); }', ctx);
   for (const f of files) {
     runInContext(readFileSync(resolve(ROOT, "js", f + ".js"), "utf8"), ctx, { filename: f + ".js" });
   }

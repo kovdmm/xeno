@@ -12,8 +12,11 @@
    - lasers are one shared looping hum whose volume follows how many beams are firing. */
 (function (XT) {
   "use strict";
+  // Randomness comes from XT.rng.audio when set (tests seed it); each module has its own stream so that
+  // cosmetic randomness never shifts the game simulation.
+  const rand = (XT.rng && XT.rng.audio) || Math.random;
   const SR = 22050;
-  const rnd = () => Math.random() * 2 - 1;
+  const rnd = () => rand() * 2 - 1;
   function synth(dur, fn) {
     const n = Math.floor(SR * dur),
       a = new Float32Array(n),
@@ -289,7 +292,7 @@
       0.6,
       (t, s) =>
         Math.sin(ph(s, sweep(t, 2600, 700, 0.5))) * Math.exp(-t * 4) * 0.3 +
-        (Math.random() < 0.02 ? rnd() * 0.6 : 0) * Math.exp(-t * 3),
+        (rand() < 0.02 ? rnd() * 0.6 : 0) * Math.exp(-t * 3),
     ],
     boom: [
       0.4,
@@ -363,7 +366,7 @@
     fire: [
       0.9,
       (t, s) =>
-        (lp(s, 0.2, rnd()) * 0.6 + (Math.random() < 0.015 ? rnd() : 0)) * Math.min(1, t * 8) * Math.exp(-t * 2.5),
+        (lp(s, 0.2, rnd()) * 0.6 + (rand() < 0.015 ? rnd() : 0)) * Math.min(1, t * 8) * Math.exp(-t * 2.5),
     ],
     plane: [
       1.8,
@@ -560,7 +563,7 @@
       const duck = prio === 0 ? 1 / Math.sqrt(1 + busy / 8) : 1;
       const id = h.play();
       h.volume(Math.min(1, vol * boost * duck) * audio.volume, id);
-      h.rate(0.92 + Math.random() * 0.16, id);
+      h.rate(0.92 + rand() * 0.16, id);
     }
   }
   function updateLaser(dt) {

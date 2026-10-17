@@ -6,6 +6,9 @@
    offscreen canvases and blitted each frame; only cheap shapes are drawn live. */
 (function (XT) {
   "use strict";
+  // Randomness comes from XT.rng.fx when set (tests seed it); each module has its own stream so that
+  // cosmetic randomness never shifts the game simulation.
+  const rand = (XT.rng && XT.rng.fx) || Math.random;
   const TAU = Math.PI * 2;
   const THEME = {
     void: "#050605",
@@ -985,12 +988,12 @@
       if (!dctx) return;
       floorDirty = true;
       for (let i = 0; i < 5 + size * 6; i++) {
-        const a = Math.random() * TAU,
-          d = Math.random() * size * 0.8,
-          r = 0.04 + Math.random() * size * 0.25;
+        const a = rand() * TAU,
+          d = rand() * size * 0.8,
+          r = 0.04 + rand() * size * 0.25;
         dctx.beginPath();
         dctx.arc(x + 0.5 + Math.cos(a) * d, y + 0.5 + Math.sin(a) * d, r, 0, TAU);
-        dctx.fillStyle = alpha(col, 0.55 + Math.random() * 0.3);
+        dctx.fillStyle = alpha(col, 0.55 + rand() * 0.3);
         dctx.fill();
       }
     }
@@ -1049,15 +1052,15 @@
     };
     function sparks(x, y, n, col, v0, v1, life, s = 0.05) {
       for (let i = 0; i < n; i++) {
-        const a = Math.random() * TAU,
-          v = v0 + Math.random() * (v1 - v0);
+        const a = rand() * TAU,
+          v = v0 + rand() * (v1 - v0);
         P({
           k: "spark",
           x,
           y,
           vx: Math.cos(a) * v,
           vy: Math.sin(a) * v,
-          life: life * (0.5 + Math.random() * 0.5),
+          life: life * (0.5 + rand() * 0.5),
           max: life,
           col,
           s,
@@ -1068,13 +1071,13 @@
       for (let i = 0; i < n; i++)
         P({
           k: "smoke",
-          x: x + (Math.random() - 0.5) * r,
-          y: y + (Math.random() - 0.5) * r,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: -0.3 - Math.random() * 0.4,
-          life: 0.8 + Math.random() * 0.6,
+          x: x + (rand() - 0.5) * r,
+          y: y + (rand() - 0.5) * r,
+          vx: (rand() - 0.5) * 0.4,
+          vy: -0.3 - rand() * 0.4,
+          life: 0.8 + rand() * 0.6,
           max: 1.4,
-          r: 0.2 + Math.random() * r * 0.4,
+          r: 0.2 + rand() * r * 0.4,
         });
     }
     function blast(x, y, r, col, life, flashA = 0) {
@@ -1277,12 +1280,12 @@
       for (const t of S.towers)
         if (t.beam)
           for (const c of t.beam)
-            if (Math.random() < dt * 12) {
+            if (rand() < dt * 12) {
               const [x, y] = C.pos(c);
               sparks(x, y, 1, THEME.tower.laser, 0.5, 2, 0.25, 0.04);
             }
       for (const p of S.proj)
-        if (p.k === "m" && Math.random() < dt * 25)
+        if (p.k === "m" && rand() < dt * 25)
           P({
             k: "smoke",
             x: p.x,
@@ -1294,11 +1297,11 @@
             r: 0.08,
           });
       for (const c of S.creeps)
-        if (c.burnT > 0 && Math.random() < dt * 6) {
+        if (c.burnT > 0 && rand() < dt * 6) {
           const [x, y] = C.pos(c);
           P({
             k: "flame",
-            x: x + (Math.random() - 0.5) * c.r,
+            x: x + (rand() - 0.5) * c.r,
             y,
             vx: 0,
             vy: -0.9,
@@ -1309,9 +1312,9 @@
           });
         }
       for (const z of S.zones)
-        if (Math.random() < dt * 14) {
-          const a = Math.random() * TAU,
-            r = Math.sqrt(Math.random()) * z.r;
+        if (rand() < dt * 14) {
+          const a = rand() * TAU,
+            r = Math.sqrt(rand()) * z.r;
           P({
             k: "flame",
             x: z.x + Math.cos(a) * r,
@@ -1561,8 +1564,8 @@
       }
       ox = oy = 0;
       if (shake > 0) {
-        ox = Math.round((Math.random() - 0.5) * shake * 0.5 * cs);
-        oy = Math.round((Math.random() - 0.5) * shake * 0.5 * cs);
+        ox = Math.round((rand() - 0.5) * shake * 0.5 * cs);
+        oy = Math.round((rand() - 0.5) * shake * 0.5 * cs);
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(floor, ox, oy);
@@ -1838,8 +1841,8 @@
           for (let i = 1; i < 5; i++) {
             const k = i / 5;
             ctx.lineTo(
-              f.x + (f.x2 - f.x) * k + 0.5 + (Math.random() - 0.5) * 0.3,
-              f.y + (f.y2 - f.y) * k + 0.5 + (Math.random() - 0.5) * 0.3,
+              f.x + (f.x2 - f.x) * k + 0.5 + (rand() - 0.5) * 0.3,
+              f.y + (f.y2 - f.y) * k + 0.5 + (rand() - 0.5) * 0.3,
             );
           }
           ctx.lineTo(f.x2 + 0.5, f.y2 + 0.5);

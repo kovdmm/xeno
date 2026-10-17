@@ -4,6 +4,9 @@
    and listen to events emitted through XT.core.on(fn). */
 (function (XT) {
   "use strict";
+  // Randomness comes from XT.rng.core when set (tests seed it); each module has its own stream so that
+  // cosmetic randomness never shifts the game simulation.
+  const rand = (XT.rng && XT.rng.core) || Math.random;
   const W = 22,
     H = 15,
     INF = 1e9,
@@ -968,8 +971,8 @@
       boss: !!T.boss,
       armor: T.armor ? T.armor + Math.floor(n / Df.armorDiv) + Df.armor : 0,
       rw: Math.max(1, Math.round(T.rw * (1 + n * 0.04) * (e.m || 1) * Df.rw)),
-      healT: Math.random(),
-      blinkT: 2 + Math.random() * 2,
+      healT: rand(),
+      blinkT: 2 + rand() * 2,
       r: T.r,
       fly: !!T.fly,
       slow: 0,
@@ -989,13 +992,13 @@
     if (c.fly) {
       const s = R.spawn[1],
         ex = R.exit[1],
-        off = (Math.random() - 0.5) * 2.4;
+        off = (rand() - 0.5) * 2.4;
       c.x = s[0] - R.dir[0] * 1.5 + R.dir[1] * off;
       c.y = s[1] - R.dir[1] * 1.5 + R.dir[0] * off;
       c.gx = ex[0] + R.dir[0] * 1.5 + R.dir[1] * off;
       c.gy = ex[1] + R.dir[1] * 1.5 + R.dir[0] * off;
     } else {
-      const s = R.spawn[(Math.random() * 3) | 0];
+      const s = R.spawn[(rand() * 3) | 0];
       c.x = s[0] - R.dir[0];
       c.y = s[1] - R.dir[1];
       c.tx = s[0];
@@ -1003,8 +1006,8 @@
       c.ti = s[1] * W + s[0];
       c.ci = -1;
       c.leaving = false;
-      c.ox = (Math.random() - 0.5) * 0.3;
-      c.oy = (Math.random() - 0.5) * 0.3;
+      c.ox = (rand() - 0.5) * 0.3;
+      c.oy = (rand() - 0.5) * 0.3;
     }
     S.creeps.push(c);
   }
@@ -1421,8 +1424,8 @@
     });
     if (p.cluster)
       for (let k = 0; k < p.cluster; k++) {
-        const a = Math.random() * 6.28,
-          r = 0.6 + Math.random() * 1;
+        const a = rand() * 6.28,
+          r = 0.6 + rand() * 1;
         S.proj.push({
           k: "s",
           src: "bomblet",
@@ -1591,8 +1594,8 @@
       S.stasisT = 8;
     } else if (k === "meteor") {
       for (let i = 0; i < 15; i++) {
-        const a = Math.random() * 6.28,
-          r = Math.sqrt(Math.random()) * A.r;
+        const a = rand() * 6.28,
+          r = Math.sqrt(rand()) * A.r;
         S.meteors.push({
           kind: "meteor",
           x: pt[0] + Math.cos(a) * r,
@@ -1646,7 +1649,7 @@
         S.meteors.push({
           kind: "bomb",
           x: b.next,
-          y: b.y + (Math.random() - 0.5) * 1.2,
+          y: b.y + (rand() - 0.5) * 1.2,
           t: 0,
           fall: 0.35,
           dmg: b.dmg,

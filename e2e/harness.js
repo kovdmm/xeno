@@ -1,17 +1,21 @@
-// Test harness for the browser game: seeded Math.random, a manual clock and requestAnimationFrame,
+// Test harness for the browser game: seeded random streams (XT.rng), a manual clock and requestAnimationFrame,
 // no network (fonts and howler are blocked, so the game is silent and looks the same everywhere).
 
 export async function openGame(page, { seed = 1 } = {}) {
   await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
   await page.addInitScript((seed) => {
-    let a = seed >>> 0;
-    Math.random = () => {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    const mulberry32 = (seed) => {
+      let a = seed >>> 0;
+      return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
     };
+    // one stream per subsystem: effects never shift the simulation
+    window.XT = { rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) } };
     let now = 0,
       id = 0,
       queue = [];
