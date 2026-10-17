@@ -105,8 +105,8 @@ describe("Escape and Space", () => {
 
 describe("UiState", () => {
   it("starts paused with nothing in hand, and clearPicks empties the hand", () => {
-    const s = createState("hard", 7);
-    expect([s.paused, s.sel, s.build, s.aim, s.diff, s.best]).toEqual([true, null, null, null, "hard", 7]);
+    const s = createState("hard", "corner", 7);
+    expect([s.paused, s.sel, s.build, s.aim, s.diff, s.level, s.best]).toEqual([true, null, null, null, "hard", "corner", 7]);
     s.build = "gun";
     s.aim = "meteor";
     s.sel = {};
@@ -115,7 +115,7 @@ describe("UiState", () => {
   });
 
   it("speed is zero while paused, otherwise the chosen one", () => {
-    const s = createState("easy", 0);
+    const s = createState("easy", "crossroads", 0);
     expect(speedOf(s)).toBe(0);
     s.paused = false;
     s.speedIdx = 2;
@@ -124,33 +124,52 @@ describe("UiState", () => {
 });
 
 describe("saved progress", () => {
+  const LEVELS = [
+    { id: "crossroads", finalWave: 200 },
+    { id: "corner", finalWave: 80 },
+  ];
   const make = (init = {}) => {
     const store = memoryStore(init);
-    return { store, p: createProgress(store, ["easy", "normal", "hard", "insane"], 200) };
+    return { store, p: createProgress(store, ["easy", "normal", "hard", "insane"], LEVELS) };
   };
 
-  it("defaults to easy, ignores an unknown saved difficulty, remembers a valid one", () => {
-    expect(make().p.readDiff()).toBe("easy");
-    expect(make({ "xt-diff": "nightmare" }).p.readDiff()).toBe("easy");
+  it("defaults to easy and the first level, ignores unknown saved ones, remembers valid ones", () => {
+    const fresh = make().p;
+    expect([fresh.readDiff(), fresh.readLevel()]).toEqual(["easy", "crossroads"]);
+    const junk = make({ "xt-diff": "nightmare", "xt-level": "nowhere" }).p;
+    expect([junk.readDiff(), junk.readLevel()]).toEqual(["easy", "crossroads"]);
     const { p } = make();
     p.saveDiff("hard");
-    expect(p.readDiff()).toBe("hard");
+    p.saveLevel("corner");
+    expect([p.readDiff(), p.readLevel()]).toEqual(["hard", "corner"]);
   });
 
-  it("keeps the best wave per difficulty, capped at the final wave", () => {
+  it("keeps the best wave per level and difficulty, capped at that level's last wave", () => {
     const { p } = make();
-    expect(p.bestOf("hard")).toBe(0);
-    p.saveBest("hard", 31);
-    expect(p.bestOf("hard")).toBe(31);
-    expect(p.bestOf("easy")).toBe(0);
-    p.saveBest("normal", 999);
-    expect(p.bestOf("normal")).toBe(200);
+    expect(p.bestOf("crossroads", "hard")).toBe(0);
+    p.saveBest("crossroads", "hard", 31);
+    expect(p.bestOf("crossroads", "hard")).toBe(31);
+    expect(p.bestOf("crossroads", "easy")).toBe(0);
+    expect(p.bestOf("corner", "hard")).toBe(0); // another map, its own record
+    p.saveBest("corner", "hard", 500);
+    expect(p.bestOf("corner", "hard")).toBe(80);
+    p.saveBest("crossroads", "normal", 999);
+    expect(p.bestOf("crossroads", "normal")).toBe(200);
   });
 
-  it("the old single record belongs to easy", () => {
+  it("the first level keeps the keys older versions used, the others get their own", () => {
+    const { p, store } = make();
+    p.saveBest("crossroads", "hard", 7);
+    p.saveBest("corner", "hard", 9);
+    expect(store.get("xt-best-hard")).toBe("7");
+    expect(store.get("xt-best-corner-hard")).toBe("9");
+  });
+
+  it("the old single record belongs to the first level on easy", () => {
     const { p } = make({ "xt-best": "12" });
-    expect(p.bestOf("easy")).toBe(12);
-    expect(p.bestOf("hard")).toBe(0);
+    expect(p.bestOf("crossroads", "easy")).toBe(12);
+    expect(p.bestOf("crossroads", "hard")).toBe(0);
+    expect(p.bestOf("corner", "easy")).toBe(0);
   });
 });
 
@@ -276,7 +295,7 @@ describe("text panels and the view, on the real game", () => {
 
   it("the view carries the selection, and a ghost tower only over a free cell it can pay for", () => {
     const { C } = setup();
-    const st = createState("easy", 0);
+    const st = createState("easy", "crossroads", 0);
     expect(buildView(C, st, 3).preview).toBeNull();
     st.build = "gun";
     st.hover = [8.5, 5.5];

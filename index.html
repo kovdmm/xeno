@@ -59,7 +59,10 @@
         border-radius: 22px;
       }
       #boot b {
-        font: 700 22px/1 "Arial Black", Impact, sans-serif;
+        font:
+          700 22px/1 "Arial Black",
+          Impact,
+          sans-serif;
         letter-spacing: 0.18em;
         color: #ece4d0;
         text-transform: uppercase;
@@ -210,6 +213,7 @@
         <div class="mbtns">
           <button class="big go" id="mPlay" data-i="play"></button>
           <button class="big" id="mNew" data-i="newGame" hidden></button>
+          <button class="big" id="mLevel"></button>
           <button class="big" id="mDiff"></button>
           <button class="big" id="mSettings" data-i="settings"></button>
           <button class="big" id="mHelp" data-i="help"></button>
@@ -287,6 +291,8 @@
             /></label>
           </div>
         </div>
+        <h3 class="mh" data-i="levelH"></h3>
+        <div class="diffs" id="levels"></div>
         <h3 class="mh" data-i="diffH"></h3>
         <p class="note" data-i="diffNote"></p>
         <div class="diffs" id="diffs"></div>

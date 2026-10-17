@@ -11,9 +11,17 @@ export class Projection {
   oy = 0;
 
   constructor(
-    readonly W: number,
-    readonly H: number,
+    public W: number,
+    public H: number,
   ) {}
+
+  /** The board changed size (another level). Returns true if it did, so the caller can rebuild what depends on it. */
+  setBoard(W: number, H: number): boolean {
+    if (W === this.W && H === this.H) return false;
+    this.W = W;
+    this.H = H;
+    return true;
+  }
 
   /** cells across / down the screen */
   get cols() {

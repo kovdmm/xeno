@@ -22,6 +22,8 @@ export interface UiContext {
   L(o: unknown, f?: string): string;
   /** what the text panels need */
   cards: CardEnv;
+  /** "Crossroads · Hard": the map and the difficulty, for texts that say where a result was reached */
+  where(level?: string, diff?: string): string;
   toast(message: string): void;
   /** the desktop layout: a mouse and a big enough window */
   isDesk(): boolean;

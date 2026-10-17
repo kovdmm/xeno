@@ -15,7 +15,7 @@ export function createApplyLang(ui: UiContext, d: LanguageDeps) {
     document.documentElement.lang = I.htmlLang;
     document.title = t("title");
     document.querySelectorAll<HTMLElement>("[data-i]").forEach((e) => {
-      e.innerHTML = t(e.dataset.i!);
+      e.innerHTML = t(e.dataset.i!, { f: C.FINAL }); // some texts state the length of the game
     });
     document.querySelectorAll<HTMLElement>("[data-i-label]").forEach((e) => {
       const v = t(e.dataset.iLabel!);
@@ -26,7 +26,7 @@ export function createApplyLang(ui: UiContext, d: LanguageDeps) {
     d.rebuildPalette();
     for (const f of d.redraw) f();
     d.renderOver();
-    if (!C.S.started) $("banner").textContent = t("banner", { d: L(C.DIFF[st.diff]) });
+    if (!C.S.started) $("banner").textContent = t("banner", { d: L(C.DIFF[st.diff]), f: C.FINAL });
     if (ui.screens.isOpen("menu")) d.openMenu();
     ui.invalidate();
     ui.refresh();

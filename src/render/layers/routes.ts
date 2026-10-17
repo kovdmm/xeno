@@ -7,7 +7,7 @@ export const routes: Layer = {
   id: "routes",
   draw(fc) {
     const { ctx, world: C, t } = fc;
-    const drawPath = (r: "h" | "v") => {
+    const drawPath = (r: string) => {
       const p = C.routePath(r);
       ctx.beginPath();
       p.forEach(([x, y], i) => ctx[i ? "lineTo" : "moveTo"](x + 0.5, y + 0.5));
@@ -23,7 +23,6 @@ export const routes: Layer = {
       ctx.stroke();
       ctx.setLineDash([]);
     };
-    drawPath("h");
-    drawPath("v");
+    for (const r of Object.keys(C.ROUTES)) drawPath(r);
   },
 };

@@ -1,5 +1,16 @@
 // What the renderer needs to know about the rest of the app, and the shape of one frame.
-import type { Creep, EnemyDef, GameEvent, Route, RouteKey, State, Tower, TowerStats, TowerType, Vec } from "../game/types";
+import type {
+  Creep,
+  EnemyDef,
+  GameEvent,
+  Route,
+  RouteKey,
+  State,
+  Tower,
+  TowerStats,
+  TowerType,
+  Vec,
+} from "../game/types";
 import type { Fx } from "./fx";
 import type { Floor } from "./floor";
 import type { Glows } from "./glow";
@@ -13,6 +24,8 @@ export interface World {
   readonly W: number;
   readonly H: number;
   readonly ROUTES: Record<RouteKey, Route>;
+  /** cells of walls: stone the enemies walk around and nothing can be built on */
+  readonly WALLS: Vec[];
   readonly ET: Record<string, EnemyDef & { fly?: number }>;
   /** the specialisations of each tower type, in order (their order picks the colour) */
   readonly TT: Record<string, { ults: Record<string, unknown> }>;

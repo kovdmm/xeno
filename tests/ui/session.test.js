@@ -9,6 +9,7 @@ function setup() {
   const C = {
     S: { over: false, won: false, started: true, wave: 0, score: 0, lives: 5, cheated: false },
     FINAL: 200,
+    LEVELS: { crossroads: { name: "Crossroads", map: { width: 4, height: 3, routes: {} } } },
     DIFF: { easy: { name: "Easy" } },
     on: (fn) => (onEvent = fn),
     newGame: () => Object.assign(C.S, { over: false, won: false, wave: 0 }),
@@ -18,8 +19,9 @@ function setup() {
   const shown = [];
   const ui = {
     core: C,
-    state: createState("easy", 0),
+    state: createState("easy", "crossroads", 0),
     t: (k) => k,
+    where: () => "Crossroads · Easy",
     L: (o) => o.name,
     $: (id) => els[id],
     toast() {},
@@ -28,7 +30,7 @@ function setup() {
     screens: { show: (id) => shown.push(id), hide() {}, isOpen: () => false },
   };
   const progress = { bestOf: () => 0, saveBest: (...a) => saved.push(a) };
-  const session = createSession(ui, progress, credits);
+  const session = createSession(ui, progress, credits, () => {});
   return { C, ui, credits, saved, shown, session, fire: (e) => onEvent(e) };
 }
 
@@ -60,7 +62,7 @@ describe("the end of a game", () => {
     const { C, fire, saved, ui } = setup();
     Object.assign(C.S, { over: true, wave: 17 });
     fire({ type: "end", won: false });
-    expect(saved).toEqual([["easy", 17]]);
+    expect(saved).toEqual([["crossroads", "easy", 17]]);
     expect(ui.state.best).toBe(17);
     Object.assign(C.S, { wave: 30, cheated: true });
     fire({ type: "end", won: false });

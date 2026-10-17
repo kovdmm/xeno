@@ -8,6 +8,7 @@ import type {
   Difficulty,
   EnemyDef,
   EnemyType,
+  MapDef,
   Route,
   RouteKey,
   State,
@@ -63,6 +64,7 @@ export interface Core extends Pick<
   readonly FINAL: number;
   /** the routes of the level being played */
   readonly ROUTES: Record<RouteKey, Route>;
+  readonly WALLS: Vec[];
   /** the id of the level being played, the levels with their texts, and their ids in order */
   readonly LEVEL: string;
   readonly LEVELS: Record<string, LevelInfo>;
@@ -81,6 +83,7 @@ export interface Core extends Pick<
 /** A level as the interface shows it. */
 export interface LevelInfo extends Texted {
   id: string;
+  map: MapDef;
   finalWave: number;
   width: number;
   height: number;

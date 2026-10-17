@@ -102,8 +102,9 @@ for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
           }, pick(["en", "ru", "de", "ua", "sv"]));
         } else if (r < 0.85) {
           what = "click a button";
-          const sel = pick(["#pauseBtn", "#pResume", "#pSettings", "#setClose", "#pHelp", "#helpClose", "#go", "#speedBtn", "#mPlay", "#pMenu", "#restart", "#overMenu", '#info [data-act="up"]', '#info [data-act="sell"]', '.tb', '.ab']);
-          const el = page.locator(sel).first();
+          const sel = pick(["#pauseBtn", "#pResume", "#pSettings", "#setClose", "#pHelp", "#helpClose", "#go", "#speedBtn", "#mPlay", "#pMenu", "#restart", "#overMenu", '#info [data-act="up"]', '#info [data-act="sell"]', '.tb', '.ab', '#levels .dcard', '#diffs .dcard', '#confirmYes', '#confirmNo', '#mLevel']);
+          const all = await page.locator(sel).all();
+          const el = all.length ? pick(all) : page.locator(sel).first(); // any of the matches: any level, any tower
           if (await el.isVisible()) await el.click({ timeout: 500, force: true }).catch(() => {});
         } else if (r < 0.9) {
           what = "cheat";

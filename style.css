@@ -963,6 +963,22 @@ kbd {
   width: 20px;
   height: 20px;
 }
+.dcard .ic svg.map {
+  width: 60px;
+  height: auto;
+  max-height: 44px;
+  border: 1px solid #000;
+  border-radius: 3px;
+}
+.big svg.map {
+  width: 34px;
+  height: auto;
+  max-height: 22px;
+  margin-right: 8px;
+  vertical-align: middle;
+  border: 1px solid #000;
+  border-radius: 2px;
+}
 .dcard .ic svg.big {
   width: 44px;
   height: 44px;

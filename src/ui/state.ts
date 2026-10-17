@@ -18,11 +18,13 @@ export interface UiState {
   /** the board is turned 90 degrees (portrait): texts that mention directions must follow */
   rotated: boolean;
   diff: DiffKey;
+  /** the id of the level (map) being played */
+  level: string;
   /** the best wave reached on this difficulty */
   best: number;
 }
 
-export const createState = (diff: DiffKey, best: number): UiState => ({
+export const createState = (diff: DiffKey, level: string, best: number): UiState => ({
   sel: null,
   build: null,
   aim: null,
@@ -31,6 +33,7 @@ export const createState = (diff: DiffKey, best: number): UiState => ({
   speedIdx: 0,
   rotated: false,
   diff,
+  level,
   best,
 });
 

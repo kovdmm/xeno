@@ -558,3 +558,164 @@ test.describe("the first paint", () => {
     await expect(page.locator("html")).toHaveClass(/ready/, { timeout: 6000 }); // the failsafe
   });
 });
+
+test.describe("levels (maps)", () => {
+  test.beforeEach(async ({ page }) => openGame(page));
+
+  const openLevels = async (page) => {
+    await page.click("#pauseBtn");
+    await page.click("#pSettings");
+  };
+  const level = (page) => core(page, (C) => C.LEVEL);
+  const boardAspectOnScreen = (page) =>
+    page.evaluate(() => {
+      const r = document.getElementById("field").getBoundingClientRect();
+      return { w: r.width, h: r.height, W: XT.core.W, H: XT.core.H };
+    });
+
+  test("the settings list every level with its picture, name and length; the current one is marked", async ({ page }) => {
+    await openLevels(page);
+    const cards = page.locator("#levels .dcard");
+    await expect(cards).toHaveCount(4);
+    await expect(cards.first()).toHaveClass(/\bon\b/);
+    await expect(cards.first()).toContainText("Crossroads");
+    await expect(cards.first()).toContainText("200 waves");
+    await expect(cards.nth(1)).toContainText("Switchback");
+    await expect(cards.nth(1)).toContainText("100 waves");
+    await expect(cards.nth(1).locator("svg.map")).toHaveCount(1);
+  });
+
+  test("choosing a level before playing switches the board at once and fits the field to it", async ({ page }) => {
+    const before = await boardAspectOnScreen(page);
+    await openLevels(page);
+    await page.click('#levels [data-l="fronts"]');
+    expect(await level(page)).toBe("fronts");
+    expect(await core(page, (C) => [C.W, C.H, C.FINAL])).toEqual([23, 15, 150]);
+    expect(await page.evaluate(() => localStorage.getItem("xt-level"))).toBe("fronts");
+    await expect(page.locator("#settings")).toBeHidden();
+    await expect(page.locator("#sWave")).toHaveText("0/150");
+    await expect.poll(async () => {
+      await tick(page, 3); // the layout is refitted on the next frame
+      const a = await boardAspectOnScreen(page);
+      return Math.abs(a.w / a.h - a.W / a.H) < 0.03;
+    }).toBe(true);
+    // the board really is another shape: 23x15, not 22x15
+    expect(before.W).toBe(22);
+  });
+
+  test("a level with another shape re-fits the field (24 wide, then back to 22)", async ({ page }) => {
+    await openLevels(page);
+    await page.click('#levels [data-l="switchback"]');
+    await expect.poll(async () => {
+      await tick(page, 3); // the layout is refitted on the next frame
+      const a = await boardAspectOnScreen(page);
+      return a.W === 24 && Math.abs(a.w / a.h - 24 / 15) < 0.03;
+    }).toBe(true);
+    await page.click("#pSettings"); // back on the pause screen, where the settings were opened from
+    await page.click('#levels [data-l="crossroads"]');
+    await expect.poll(async () => {
+      await tick(page, 3); // the layout is refitted on the next frame
+      const a = await boardAspectOnScreen(page);
+      return a.W === 22 && Math.abs(a.w / a.h - 22 / 15) < 0.03;
+    }).toBe(true);
+  });
+
+  test("with a game under way a change of level is confirmed first, and can be declined", async ({ page }) => {
+    await core(page, (C) => {
+      C.cheat("hesoyam");
+      C.sendWave();
+    });
+    await core(page, (C) => C.step(0.1));
+    await openLevels(page);
+    await page.click('#levels [data-l="corner"]');
+    await expect(page.locator("#confirm")).toBeVisible();
+    await expect(page.locator("#confirmTxt")).toContainText("The corner");
+    await page.click("#confirmNo");
+    expect(await level(page)).toBe("crossroads");
+    await page.click('#levels [data-l="corner"]');
+    await page.click("#confirmYes");
+    expect(await level(page)).toBe("corner");
+    expect((await state(page)).wave).toBe(0);
+  });
+
+  test("the choice is remembered after a reload, and the title shows the map", async ({ page }) => {
+    await openLevels(page);
+    await page.click('#levels [data-l="corner"]');
+    await page.reload();
+    await page.waitForFunction(() => window.XT?.core);
+    expect(await level(page)).toBe("corner");
+    await expect(page.locator("#mLevel")).toContainText("The corner");
+    await expect(page.locator("#mLevel svg.map")).toHaveCount(1);
+    await page.click("#mLevel"); // opens the settings
+    await expect(page.locator("#settings")).toBeVisible();
+    await expect(page.locator('#levels [data-l="corner"]')).toHaveClass(/\bon\b/);
+  });
+
+  test("texts state the length of the level being played", async ({ page }) => {
+    await openLevels(page);
+    await page.click('#levels [data-l="corner"]');
+    await expect(page.locator("#banner")).toContainText("80 waves");
+    await core(page, (C) => {
+      C.sendWave();
+      for (let i = 0; i < 4000 && !C.S.over; i++) C.step(0.05);
+    });
+    await tick(page, 6);
+    await expect(page.locator("#overTxt")).toContainText("of 80");
+    await expect(page.locator("#overTxt")).toContainText("The corner · Easy");
+  });
+
+  test("records are kept per level and difficulty", async ({ page }) => {
+    await openLevels(page);
+    await page.click('#levels [data-l="switchback"]');
+    await core(page, (C) => {
+      C.sendWave();
+      for (let i = 0; i < 4000 && !C.S.over; i++) C.step(0.05);
+    });
+    await tick(page, 6);
+    const keys = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("xt-best")));
+    expect(keys).toEqual(["xt-best-switchback-easy"]);
+  });
+
+  test("the next-wave line names where the wave comes from, whatever the level's gates", async ({ page }) => {
+    await openLevels(page);
+    await page.click('#levels [data-l="fronts"]');
+    await tick(page, 12);
+    // wave 1 uses the first route: east, left to right
+    await expect(page.locator("#next")).toContainText("left → right");
+    await core(page, (C) => C.sendWave());
+    await tick(page, 12);
+    await expect(page.locator("#next")).toContainText("right → left"); // wave 2: west
+    await core(page, (C) => C.sendWave());
+    await tick(page, 12);
+    await expect(page.locator("#next")).toContainText("top → bottom"); // wave 3: south
+  });
+
+  test("walls cannot be built on", async ({ page }) => {
+    await openLevels(page);
+    await page.click('#levels [data-l="switchback"]');
+    await core(page, (C) => C.cheat("hesoyam"));
+    await press(page, "1");
+    const before = (await state(page)).credits;
+    await clickCell(page, [5.5, 4.5]); // inside the first wall
+    expect((await state(page)).towers).toEqual([]);
+    expect((await state(page)).credits).toBe(before);
+    await expect(page.locator("#toast")).not.toHaveText("");
+  });
+
+  test("on a tall screen the level still fits and reads right", async ({ page, browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "en-US" });
+    const p = await ctx.newPage();
+    await openGame(p);
+    await p.click("#pauseBtn");
+    await p.click("#pSettings");
+    await p.click('#levels [data-l="fronts"]');
+    await tick(p, 12);
+    const a = await p.evaluate(() => {
+      const r = document.getElementById("field").getBoundingClientRect();
+      return { w: r.width, h: r.height };
+    });
+    expect(a.h).toBeGreaterThan(a.w); // turned
+    expect(Math.abs(a.w / a.h - 15 / 23)).toBeLessThan(0.03);
+    await ctx.close();
+  });
+});

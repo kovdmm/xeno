@@ -38,9 +38,14 @@ const SILENT: Sound = {
 export function createUi(deps: UiDeps) {
   const { core, i18n, store } = deps;
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-  const progress = createProgress(store, core.DKEYS, core.FINAL);
-  const diff = progress.readDiff();
-  const state = createState(diff, progress.bestOf(diff));
+  const progress = createProgress(
+    store,
+    core.DKEYS,
+    core.LKEYS.map((id) => ({ id, finalWave: core.LEVELS[id].finalWave })),
+  );
+  const diff = progress.readDiff(),
+    level = progress.readLevel();
+  const state = createState(diff, level, progress.bestOf(level, diff));
   const renderer = deps.createRenderer($<HTMLCanvasElement>("field"));
   const desk = matchMedia(DESK_QUERY);
 
@@ -75,6 +80,7 @@ export function createUi(deps: UiDeps) {
     t,
     L,
     cards,
+    where: (lv = state.level, d = state.diff) => `${L(core.LEVELS[lv])} · ${L(core.DIFF[d as keyof typeof core.DIFF])}`,
     toast(message) {
       const el = $("toast");
       el.textContent = message;
@@ -95,7 +101,7 @@ export function createUi(deps: UiDeps) {
   const hud = createHud(ui, palette);
   const commands = createCommands(ui, hud.drawSpeed);
   const credits = installCredits(ui);
-  const session = createSession(ui, progress, credits.open);
+  const session = createSession(ui, progress, credits.open, () => applyLang());
   const soundControls = installSoundControls(ui);
   const layout = { refit: () => {}, fit: () => {} };
   const appMode = installAppMode(ui, () => layout.refit());

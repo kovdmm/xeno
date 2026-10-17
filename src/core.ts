@@ -37,7 +37,11 @@ function withText(table: Table, section: string, i18n: TextSource) {
 
 /** A level for the interface: its size and length, and its name and description in the current language. */
 function levelInfo(id: string, d: LevelDef, i18n: TextSource) {
-  return addTexts({ id, finalWave: d.finalWave, width: d.map.width, height: d.map.height }, "levels." + id, i18n);
+  return addTexts(
+    { id, finalWave: d.finalWave, width: d.map.width, height: d.map.height, map: d.map },
+    "levels." + id,
+    i18n,
+  );
 }
 
 /** What the rest of the app gets: the interface view of the game plus what the renderer reads. */
@@ -60,6 +64,9 @@ export function createCore(i18n: TextSource, rng?: Rng): GameCore {
     },
     get ROUTES() {
       return game.level.routes as never;
+    },
+    get WALLS() {
+      return game.level.walls;
     },
     get LEVEL() {
       return game.level.id;

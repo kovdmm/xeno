@@ -74,8 +74,7 @@ describe("source hygiene", () => {
       expect(c, f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia", "i18n"));
       expect(c, f.name).not.toMatch(/Math\.random|performance\.now/);
       // from the game: types, and the gate helper
-      for (const line of f.text.split("\n").filter((l) => /from "\.\.\/(\.\.\/)?game\//.test(l)))
-        expect(line, f.name).toMatch(/^import type |game\/constants"/);
+      expect(f.text, f.name).not.toMatch(/import (?!type)[^;]*from "\.\.\/(\.\.\/)?game\/(?!constants")/);
     }
   });
 

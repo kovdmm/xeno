@@ -60,12 +60,28 @@ export function createRenderer(canvas: HTMLCanvasElement, deps: RendererDeps, op
     proj.cs = w / proj.cols;
     sprites.clear();
     floor.build();
+    // a canvas that changed size is blank until painted: paint the last picture again at once, so the
+    // window being resized never shows an empty frame
+    if (lastView && !drawing) paint(lastView, 0);
   }
 
+  let lastView: View | null = null;
+  let drawing = false;
+
   function draw(view: View, dt: number) {
+    lastView = view;
+    drawing = true;
+    // another level has another board: the floor, the decals and the sizes are made again
+    if (proj.setBoard(world.W, world.H)) floor.invalidateAll();
     if (!floor.ready) resize();
     if (governor.tick(clock())) floor.invalidate();
     if (!floor.ready) resize();
+    drawing = false;
+    paint(view, dt);
+  }
+
+  /** One picture: advance the effects by dt and run the layers. */
+  function paint(view: View, dt: number) {
     fx.step(dt, world, proj.rot);
     glows.reset(governor.settings.glow);
     ctx.setTransform(1, 0, 0, 1, 0, 0);

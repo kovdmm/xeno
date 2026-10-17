@@ -173,6 +173,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
       screens.hide("menu");
     }),
   );
+  $("mLevel").addEventListener("click", d.menu.openSettings);
   $("mDiff").addEventListener("click", d.menu.openSettings);
   $("mSettings").addEventListener("click", d.menu.openSettings);
   $("mHelp").addEventListener("click", d.menu.openHelp);

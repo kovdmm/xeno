@@ -28,7 +28,6 @@ export function turnsOnDesktop(sw: number, sh: number, W: number, H: number): bo
 
 export function installLayout(ui: UiContext, palette: Palette, deskMQ: MediaQueryList, afterTurn: () => void) {
   const { core: C, state: st, $ } = ui;
-  const { W, H } = C;
   const app = $("app"),
     stage = $("stage"),
     fw = $("fw"),
@@ -41,14 +40,14 @@ export function installLayout(ui: UiContext, palette: Palette, deskMQ: MediaQuer
   function fit() {
     let w: number, h: number;
     let rot = portrait.matches;
-    if (ui.isDesk()) rot = turnsOnDesktop(stage.clientWidth - PAD, stage.clientHeight - PAD, W, H);
+    if (ui.isDesk()) rot = turnsOnDesktop(stage.clientWidth - PAD, stage.clientHeight - PAD, C.W, C.H);
     if (rot !== st.rotated) {
       st.rotated = rot;
       ui.renderer.setRotated(rot);
       // texts that mention directions were built for the old orientation: the palette tooltips and both panels
       afterTurn();
     }
-    const ar = rot ? H / W : W / H; // width / height of the field on screen
+    const ar = rot ? C.H / C.W : C.W / C.H; // width / height of the field on screen
     if (ui.isDesk()) {
       [w, h] = fitAspect(stage.clientWidth - PAD, stage.clientHeight - PAD, ar);
     } else if (rot) {
@@ -77,6 +76,10 @@ export function installLayout(ui: UiContext, palette: Palette, deskMQ: MediaQuer
   }
 
   const refit = () => requestAnimationFrame(fit);
+  // another level has another board: fit the field to it
+  C.on((e) => {
+    if (e.type === "reset") refit();
+  });
   new ResizeObserver(fit).observe(app);
   portrait.addEventListener?.("change", refit);
   deskMQ.addEventListener?.("change", () => {

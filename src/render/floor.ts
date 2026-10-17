@@ -1,6 +1,6 @@
 // The floor: the static ground, the gore decals painted on it, and the two composed into one image that the
 // floor layer blits every frame. Also builds the sprite-sized ground when the size or orientation changes.
-import { mid } from "../game/constants";
+import { gateGeometry } from "./gates";
 import { alpha, shade } from "./color";
 import { gloss } from "./primitives";
 import { TAU, THEME } from "./theme";
@@ -133,10 +133,11 @@ export class Floor {
     }
     // hive veins creeping out of the breaches
     for (const r of Object.values(this.world.ROUTES)) {
-      for (let v = 0; v < 16; v++) {
-        let x = mid(r.spawn)[0] + 0.5,
-          y = mid(r.spawn)[1] + 0.5,
-          a = Math.atan2(r.dir[1], r.dir[0]) + (R() - 0.5) * 2.4;
+      const gate = gateGeometry(r);
+      for (let v = 0, n = Math.round(16 * gate.span); v < n; v++) {
+        let x = gate.spawn[0],
+          y = gate.spawn[1],
+          a = Math.atan2(gate.dir[1], gate.dir[0]) + (R() - 0.5) * 2.4;
         g.beginPath();
         g.moveTo(x, y);
         const len = 2 + R() * 5;
@@ -151,19 +152,18 @@ export class Floor {
         g.lineCap = "round";
         g.stroke();
       }
-      const [sx, sy] = mid(r.spawn),
-        gr = g.createRadialGradient(sx + 0.5, sy + 0.5, 0, sx + 0.5, sy + 0.5, 2.2);
+      const [sx, sy] = gate.spawn,
+        pit = 2.2 * gate.span,
+        gr = g.createRadialGradient(sx, sy, 0, sx, sy, pit);
       gr.addColorStop(0, "rgba(20,0,6,.95)");
       gr.addColorStop(0.45, alpha(THEME.hive, 0.55));
       gr.addColorStop(1, "rgba(60,0,20,0)");
       g.fillStyle = gr;
-      g.fillRect(sx - 2, sy - 2, 5, 5);
+      g.fillRect(sx - pit - 0.3, sy - pit - 0.3, 2 * pit + 0.6, 2 * pit + 0.6);
       // exit: bunker gate with hazard stripes
-      const ex = r.exit,
-        minx = Math.min(...ex.map((e) => e[0])),
-        miny = Math.min(...ex.map((e) => e[1])),
-        maxx = Math.max(...ex.map((e) => e[0])) + 1,
-        maxy = Math.max(...ex.map((e) => e[1])) + 1;
+      const [minx, miny, bw, bh] = gate.exitBox,
+        maxx = minx + bw,
+        maxy = miny + bh;
       g.fillStyle = THEME.gate;
       g.fillRect(minx, miny, maxx - minx, maxy - miny);
       g.save();
@@ -185,12 +185,39 @@ export class Floor {
       g.lineWidth = 0.06;
       g.strokeRect(minx, miny, maxx - minx, maxy - miny);
     }
+    // walls: slabs of stone, one tile per cell, so they read as part of the same deck
+    for (const [wx, wy] of this.world.WALLS) {
+      g.fillStyle = "rgba(0,0,0,.38)"; // the shadow it throws
+      g.fillRect(wx + 0.08, wy + 0.12, 1, 1);
+      g.fillStyle = gloss(g, wx, wy, wx + 1, wy + 1, "#57524a", "#1e1c18");
+      g.fillRect(wx, wy, 1, 1);
+      g.fillStyle = "rgba(255,255,255,.13)"; // lit edges, top and left
+      g.fillRect(wx, wy, 1, 0.07);
+      g.fillRect(wx, wy, 0.07, 1);
+      g.fillStyle = "rgba(0,0,0,.5)"; // shaded edges, bottom and right
+      g.fillRect(wx, wy + 0.93, 1, 0.07);
+      g.fillRect(wx + 0.93, wy, 0.07, 1);
+      if (R() < 0.4) {
+        g.strokeStyle = "rgba(0,0,0,.5)";
+        g.lineWidth = 0.025;
+        g.beginPath();
+        let cx = wx + 0.2 + R() * 0.6,
+          cy = wy + 0.2 + R() * 0.6;
+        g.moveTo(cx, cy);
+        for (let k = 0; k < 3; k++) g.lineTo((cx += R() * 0.3 - 0.15), (cy += R() * 0.3 - 0.15));
+        g.stroke();
+      }
+      g.strokeStyle = "#000";
+      g.lineWidth = 0.04;
+      g.strokeRect(wx, wy, 1, 1);
+    }
     // floor = ground + gore decals, recomposited only when decals change (vignette and scanlines are CSS)
     const floor = (this.floor = this.createCanvas());
     floor.width = canvas.width;
     floor.height = canvas.height;
     this.fctx = floor.getContext("2d")!;
     this.floorDirty = true;
+    this.towersDirty = true; // the new floor image is blank: compose it at once, not after the usual pause
     // decals persist across resizes when possible
     const old = this.decals;
     const decals = (this.decals = this.createCanvas());

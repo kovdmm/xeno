@@ -39,6 +39,17 @@ export const SCENES = {
     });
   },
 
+  /** a level with a handful of towers on free cells and a wave on its way; the argument is the level id */
+  levelTour(C, id) {
+    C.newGame("normal", id);
+    C.cheat("hesoyam");
+    const types = ["gun", "cannon", "frost", "plasma", "laser", "missile"];
+    let k = 0;
+    for (let y = 2; y < C.H - 2 && k < types.length; y += 3)
+      for (let x = 3; x < C.W - 3 && k < types.length; x += 5) if (C.placeCheck(x, y) === "") C.place(types[k++], x, y);
+    C.sendWave();
+  },
+
   /** a defended maze with a ground wave on its way */
   groundBattle(C) {
     C.newGame("normal");

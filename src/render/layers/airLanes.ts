@@ -1,6 +1,6 @@
 import { alpha } from "../color";
 import { THEME } from "../theme";
-import { mid } from "../../game/constants";
+import { laneOf } from "../gates";
 import type { RouteKey } from "../../game/types";
 import type { Layer } from "../types";
 
@@ -20,15 +20,16 @@ export const airLanes: Layer = {
     ctx.lineDashOffset = -t;
     ctx.lineWidth = 0.04;
     for (const r of lanes) {
-      const R = C.ROUTES[r],
-        m = mid(R.spawn);
-      const rect: [number, number, number, number] = R.dir[0]
-        ? [0, m[1] + 0.5 - 1.2, C.W, 2.4]
-        : [m[0] + 0.5 - 1.2, 0, 2.4, C.H];
+      // a band along the straight line a flyer takes, from the board edge at the entrance to the one at the exit
+      const lane = laneOf(C.ROUTES[r]);
+      ctx.save();
+      ctx.translate(lane.from[0], lane.from[1]);
+      ctx.rotate(lane.angle);
       ctx.fillStyle = alpha(THEME.enemy.flyer, a);
-      ctx.fillRect(...rect);
+      ctx.fillRect(0, -1.2, lane.length, 2.4);
       ctx.strokeStyle = alpha(THEME.enemy.flyer, 0.4);
-      ctx.strokeRect(...rect);
+      ctx.strokeRect(0, -1.2, lane.length, 2.4);
+      ctx.restore();
     }
     ctx.restore();
   },

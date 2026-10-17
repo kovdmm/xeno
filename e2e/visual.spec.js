@@ -2,8 +2,8 @@ import { test, expect } from "@playwright/test";
 import { openGame, tick, core, field, cellToClient } from "./harness.js";
 import { SCENES } from "./scenes.js";
 
-async function scene(page, name, frames = 0) {
-  await core(page, SCENES[name]);
+async function scene(page, name, frames = 0, arg) {
+  await core(page, SCENES[name], arg);
   await tick(page, frames);
 }
 const shot = (page, name) => expect(field(page)).toHaveScreenshot(name + ".png");
@@ -26,6 +26,12 @@ test.describe("desktop", () => {
     await scene(page, "levels", 10);
     await shot(page, "tower-levels");
   });
+
+  for (const id of ["switchback", "fronts", "corner"])
+    test(`level ${id}: walls, gates and the road`, async ({ page }) => {
+      await scene(page, "levelTour", 240, id);
+      await shot(page, "level-" + id);
+    });
 
   test("ground battle", async ({ page }) => {
     await scene(page, "groundBattle", 420);
@@ -121,6 +127,11 @@ test.describe("portrait (board turned 90°)", () => {
   test("ground battle", async ({ page }) => {
     await scene(page, "groundBattle", 420);
     await shot(page, "portrait-ground-battle");
+  });
+
+  test("level fronts turned: three gates on a tall screen", async ({ page }) => {
+    await scene(page, "levelTour", 240, "fronts");
+    await shot(page, "portrait-level-fronts");
   });
 
   test("tower gallery", async ({ page }) => {
