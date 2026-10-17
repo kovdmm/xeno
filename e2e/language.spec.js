@@ -167,3 +167,106 @@ test.describe("layout in every language", () => {
     });
   }
 });
+
+test.describe("texts follow the board's orientation", () => {
+  const TXT = (page) =>
+    page.evaluate(() => ({
+      h: XT.i18n.gameText("routes.h.label"),
+      hRot: XT.i18n.gameText("routes.h.labelRotated"),
+      desc: XT.i18n.gameText("abilities.carpet.desc"),
+      descRot: XT.i18n.gameText("abilities.carpet.descRotated"),
+    }));
+  const next = (page) => page.locator("#next").innerText();
+  const carpetTitle = (page) => page.locator('#abil .ab[data-a="carpet"]').getAttribute("title");
+  const start = async (page, lang) => {
+    await open(page);
+    await choose(page, lang);
+    await page.click("#setClose");
+    await page.click("#mPlay");
+    await page.waitForTimeout(150);
+  };
+
+  for (const l of LANGS) {
+    test(`${l.name}: landscape reads left → right and "row", portrait top → bottom and "column"`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await start(page, l.code);
+      const t = await TXT(page);
+      expect(await next(page)).toContain(t.h);
+      expect(await next(page)).not.toContain(t.hRot === t.h ? "\u0000" : t.hRot);
+      expect(await carpetTitle(page)).toContain(t.desc);
+      // turn the device: the same page now describes the turned board, without a reload
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect.poll(() => next(page)).toContain(t.hRot);
+      expect(await next(page)).not.toContain(t.h);
+      expect(await carpetTitle(page)).toContain(t.descRot);
+      expect(await carpetTitle(page)).not.toContain(t.desc);
+      // and back
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await expect.poll(() => next(page)).toContain(t.h);
+      expect(await carpetTitle(page)).toContain(t.desc);
+    });
+  }
+
+  test("the layout is right straight away, whether the page opens turned or is turned later", async ({ browser }) => {
+    const size = (page) => page.locator("#fw").boundingBox();
+    const settled = async (page) => {
+      // what the layout converges to once everything has been measured again
+      await page.setViewportSize({ width: 391, height: 844 });
+      await page.waitForTimeout(100);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      return size(page);
+    };
+    const same = (a, b) => {
+      expect(a.width).toBeCloseTo(b.width, 0);
+      expect(a.height).toBeCloseTo(b.height, 0);
+    };
+
+    // opened turned: the first measurement must already be the settled one
+    const fresh = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await open(fresh);
+    await fresh.click("#mPlay");
+    await fresh.waitForTimeout(300);
+    const first = await size(fresh);
+    same(first, await settled(fresh));
+    await fresh.close();
+
+    // turned later: the same size, and every rebuilt ability button shows its price at once
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await open(page);
+    await page.click("#mPlay");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(300);
+    same(await size(page), first);
+    const empty = await page.evaluate(
+      () => [...document.querySelectorAll("#abil .ab .c")].filter((c) => !c.textContent).length,
+    );
+    expect(empty).toBe(0);
+    await page.close();
+  });
+
+  test("the labels agree with what is on the screen (the geometry decides, not a guess)", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page);
+    await page.click("#mPlay");
+    await page.waitForTimeout(150);
+    const at = (x, y) => cellToClient(page, [x, y]);
+    // board route h: from the left board edge to the right one; route v: from the top edge to the bottom one
+    const hFrom = await at(0.5, 7.5),
+      hTo = await at(21.5, 7.5);
+    const vFrom = await at(11.5, 0.5),
+      vTo = await at(11.5, 14.5);
+    // turned: h runs down the screen, v runs from the right to the left
+    expect(hTo.y).toBeGreaterThan(hFrom.y + 100);
+    expect(Math.abs(hTo.x - hFrom.x)).toBeLessThan(5);
+    expect(vTo.x).toBeLessThan(vFrom.x - 100);
+    expect(Math.abs(vTo.y - vFrom.y)).toBeLessThan(5);
+    expect(await page.evaluate(() => XT.i18n.gameText("routes.h.labelRotated"))).toBe("top → bottom");
+    expect(await page.evaluate(() => XT.i18n.gameText("routes.v.labelRotated"))).toBe("right → left");
+    // the carpet bomber follows a board row; on the turned board that is a vertical line on the screen
+    const rowA = await at(2.5, 5.5),
+      rowB = await at(18.5, 5.5);
+    expect(Math.abs(rowB.x - rowA.x)).toBeLessThan(5);
+    expect(Math.abs(rowB.y - rowA.y)).toBeGreaterThan(100);
+  });
+});

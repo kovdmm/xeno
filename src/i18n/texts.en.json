@@ -120,8 +120,6 @@
     "soundOff": "Sound off",
     "sndBtn": "Sound",
     "noAudio": "Sound unavailable: howler.js did not load",
-    "rTB": "top → bottom",
-    "rRL": "right → left",
     "fsOn": "Fullscreen",
     "fsAskT": "Play fullscreen?",
     "fsAskTxt": "The field gets bigger and the browser bars stay out of the way. You can switch it later in Settings.",
@@ -326,7 +324,8 @@
       "carpet": {
         "name": "Carpet Bombing",
         "short": "Bombs",
-        "desc": "A bomber flies along the chosen row"
+        "desc": "A bomber flies along the chosen row",
+        "descRotated": "A bomber flies along the chosen column"
       },
       "nuke": {
         "name": "Nuclear Strike",
@@ -336,10 +335,12 @@
     },
     "routes": {
       "h": {
-        "label": "left → right"
+        "label": "left → right",
+        "labelRotated": "top → bottom"
       },
       "v": {
-        "label": "top → bottom"
+        "label": "top → bottom",
+        "labelRotated": "right → left"
       }
     }
   }

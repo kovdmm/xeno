@@ -120,8 +120,6 @@
     "soundOff": "Ljud av",
     "sndBtn": "Ljud",
     "noAudio": "Ljud är inte tillgängligt: howler.js laddades inte",
-    "rTB": "uppifrån → ned",
-    "rRL": "höger → vänster",
     "fsOn": "Helskärm",
     "fsAskT": "Spela i helskärm?",
     "fsAskTxt": "Planen blir större och webbläsarens fält ligger inte i vägen. Du kan ändra det senare i Inställningar.",
@@ -151,7 +149,10 @@
         "name": "Kulspruta",
         "desc": "Billig och snabbskjutande, träffar allt. Svag mot pansar.",
         "ults": {
-          "mini": { "name": "Minigun", "desc": "Eldhastighet ×6" },
+          "mini": {
+            "name": "Minigun",
+            "desc": "Eldhastighet ×6"
+          },
           "sniper": {
             "name": "Prickskytt",
             "desc": "Räckvidd ×1,7, skada ×6, halva eldhastigheten. Siktar på den tuffaste fienden"
@@ -162,7 +163,10 @@
         "name": "Kanon",
         "desc": "Splittergranater på nära håll. Endast markmål.",
         "ults": {
-          "cluster": { "name": "Klustervapen", "desc": "Granaten sprider 6 submunitioner, skada ×2" },
+          "cluster": {
+            "name": "Klustervapen",
+            "desc": "Granaten sprider 6 submunitioner, skada ×2"
+          },
           "shock": {
             "name": "Chock",
             "desc": "Skada ×2,5, explosion ×1,4, bedövar i 0,5 s (därefter 2,5 s bedövningsimmunitet)"
@@ -187,15 +191,24 @@
         "name": "Missiler",
         "desc": "Målsökande missiler mot flygare.",
         "ults": {
-          "swarm": { "name": "Missilsvärm", "desc": "Salva mot 8 olika flygare" },
-          "sam": { "name": "Mark-luft", "desc": "Träffar även markenheter, områdesskada" }
+          "swarm": {
+            "name": "Missilsvärm",
+            "desc": "Salva mot 8 olika flygare"
+          },
+          "sam": {
+            "name": "Mark-luft",
+            "desc": "Träffar även markenheter, områdesskada"
+          }
         }
       },
       "laser": {
         "name": "Laser",
         "desc": "Kontinuerlig stråle som går igenom pansar. Skada per sekund.",
         "ults": {
-          "prism": { "name": "Prisma", "desc": "4 strålar samtidigt" },
+          "prism": {
+            "name": "Prisma",
+            "desc": "4 strålar samtidigt"
+          },
           "heat": {
             "name": "Överhettning",
             "desc": "Skadan på ett mål ökar upp till ×8 över 4 s, räckvidd ×1,3"
@@ -210,39 +223,75 @@
             "name": "Supernova",
             "desc": "Skottet exploderar och tänder eld på allt i närheten, skada och brand ×2"
           },
-          "plague": { "name": "Pest", "desc": "Brand ×6 och den sprids till grannar" }
+          "plague": {
+            "name": "Pest",
+            "desc": "Brand ×6 och den sprids till grannar"
+          }
         }
       },
       "rail": {
         "name": "Rälskanon",
         "desc": "Ett ögonblickligt skott går igenom alla fiender på en linje.",
         "ults": {
-          "gauss": { "name": "Gauss", "desc": "Skada ×2,5, tre gånger bredare stråle, räckvidd ×1,2" },
-          "auto": { "name": "Automatladdare", "desc": "Eldhastighet ×5" }
+          "gauss": {
+            "name": "Gauss",
+            "desc": "Skada ×2,5, tre gånger bredare stråle, räckvidd ×1,2"
+          },
+          "auto": {
+            "name": "Automatladdare",
+            "desc": "Eldhastighet ×5"
+          }
         }
       },
       "artillery": {
         "name": "Haubits",
         "desc": "Torn på 2×2. Långräckviddig eld mot den tuffaste fienden, går igenom pansar.",
         "ults": {
-          "salvo": { "name": "Salva", "desc": "5 granater mot olika mål" },
-          "nuke": { "name": "Kärnvapengranat", "desc": "Skada ×7, explosionsradie 3,5, tre gånger långsammare" }
+          "salvo": {
+            "name": "Salva",
+            "desc": "5 granater mot olika mål"
+          },
+          "nuke": {
+            "name": "Kärnvapengranat",
+            "desc": "Skada ×7, explosionsradie 3,5, tre gånger långsammare"
+          }
         }
       }
     },
     "enemies": {
-      "crawler": { "name": "Krypare" },
-      "runner": { "name": "Löpare" },
-      "swarm": { "name": "Svärm" },
-      "armored": { "name": "Pansrade" },
-      "flyer": { "name": "Flygare" },
-      "healer": { "name": "Helare" },
-      "blinker": { "name": "Hoppare" },
-      "boss": { "name": "Yngelmoder" },
-      "queen": { "name": "Svärmdrottning" }
+      "crawler": {
+        "name": "Krypare"
+      },
+      "runner": {
+        "name": "Löpare"
+      },
+      "swarm": {
+        "name": "Svärm"
+      },
+      "armored": {
+        "name": "Pansrade"
+      },
+      "flyer": {
+        "name": "Flygare"
+      },
+      "healer": {
+        "name": "Helare"
+      },
+      "blinker": {
+        "name": "Hoppare"
+      },
+      "boss": {
+        "name": "Yngelmoder"
+      },
+      "queen": {
+        "name": "Svärmdrottning"
+      }
     },
     "difficulties": {
-      "easy": { "name": "Lätt", "desc": "Den ursprungliga balansen. Inga helare eller hoppare." },
+      "easy": {
+        "name": "Lätt",
+        "desc": "Den ursprungliga balansen. Inga helare eller hoppare."
+      },
       "normal": {
         "name": "Normal",
         "desc": "Fiendernas hälsa upp till ×1,9 vid mitten av spelet, +1 pansar. Från våg 30: helare, hoppare och flygare blandas in i markvågorna."
@@ -262,7 +311,11 @@
         "short": "Stasis",
         "desc": "Varje fiende saktas ner med 75 % i 8 s (yngelmödrar med 40 %)"
       },
-      "meteor": { "name": "Meteorer", "short": "Meteorer", "desc": "15 meteorer över det valda området" },
+      "meteor": {
+        "name": "Meteorer",
+        "short": "Meteorer",
+        "desc": "15 meteorer över det valda området"
+      },
       "napalm": {
         "name": "Napalm",
         "short": "Napalm",
@@ -271,7 +324,8 @@
       "carpet": {
         "name": "Mattbombning",
         "short": "Bomber",
-        "desc": "Ett bombplan flyger längs den valda raden"
+        "desc": "Ett bombplan flyger längs den valda raden",
+        "descRotated": "Ett bombplan flyger längs den valda kolumnen"
       },
       "nuke": {
         "name": "Kärnvapenanfall",
@@ -280,8 +334,14 @@
       }
     },
     "routes": {
-      "h": { "label": "vänster → höger" },
-      "v": { "label": "uppifrån → ned" }
+      "h": {
+        "label": "vänster → höger",
+        "labelRotated": "uppifrån → ned"
+      },
+      "v": {
+        "label": "uppifrån → ned",
+        "labelRotated": "höger → vänster"
+      }
     }
   }
 }

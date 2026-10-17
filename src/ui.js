@@ -6,8 +6,12 @@ export function installUi(XT) {
   const C = XT.core,
     I = XT.i18n,
     { TT, TKEYS, AB, AKEYS, DIFF, DKEYS, ROUTES, FINAL, W, H } = C;
+  // the board is turned 90° in portrait: everything that describes screen directions must follow it
+  let rotated = false;
   const t = (k, v) => I.t(k, v),
-    L = (o, f) => I.L(o, f);
+    // a data object's text; when the board is turned, `<field>Rotated` (if the data has one) replaces `<field>`:
+    // "left → right" becomes "top → bottom", "the chosen row" becomes "the chosen column"
+    L = (o, f = "name") => (rotated && o[f + "Rotated"] != null ? o[f + "Rotated"] : I.L(o, f));
   const $ = (id) => document.getElementById(id);
   const cv = $("field");
   const R = XT.createRenderer(cv);
@@ -196,15 +200,14 @@ export function installUi(XT) {
   }
 
   /* ---------- input ---------- */
-  // screen point → board cells; in portrait the board is turned 90° clockwise
-  let rotated = false;
+  // screen point → board cells; in portrait the board is turned 90° clockwise (`rotated`)
   function ptAt(e) {
     const r = cv.getBoundingClientRect(),
       u = (e.clientX - r.left) / r.width,
       v = (e.clientY - r.top) / r.height;
     return rotated ? [v * W, H - u * H] : [u * W, v * H];
   }
-  const routeLabel = (r) => (rotated ? t(r === "h" ? "rTB" : "rRL") : L(ROUTES[r], "label"));
+  const routeLabel = (r) => L(ROUTES[r], "label");
   cv.addEventListener("pointermove", (e) => {
     hover = ptAt(e);
   });
@@ -890,7 +893,11 @@ export function installUi(XT) {
     if (rot !== rotated) {
       rotated = rot;
       R.setRotated(rot);
+      // texts that mention directions were built for the old orientation: the palette tooltips and both panels
+      buildPalette();
       lastNext = "";
+      lastInfo = "\u0000";
+      refreshUI(); // the new buttons are empty until filled; the field is measured right below
     }
     const ar = rot ? H / W : W / H; // width / height of the field on screen
     if (isDesk()) {
