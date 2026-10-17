@@ -1,6 +1,5 @@
 /* Xeno-Tactic – i18n labels */
-(function (XT) {
-  "use strict";
+export function installI18n(XT) {
   /* ---------- language ----------
    Default: the first language in the browser's preference list that the game knows; otherwise English. */
   const LANGS = ["ru", "en"];
@@ -349,4 +348,4 @@
   // Localised field of a data object: name/desc/short/label, with *_en for English.
   i18n.L = (o, f = "name") => (i18n.lang === "en" && o[f + "_en"] != null ? o[f + "_en"] : o[f]);
   XT.i18n = i18n;
-})((window.XT = window.XT || {}));
+}

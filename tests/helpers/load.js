@@ -1,13 +1,16 @@
-// Loads the legacy `window.XT` IIFE scripts into an isolated vm context, so tests can run them in Node
-// without a browser. Each module gets its own seeded random stream (XT.rng.core / fx / audio), so cosmetic
-// randomness in the renderer can never shift the simulation. Math.random itself throws inside the sandbox:
-// any use that bypasses XT.rng is a bug.
-import { readFileSync } from "node:fs";
-import { createContext, runInContext } from "node:vm";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { dirname, resolve } from "node:path";
+// Builds the game modules for tests: a fresh `XT` registry per call (so no state leaks between tests) with
+// browser globals stubbed on globalThis.
+//
+// Each module gets its own seeded random stream (XT.rng.core / fx / audio), so cosmetic randomness in the
+// renderer can never shift the simulation. Timers and the clock go through XT.env, which the modules honour.
+import { installI18n } from "../../src/i18n.js";
+import { installCore } from "../../src/core.js";
+import { installRender } from "../../src/render.js";
+import { installAudio } from "../../src/audio.js";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const INSTALL = { i18n: installI18n, core: installCore, render: installRender, audio: installAudio };
+// every browser global the modules touch; anything not provided by a test is removed again
+const GLOBALS = ["window", "navigator", "matchMedia", "addEventListener", "Howl", "Howler", "localStorage", "document"];
 
 export function mulberry32(seed) {
   let a = seed >>> 0;
@@ -20,35 +23,33 @@ export function mulberry32(seed) {
   };
 }
 
-/** @param files script names under js/ in load order, e.g. ["core"]
- *  @param opts.seed seed of the core stream (fx = seed+1, audio = seed+2)  @param opts.globals extra globals */
-export function loadXT(files, { seed = 1, globals = {} } = {}) {
-  const win = {
-    XT: { rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) } },
-    addEventListener() {},
-    devicePixelRatio: 1,
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
-  };
-  const sandbox = {
-    window: win,
-    navigator: { languages: ["en"], language: "en" },
-    matchMedia: win.matchMedia,
-    setTimeout: () => 0,
-    addEventListener() {},
-    performance: { now: () => 0 },
-    console,
-    btoa: (s) => Buffer.from(s, "binary").toString("base64"),
-    ...globals,
-  };
-  sandbox.globalThis = sandbox;
-  const ctx = createContext(sandbox);
-  runInContext('Math.random = () => { throw new Error("Math.random used: take it from XT.rng"); }', ctx);
-  for (const f of files) {
-    runInContext(readFileSync(resolve(ROOT, "js", f + ".js"), "utf8"), ctx, {
-      filename: pathToFileURL(resolve(ROOT, "js", f + ".js")).href,
-    });
+function setGlobals(values) {
+  for (const k of GLOBALS) {
+    if (k in values) Object.defineProperty(globalThis, k, { value: values[k], configurable: true, writable: true });
+    else delete globalThis[k];
   }
-  return win.XT;
+}
+
+/** @param files module names in install order, e.g. ["core", "audio"]
+ *  @param opts.seed seed of the core stream (fx = seed+1, audio = seed+2)
+ *  @param opts.globals browser globals to provide (Howl, Howler, localStorage, document, ...);
+ *         `setTimeout` is routed to the modules through XT.env instead of the real global */
+export function loadXT(files, { seed = 1, globals = {} } = {}) {
+  const { setTimeout = () => 0, ...rest } = globals;
+  const noop = () => {};
+  setGlobals({
+    window: { devicePixelRatio: 1, addEventListener: noop },
+    navigator: { languages: ["en"], language: "en" },
+    matchMedia: () => ({ matches: false, addEventListener: noop }),
+    addEventListener: noop,
+    ...rest,
+  });
+  const XT = {
+    rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) },
+    env: { setTimeout, now: () => 0 },
+  };
+  for (const f of files) INSTALL[f](XT);
+  return XT;
 }
 
 /** Runs the simulation for `seconds` of game time in the same 25 ms steps the UI loop uses. */

@@ -10,11 +10,12 @@
      and get quieter as the field gets busier;
    - important sounds (leaks, bosses, nukes, waves, upgrades) bypass the budget;
    - lasers are one shared looping hum whose volume follows how many beams are firing. */
-(function (XT) {
-  "use strict";
+export function installAudio(XT) {
   // Randomness comes from XT.rng.audio when set (tests seed it); each module has its own stream so that
   // cosmetic randomness never shifts the game simulation.
   const rand = (XT.rng && XT.rng.audio) || Math.random;
+  // timers can be replaced through XT.env (tests); the browser default is used otherwise
+  const later = (XT.env && XT.env.setTimeout) || ((fn, ms) => setTimeout(fn, ms));
   const SR = 22050;
   const rnd = () => rand() * 2 - 1;
   function synth(dur, fn) {
@@ -365,8 +366,7 @@
     meteorcast: [0.7, (t, s) => lp(s, sweep(t, 0.5, 0.05, 0.6), rnd()) * Math.min(1, t * 6) * Math.exp(-t * 3) * 1.2],
     fire: [
       0.9,
-      (t, s) =>
-        (lp(s, 0.2, rnd()) * 0.6 + (rand() < 0.015 ? rnd() : 0)) * Math.min(1, t * 8) * Math.exp(-t * 2.5),
+      (t, s) => (lp(s, 0.2, rnd()) * 0.6 + (rand() < 0.015 ? rnd() : 0)) * Math.min(1, t * 8) * Math.exp(-t * 2.5),
     ],
     plane: [
       1.8,
@@ -524,7 +524,7 @@
     });
     Howler.volume(1);
     Howler.mute(audio.muted);
-    setTimeout(buildMusic, 400); // compose after the first frame is up
+    later(buildMusic, 400); // compose after the first frame is up
     // browsers start audio only after a gesture; make sure the loop is running then
     const kick = () => {
       Howler.ctx && Howler.ctx.state === "suspended" && Howler.ctx.resume();
@@ -693,4 +693,4 @@
     });
   }
   XT.audio = audio;
-})((window.XT = window.XT || {}));
+}

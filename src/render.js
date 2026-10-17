@@ -4,11 +4,11 @@
    API: XT.createRenderer(canvas) → {resize, draw(view,dt), towerIcon(ctx,type), theme}.
    Performance: the floor, tower parts, alien frames and glows are rendered once into
    offscreen canvases and blitted each frame; only cheap shapes are drawn live. */
-(function (XT) {
-  "use strict";
+export function installRender(XT) {
   // Randomness comes from XT.rng.fx when set (tests seed it); each module has its own stream so that
   // cosmetic randomness never shifts the game simulation.
   const rand = (XT.rng && XT.rng.fx) || Math.random;
+  const clock = (XT.env && XT.env.now) || (() => performance.now());
   const TAU = Math.PI * 2;
   const THEME = {
     void: "#050605",
@@ -1022,7 +1022,7 @@
       good = 0,
       lastNow = 0;
     function governor() {
-      const now = performance.now();
+      const now = clock();
       if (lastNow) {
         const d = now - lastNow;
         if (d < 250) {
@@ -1979,4 +1979,4 @@
     };
   };
   XT.THEME = THEME;
-})((window.XT = window.XT || {}));
+}

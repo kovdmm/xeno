@@ -35,14 +35,14 @@ describe("i18n dictionaries", () => {
   });
 
   it("every literal t('key') used by ui.js exists", () => {
-    const ui = read("js/ui.js");
+    const ui = read("src/ui.js");
     const keys = new Set([...ui.matchAll(/\bt\(\s*"([A-Za-z0-9_]+)"/g)].map((m) => m[1]));
     expect(keys.size).toBeGreaterThan(30);
     for (const k of keys) expect(I18N.ru[k], k).toBeDefined();
   });
 
   it("every code the core returns to the player has a message", () => {
-    const core = read("js/core.js");
+    const core = read("src/core.js");
     const codes = new Set([...core.matchAll(/"(pc[A-Z]\w*|pc22|noCred|pickUlt)"/g)].map((m) => m[1]));
     expect([...codes].sort()).toEqual(["noCred", "pc22", "pcBlock", "pcEdge", "pcEnemy", "pcRes", "pcTrap", "pickUlt"]);
     for (const c of codes) expect(I18N.ru[c], c).toBeDefined();

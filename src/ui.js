@@ -2,8 +2,7 @@
    input, settings, records and the main loop.
    Talks to the game only through XT.core (commands, queries, events),
    draws only through XT.createRenderer and plays sound only through XT.audio. */
-(function (XT) {
-  "use strict";
+export function installUi(XT) {
   const C = XT.core,
     I = XT.i18n,
     { TT, TKEYS, AB, AKEYS, DIFF, DKEYS, ROUTES, FINAL, W, H } = C;
@@ -956,4 +955,4 @@
   R.resize();
   requestAnimationFrame(frame);
   XT.ui = { newGame, refreshUI, openMenu };
-})((window.XT = window.XT || {}));
+}

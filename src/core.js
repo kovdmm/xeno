@@ -2,8 +2,7 @@
    Pure game logic and state: no DOM, no canvas, no colors, no UI strings.
    The renderer and the UI read XT.core.S and the query helpers, issue commands,
    and listen to events emitted through XT.core.on(fn). */
-(function (XT) {
-  "use strict";
+export function installCore(XT) {
   // Randomness comes from XT.rng.core when set (tests seed it); each module has its own stream so that
   // cosmetic randomness never shifts the game simulation.
   const rand = (XT.rng && XT.rng.core) || Math.random;
@@ -1751,4 +1750,4 @@
     pos: (c) => [ex(c), ey(c)],
     difficulty: () => diff,
   };
-})((window.XT = window.XT || {}));
+}

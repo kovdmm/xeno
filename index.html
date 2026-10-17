@@ -43,7 +43,7 @@
       href="https://fonts.googleapis.com/css2?family=Russo+One&amp;family=PT+Sans+Narrow:wght@400;700&amp;display=swap"
     />
     <link rel="stylesheet" href="style.css" />
-    <!-- Structure: js/core.js (game logic, no DOM) · js/render.js (canvas look) · js/audio.js (sound, howler.js) · js/i18n.js (texts) · js/ui.js (interface and loop) · style.css (page look) -->
+    <!-- Structure: src/core.js (game logic, no DOM) · src/render.js (canvas look) · src/audio.js (sound, howler.js) · src/i18n.js (texts) · src/ui.js (interface and loop) · src/main.js (wiring) · style.css (page look) -->
 
     <div class="app" id="app">
       <div class="dlogo" data-i="brand" aria-hidden="true"></div>
@@ -233,11 +233,7 @@
       </div>
     </div>
 
-    <script src="js/i18n.js"></script>
-    <script src="js/core.js"></script>
-    <script src="js/render.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    <script src="js/audio.js"></script>
-    <script src="js/ui.js"></script>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
