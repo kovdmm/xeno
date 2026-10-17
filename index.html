@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <style>
+      :root {
+        color-scheme: light;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        font:
+          14px -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: #fff;
+        color: #000;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden]:not([hidden="until-found" i]) {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <title>Xeno-Tactic</title>
+    <meta name="theme-color" content="#050605" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Russo+One&amp;family=PT+Sans+Narrow:wght@400;700&amp;display=swap"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <!-- Structure: js/core.js (game logic, no DOM) · js/render.js (canvas look) · js/audio.js (sound, howler.js) · js/i18n.js (texts) · js/ui.js (interface and loop) · style.css (page look) -->
+
+    <div class="app" id="app">
+      <div class="dlogo" data-i="brand" aria-hidden="true"></div>
+      <header class="hdr" id="hdr">
+        <div class="stats">
+          <div class="chip c-cred" data-i-label="cCred">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2l7 5v10l-7 5-7-5V7z" fill="#ffb22e" stroke="#000" stroke-width="1.6" />
+              <path d="M12 2v20M5 7l14 10M19 7L5 17" stroke="rgba(0,0,0,.35)" stroke-width="1" /></svg
+            ><b id="sCred">0</b>
+          </div>
+          <div class="chip c-lives" data-i-label="cLives">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 21s-8-5.3-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.7-8 11-8 11z"
+                fill="#d81f36"
+                stroke="#000"
+                stroke-width="1.6"
+              /></svg
+            ><b id="sLives">0</b>
+          </div>
+          <div class="chip c-wave" data-i-label="cWave">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3c-4.4 0-7.5 3-7.5 7.2 0 2.4 1.1 4.1 2.7 5.2v2.4c0 .7.5 1.2 1.1 1.2h7.4c.6 0 1.1-.5 1.1-1.2v-2.4c1.6-1.1 2.7-2.8 2.7-5.2C19.5 6 16.4 3 12 3z"
+                fill="#cfc6b4"
+                stroke="#000"
+                stroke-width="1.6"
+              />
+              <circle cx="9" cy="10.8" r="2" fill="#000" />
+              <circle cx="15" cy="10.8" r="2" fill="#000" /></svg
+            ><b id="sWave">0</b>
+          </div>
+          <div class="chip c-score" data-i-label="cScore">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2.5l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 16.7 6.2 20l1.4-6.4L2.7 9.2l6.5-.7z"
+                fill="#8dff3a"
+                stroke="#000"
+                stroke-width="1.6"
+              /></svg
+            ><b id="sScore">0</b>
+          </div>
+        </div>
+      </header>
+
+      <div class="stage" id="stage">
+        <div class="fieldWrap" id="fw">
+          <canvas id="field"></canvas>
+          <div class="banner" id="banner"></div>
+          <div class="toast" id="toast" style="opacity: 0"></div>
+        </div>
+      </div>
+
+      <div class="dock" id="dock">
+        <div class="wave plate">
+          <div class="next" id="next"></div>
+          <div class="prog"><i id="progBar" style="width: 0%"></i></div>
+        </div>
+        <div class="ctrl">
+          <button class="go" id="go">Начать</button>
+          <button class="speed" id="speedBtn" data-i-label="speed">×1</button>
+          <button class="speed pausebtn" id="pauseBtn" data-i-label="paused">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" fill="currentColor" />
+              <rect x="14" y="5" width="4" height="14" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
+        <div class="pal" id="pal">
+          <div class="towers" id="towers"></div>
+          <div class="abil" id="abil"></div>
+        </div>
+        <div class="info plate" id="info" hidden></div>
+      </div>
+    </div>
+
+    <!-- title screen -->
+    <div class="screen menu" id="menu">
+      <div class="menuIn">
+        <h1 class="logo" data-i="brand">Ксено<span>-</span>Тактика</h1>
+        <p class="tagline" data-i="tagline"></p>
+        <div class="mbtns">
+          <button class="big go" id="mPlay" data-i="play"></button>
+          <button class="big" id="mNew" data-i="newGame" hidden></button>
+          <button class="big" id="mDiff"></button>
+          <button class="big" id="mSettings" data-i="settings"></button>
+          <button class="big" id="mHelp" data-i="help"></button>
+        </div>
+        <p class="mbest" id="mBest"></p>
+      </div>
+    </div>
+
+    <!-- pause -->
+    <div class="screen" id="pause" hidden>
+      <div class="menuIn">
+        <h2 class="scrTitle" data-i="paused"></h2>
+        <div class="mbtns">
+          <button class="big go" id="pResume" data-i="resume"></button>
+          <button class="big" id="pRestart" data-i="restart"></button>
+          <button class="big" id="pSettings" data-i="settings"></button>
+          <button class="big" id="pHelp" data-i="help"></button>
+          <button class="big" id="pMenu" data-i="mainMenu"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- game over -->
+    <div class="screen over" id="over" hidden>
+      <div class="menuIn">
+        <h2 class="scrTitle" id="overTtl">База пала</h2>
+        <div class="overTxt" id="overTxt"></div>
+        <div class="mbtns">
+          <button class="big go" id="restart" data-i="restart"></button>
+          <button class="big" id="overDiff" data-i="settings"></button>
+          <button class="big" id="overMenu" data-i="mainMenu"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="help" hidden>
+      <div class="in plate">
+        <div class="mhead">
+          <h2 data-i="help"></h2>
+          <button class="icon x" id="helpClose" data-i-label="close">✕</button>
+        </div>
+        <p id="bestLine"></p>
+        <div id="helpText">
+          <p data-i="help1"></p>
+          <p data-i="help2"></p>
+          <p data-i="help3"></p>
+          <p data-i="help4"></p>
+          <p data-i="help5"></p>
+          <p data-i="help6"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="settings" hidden>
+      <div class="in plate">
+        <div class="mhead">
+          <h2 data-i="setTitle"></h2>
+          <button class="icon x" id="setClose" data-i-label="close">✕</button>
+        </div>
+        <h3 class="mh" data-i="langH"></h3>
+        <div class="langs" id="langs"></div>
+        <h3 class="mh" data-i="screenH"></h3>
+        <div class="langs"><button class="lcard" id="fsBtn"></button></div>
+        <h3 class="mh" data-i="soundH"></h3>
+        <div class="sound">
+          <button class="lcard" id="sndToggle"></button>
+          <div class="vols">
+            <label class="vol"
+              ><span data-i="volume"></span><input type="range" id="sndVol" min="0" max="100" step="5" /></label
+            ><label class="vol"
+              ><span data-i="music"></span><input type="range" id="musVol" min="0" max="100" step="5"
+            /></label>
+          </div>
+        </div>
+        <h3 class="mh" data-i="diffH"></h3>
+        <p class="note" data-i="diffNote"></p>
+        <div class="diffs" id="diffs"></div>
+        <div class="confirm" id="confirm" hidden>
+          <p id="confirmTxt"></p>
+          <div class="btnrow">
+            <button class="go" id="confirmYes" data-i="startOver"></button
+            ><button id="confirmNo" data-i="cancel"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- easter egg: ten clicks on the logo -->
+    <div class="screen credits" id="credits" hidden>
+      <div class="crWrap"><div class="croll" id="croll"></div></div>
+      <p class="crHint" data-i="crHint"></p>
+    </div>
+
+    <div class="modal fsask" id="fsAsk" hidden>
+      <div class="in plate">
+        <h2 data-i="fsAskT"></h2>
+        <p class="note" data-i="fsAskTxt"></p>
+        <div class="btnrow">
+          <button class="big go" id="fsYes" data-i="fsOn"></button
+          ><button class="big" id="fsNo" data-i="fsLater"></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/i18n.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/render.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/ui.js"></script>
+  </body>
+</html>

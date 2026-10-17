@@ -1,0 +1,17 @@
+{
+  "name": "xeno-tactic",
+  "version": "1.0.0",
+  "description": "Xeno-Tactic — browser tactics game",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve -l 3000 .",
+    "deploy": "scp -r index.html style.css js root@46.101.198.82:/var/www/xeno.kovalev.app/"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "printWidth": 120
+  }
+}
