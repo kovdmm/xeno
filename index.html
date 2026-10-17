@@ -29,7 +29,25 @@
       [hidden]:not([hidden="until-found" i]) {
         display: none !important;
       }
+      /* the page appears once it is built (texts, fonts, layout): no flash of an empty interface */
+      html {
+        background: #050605;
+      }
+      html:not(.ready) body {
+        opacity: 0;
+        pointer-events: none;
+      }
+      html.ready body {
+        opacity: 1;
+        transition: opacity 0.18s ease-out;
+      }
     </style>
+    <script>
+      // if the game fails to start, show the page anyway rather than a blank screen
+      setTimeout(function () {
+        document.documentElement.classList.add("ready");
+      }, 4000);
+    </script>
     <title>Xeno-Tactic</title>
     <meta name="theme-color" content="#050605" />
     <link rel="manifest" href="manifest.json" />

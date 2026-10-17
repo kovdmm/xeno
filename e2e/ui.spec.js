@@ -536,3 +536,24 @@ test.describe("keys that are not for the game", () => {
     expect((await state(page)).towers[0].lvl).toBe(1);
   });
 });
+
+test.describe("the first paint", () => {
+  test("the page is shown once it is built, with its texts in place", async ({ page }) => {
+    await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveClass(/ready/);
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).opacity)).toBe("1"); // fades in
+    // by then the texts are there
+    await expect(page.locator("#mPlay")).toHaveText("Play");
+    await expect(page.locator("h1.logo")).not.toHaveText("");
+  });
+
+  test("the page stays hidden until the game has started, and shows anyway if it never does", async ({ page }) => {
+    await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+    await page.route(/\/src\/main\.ts/, (r) => r.abort()); // the game fails to load
+    await page.goto("/");
+    expect(await page.evaluate(() => document.documentElement.classList.contains("ready"))).toBe(false);
+    expect(await page.evaluate(() => getComputedStyle(document.body).opacity)).toBe("0");
+    await expect(page.locator("html")).toHaveClass(/ready/, { timeout: 6000 }); // the failsafe
+  });
+});
