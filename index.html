@@ -103,6 +103,11 @@
       }
     </style>
     <script>
+      // the browser offers installing once, possibly before the game's scripts have run: keep the offer for them
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        window.__xtInstall = e;
+      });
       // if the game fails to start, show the page anyway rather than a blank screen
       setTimeout(function () {
         document.documentElement.classList.add("ready");

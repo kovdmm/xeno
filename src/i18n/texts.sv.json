@@ -145,7 +145,6 @@
     "installH": "Installation",
     "installBtn": "Installera appen",
     "installDone": "Installerad som app",
-    "installNo": "Installation är inte tillgänglig i den här webbläsaren",
     "installIos": "I Safari: tryck på Dela och sedan ”Lägg till på hemskärmen”.",
     "dirRight": "vänster → höger",
     "dirDown": "uppifrån → ned",
@@ -153,7 +152,8 @@
     "dirUp": "nedifrån → upp",
     "levelH": "Karta",
     "levelIs": "Karta: {l}",
-    "wavesN": "{n} vågor"
+    "wavesN": "{n} vågor",
+    "installMenu": "Erbjuds inte här just nu. Du kan ändå installera via webbläsarmenyn (⋮ → Installera app)."
   },
   "game": {
     "towers": {

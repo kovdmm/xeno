@@ -83,15 +83,17 @@ export function installAppMode(ui: UiContext, onFullscreenChange: () => void) {
     { standalone: asApp, userAgent: navigator.userAgent, maxTouchPoints: navigator.maxTouchPoints || 0 },
     window,
     () => drawInstall(),
+    (window as unknown as { __xtInstall?: Event }).__xtInstall ?? null,
   );
   function drawInstall() {
     const st = installer.state(),
       b = $<HTMLButtonElement>("installBtn"),
       note = $("installNote");
-    b.textContent = st === "installed" ? t("installDone") : st === "unavailable" ? t("installNo") : t("installBtn");
+    b.textContent = st === "installed" ? t("installDone") : t("installBtn");
     b.disabled = st === "installed" || st === "unavailable";
-    note.hidden = st !== "ios";
-    note.textContent = st === "ios" ? t("installIos") : "";
+    // no dialog to show: iPhone has its own way, elsewhere the browser menu may still offer installing
+    note.hidden = st !== "ios" && st !== "unavailable";
+    note.textContent = st === "ios" ? t("installIos") : st === "unavailable" ? t("installMenu") : "";
   }
   $("installBtn").addEventListener("click", () => {
     if (installer.state() === "ios") ui.toast(t("installIos"));

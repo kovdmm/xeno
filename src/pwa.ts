@@ -21,8 +21,17 @@ export interface Env {
 export const isIos = (e: Env) =>
   /iPad|iPhone|iPod/.test(e.userAgent) || (/Macintosh/.test(e.userAgent) && e.maxTouchPoints > 1);
 
-export function createInstaller(env: Env, target: EventTarget, onChange: (s: InstallState) => void) {
-  let deferred: InstallPromptEvent | null = null;
+/**
+ * `early` is an install prompt the page caught before the app started (see index.html): the browser sends
+ * it once, and it may well arrive while the scripts are still loading.
+ */
+export function createInstaller(
+  env: Env,
+  target: EventTarget,
+  onChange: (s: InstallState) => void,
+  early: Event | null = null,
+) {
+  let deferred = early as InstallPromptEvent | null;
   let installed = env.standalone;
   const state = (): InstallState =>
     installed ? "installed" : deferred ? "available" : isIos(env) ? "ios" : "unavailable";

@@ -36,6 +36,14 @@ describe("installer", () => {
     expect(seen).toEqual(["available"]);
   });
 
+  it("an offer the page caught before the app started counts: the button is ready at once", async () => {
+    const early = promptEvent();
+    const inst = createInstaller(env(), new EventTarget(), () => {}, early);
+    expect(inst.state()).toBe("available");
+    expect(await inst.prompt()).toBe(true);
+    expect(early.calls).toBe(1);
+  });
+
   it("prompt() shows the dialog once and reports the choice", async () => {
     const t = new EventTarget();
     const inst = createInstaller(env(), t, () => {});

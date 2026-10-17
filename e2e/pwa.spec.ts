@@ -23,8 +23,10 @@ test("the settings offer installing; without a browser offer the button says so"
   await page.goto("/");
   await page.waitForFunction(() => window.XT?.i18n);
   await page.click("#mSettings");
+  // nothing to show yet: the button waits, and the note points to the browser menu
   await expect(page.locator("#installBtn")).toBeDisabled();
-  await expect(page.locator("#installBtn")).toHaveText("Installing is not available in this browser");
+  await expect(page.locator("#installNote")).toBeVisible();
+  await expect(page.locator("#installNote")).toContainText("browser menu");
   // the browser announces that installing is possible
   await page.evaluate(() => {
     const e = new Event("beforeinstallprompt", { cancelable: true }) as Event & {
@@ -36,11 +38,28 @@ test("the settings offer installing; without a browser offer the button says so"
     window.dispatchEvent(e);
   });
   await expect(page.locator("#installBtn")).toBeEnabled();
+  await expect(page.locator("#installNote")).toBeHidden();
   await expect(page.locator("#installBtn")).toHaveText("Install the app");
   await page.click("#installBtn");
   expect(await page.evaluate(() => (window as unknown as { __prompted?: boolean }).__prompted)).toBe(true);
   await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
   await expect(page.locator("#installBtn")).toHaveText("Installed as an app");
+});
+
+test("an install offer that arrived while the game was loading is not lost", async ({ page }) => {
+  await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+  // what index.html keeps for the app when the browser's offer comes early
+  await page.addInitScript(() => {
+    const e = new Event("beforeinstallprompt") as Event & { prompt(): Promise<void>; userChoice: Promise<unknown> };
+    e.prompt = async () => {};
+    e.userChoice = Promise.resolve({ outcome: "dismissed" });
+    (window as unknown as { __xtInstall: Event }).__xtInstall = e;
+  });
+  await page.goto("/");
+  await page.waitForFunction(() => window.XT?.i18n);
+  await page.click("#mSettings");
+  await expect(page.locator("#installBtn")).toBeEnabled();
+  await expect(page.locator("#installNote")).toBeHidden();
 });
 
 test("the service worker caches the game, which then opens offline", async ({ page, context }) => {

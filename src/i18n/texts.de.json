@@ -145,7 +145,6 @@
     "installH": "Installation",
     "installBtn": "App installieren",
     "installDone": "Als App installiert",
-    "installNo": "Installation ist in diesem Browser nicht verfügbar",
     "installIos": "In Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“.",
     "dirRight": "links → rechts",
     "dirDown": "oben → unten",
@@ -153,7 +152,8 @@
     "dirUp": "unten → oben",
     "levelH": "Karte",
     "levelIs": "Karte: {l}",
-    "wavesN": "{n} Wellen"
+    "wavesN": "{n} Wellen",
+    "installMenu": "Hier wird es gerade nicht angeboten. Du kannst trotzdem über das Browsermenü installieren (⋮ → App installieren)."
   },
   "game": {
     "towers": {
