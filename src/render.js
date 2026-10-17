@@ -142,6 +142,42 @@ export function installRender(XT) {
   }
   // type colour drifts toward a hot red and gains saturation with level, but keeps its identity
   const lvCol = (type, l) => mix(THEME.tower[type], "#ff1e0a", [0, 0.1, 0.2, 0.3, 0.38][Math.min(l, 4)]);
+  /* The level has its own colour, apart from the tower type: a heat ladder from cold steel through
+     yellow and orange to the red of the ultimate. It shows on the rim, the level diodes and the lights, so the
+     level reads at a glance even where two towers are the same size. The panel colours the level name with it. */
+  const TIER = ["#a3aab2", "#dcc84e", "#ff9a2a", "#ff5a26", "#ff1c2c"];
+  /* The ultimate (level 5) takes a colour of its own per tower type. The hues differ, the brightness does not:
+     each is fitted to the same relative luminance, so no tower's ultimate shines brighter than another's. */
+  const ULT_HUE = { gun: 190, cannon: 358, frost: 218, missile: 268, laser: 148, plasma: 82, rail: 318, artillery: 34 };
+  const ULT_LUM = 0.27;
+  function hsl(h, s, l) {
+    const a = s * Math.min(l, 1 - l),
+      f = (n) => l - a * Math.max(-1, Math.min((n + h / 30) % 12 - 3, 9 - ((n + h / 30) % 12), 1));
+    return [f(0), f(8), f(4)];
+  }
+  const lum = ([r, g, b]) => {
+    const lin = (v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  };
+  // the same brightness at any hue: bisect the lightness until the luminance matches
+  function fitted(h) {
+    let lo = 0.2,
+      hi = 0.8;
+    for (let i = 0; i < 24; i++) {
+      const m = (lo + hi) / 2;
+      if (lum(hsl(h, 1, m)) < ULT_LUM) lo = m;
+      else hi = m;
+    }
+    return "#" + hsl(h, 1, lo).map((v) => Math.round(v * 255).toString(16).padStart(2, "0")).join("");
+  }
+  // a type's two specialisations sit a few degrees either side of its hue: related, but tellable apart
+  const SPEC_SHIFT = 16;
+  const ULT_COL = {};
+  const specCol = (type, ult) => {
+    const i = Object.keys(XT.core.TT[type].ults).indexOf(ult);
+    return (ULT_COL[type + "|" + ult] ||= fitted(ULT_HUE[type] + (i < 0 ? 0 : i ? SPEC_SHIFT : -SPEC_SHIFT)));
+  };
+  const tierCol = (l, type, ult) => (l >= 4 && ULT_HUE[type] != null ? specCol(type, ult) : TIER[Math.min(l, 4)]);
   const PLATE = [
     ["#8a847a", "#2e2b26"],
     ["#78716a", "#26221e"],
@@ -166,7 +202,7 @@ export function installRender(XT) {
     // spikes from level 3
     if (L >= 2) {
       const sl = 0.08 + 0.05 * L;
-      c.fillStyle = L >= 4 ? "#2a0a08" : "#2a2622";
+      c.fillStyle = mix("#1c1a17", tierCol(L, type, ult), 0.22);
       c.strokeStyle = "#000";
       c.lineWidth = 0.025;
       for (let i = 0; i < 4; i++) {
@@ -184,6 +220,11 @@ export function installRender(XT) {
     c.fillStyle = gloss(c, -0.4, -0.4, 0.4, 0.4, PLATE[L][0], PLATE[L][1]);
     c.fill();
     outline(c, 0.045);
+    // the level ring: thin on the steel tier, thick and lit from the third on
+    oct(c, 0.455);
+    c.strokeStyle = tierCol(L, type, ult);
+    c.lineWidth = 0.02 + 0.012 * L;
+    c.stroke();
     oct(c, 0.38);
     c.fillStyle = gloss(c, 0.3, 0.3, -0.3, -0.3, L >= 3 ? "#2e1c1a" : "#3a3631", L >= 3 ? "#0c0606" : "#151311");
     c.fill();
@@ -200,12 +241,12 @@ export function installRender(XT) {
       [0.33, 0.33],
     ])
       rivet(c, x * 0.92, y * 0.92);
-    // red warning lights from level 4
+    // lights in the tier colour from level 4
     if (L >= 3)
       for (const x of [-0.36, 0.36]) {
         c.beginPath();
         c.arc(x, 0, 0.035, 0, TAU);
-        c.fillStyle = "#ff2a1a";
+        c.fillStyle = tierCol(L, type, ult);
         c.fill();
         c.strokeStyle = "#000";
         c.lineWidth = 0.012;
@@ -216,20 +257,20 @@ export function installRender(XT) {
       const x = -0.2 + i * 0.1;
       c.beginPath();
       c.arc(x, -0.385, 0.028, 0, TAU);
-      c.fillStyle = L >= 4 ? THEME.accent : col;
+      c.fillStyle = tierCol(L, type, ult);
       c.fill();
       c.strokeStyle = "#000";
       c.lineWidth = 0.012;
       c.stroke();
     }
     if (L >= 4) {
-      oct(c, 0.44);
-      c.strokeStyle = "#ff3a1a";
-      c.lineWidth = 0.04;
+      oct(c, 0.43);
+      c.strokeStyle = alpha(tierCol(L, type, ult), 0.55);
+      c.lineWidth = 0.03;
       c.stroke();
-      oct(c, 0.47);
-      c.strokeStyle = alpha(THEME.accent, 0.9);
-      c.lineWidth = 0.02;
+      oct(c, 0.49);
+      c.strokeStyle = alpha(tierCol(L, type, ult), 0.9);
+      c.lineWidth = 0.018;
       c.stroke();
     }
     c.restore();
@@ -1426,7 +1467,7 @@ export function installRender(XT) {
         z = tw.size || 1,
         cx = tw.x + 0.5,
         cy = tw.y + 0.5;
-      const base = sprite("b|" + tw.type + "|" + Math.min(tw.lvl, 4) + "|" + z, z * 1.35, (c) => {
+      const base = sprite("b|" + tw.type + "|" + Math.min(tw.lvl, 4) + "|" + ult + "|" + z, z * 1.35, (c) => {
         if (z > 1) c.scale(z, z);
         c.fillStyle = "rgba(0,0,0,.45)";
         c.beginPath();
@@ -1975,6 +2016,7 @@ export function installRender(XT) {
       towerIcon,
       setRotated,
       theme: THEME,
+      tierColor: tierCol,
       quality: () => quality,
     };
   };

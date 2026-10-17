@@ -770,7 +770,7 @@ export function installUi(XT) {
       lv = t("lvl5") + (sel.oc ? t("oc", { n: sel.oc }) : "");
       up = `<div class="ultHead"><b>${L(u)}:</b> ${L(u, "desc")}</div><div class="btnrow"><button class="go" data-act="up" ${poor}>${t("ocBtn", { n: sel.oc + 1, c: fmt(uc) })}</button></div>`;
     }
-    return `<div class="top"><div class="ttl">${L(d)} · ${lv}</div><button class="sellb" data-act="sell">${t("sell", { v: fmt(Math.floor(sel.inv * 0.7)) })}</button><button class="x" data-act="cancel" aria-label="${t("close")}">✕</button></div>
+    return `<div class="top"><div class="ttl">${L(d)} · <b style="color:${R.tierColor(Lv, sel.type, sel.ult)}">${lv}</b></div><button class="sellb" data-act="sell">${t("sell", { v: fmt(Math.floor(sel.inv * 0.7)) })}</button><button class="x" data-act="cancel" aria-label="${t("close")}">✕</button></div>
     ${up}<div class="kv">${rows}</div>`;
   }
   // desktop: the card area explains what is being built or aimed when no tower is selected

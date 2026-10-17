@@ -25,6 +25,20 @@ export const SCENES = {
     });
   },
 
+  /** every tower type at all five levels, one row per level */
+  levels(C) {
+    C.newGame("easy");
+    C.cheat("hesoyam");
+    C.TKEYS.forEach((type, i) => {
+      for (let lvl = 0; lvl < 5; lvl++) {
+        const r = C.place(type, 1 + i * 2, 1 + lvl * 3);
+        if (!r.ok) throw new Error(`place ${type} lvl ${lvl}: ${r.code}`);
+        for (let l = 0; l < Math.min(lvl, 3); l++) C.upgrade(r.tower);
+        if (lvl === 4) C.upgrade(r.tower, Object.keys(C.TT[type].ults)[0]);
+      }
+    });
+  },
+
   /** a defended maze with a ground wave on its way */
   groundBattle(C) {
     C.newGame("normal");

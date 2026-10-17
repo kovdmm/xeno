@@ -22,6 +22,11 @@ test.describe("desktop", () => {
     await shot(page, "towers");
   });
 
+  test("tower levels: five tiers of every type", async ({ page }) => {
+    await scene(page, "levels", 10);
+    await shot(page, "tower-levels");
+  });
+
   test("ground battle", async ({ page }) => {
     await scene(page, "groundBattle", 420);
     await shot(page, "ground-battle");

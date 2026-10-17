@@ -66,6 +66,28 @@ describe("renderer smoke test", () => {
     for (const k of Object.keys(C.ET)) expect(R.theme.enemy[k], k).toMatch(/^#/);
   });
 
+  it("every tower type has its own ultimate colour, all equally bright", () => {
+    const { C, R } = setup();
+    const ult0 = (k) => Object.keys(C.TT[k].ults)[0];
+    const cols = C.TKEYS.map((k) => R.tierColor(4, k, ult0(k)));
+    expect(new Set(cols).size).toBe(C.TKEYS.length);
+    const lin = (v) => ((v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    const lum = (h) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    };
+    const ls = cols.map(lum);
+    expect(Math.max(...ls) - Math.min(...ls)).toBeLessThan(0.01);
+    // the two specialisations of a type differ a little, and equally bright
+    for (const k of C.TKEYS) {
+      const [u1, u2] = Object.keys(C.TT[k].ults).map((u) => R.tierColor(4, k, u));
+      expect(u1, k).not.toBe(u2);
+      expect(Math.abs(lum(u1) - lum(u2)), k).toBeLessThan(0.01);
+    }
+    // lower levels do not depend on the type
+    for (const l of [0, 1, 2, 3]) expect(new Set(C.TKEYS.map((k) => R.tierColor(l, k))).size).toBe(1);
+  });
+
   it("sets the canvas backing store from its CSS size", () => {
     const { main } = setup();
     expect(main.width).toBeGreaterThan(300);
