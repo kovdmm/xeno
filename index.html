@@ -48,7 +48,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <!-- Structure: src/core.js (game logic, no DOM) · src/render.js (canvas look) · src/audio.js (sound, howler.js) · src/i18n.js (texts) · src/ui.js (interface and loop) · src/main.js (wiring) · style.css (page look) -->
+    <!-- Structure: src/game (simulation, no DOM) · src/render (canvas look, layers) · src/audio (sound) · src/i18n (texts) · src/ui (interface and loop) · src/app.ts (services) · src/main.ts (wiring) · style.css (page look) -->
 
     <div class="app" id="app">
       <div class="dlogo" data-i="brand" aria-hidden="true"></div>
@@ -242,6 +242,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

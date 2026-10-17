@@ -27,12 +27,12 @@ describe("source hygiene", () => {
   });
 
   it("Math.random appears only as the default random stream of the three subsystems, once each", () => {
-    const allowed = { "game/game.ts": 1, "render.js": 1, "audio.js": 1 };
+    const allowed = { "game/game.ts": 1, "render/browser.ts": 1, "audio/browser.ts": 1 };
     for (const f of files) expect((f.text.match(/Math\.random/g) || []).length, f.name).toBe(allowed[f.name] ?? 0);
   });
 
-  it("no module writes to window.XT any more: wiring happens in main only", () => {
-    for (const f of files) if (f.name !== "main.js") expect(f.text, f.name).not.toMatch(/window\.XT/);
+  it("window.XT is only a debugging handle set in main.ts: no other module reads or writes it", () => {
+    for (const f of files) if (f.name !== "main.ts") expect(f.text, f.name).not.toMatch(/window\.XT|(?<![.\w])XT\./);
   });
 
   it("no leftover IIFE wrappers or 'use strict' (modules are strict already)", () => {
@@ -65,7 +65,7 @@ describe("source hygiene", () => {
   });
 
   it("the renderer (src/render) gets the browser, time and randomness from outside, and only reads the game", () => {
-    for (const f of under("render")) {
+    for (const f of under("render").filter((x) => x.name !== "render/browser.ts")) {
       const c = code(f);
       expect(c, f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia", "i18n"));
       expect(c, f.name).not.toMatch(/Math\.random|performance\.now/);

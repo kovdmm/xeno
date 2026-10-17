@@ -266,7 +266,7 @@ describe("the app facade (XT.i18n and the texts on XT.core data)", () => {
 
   it("exposes the languages for the selector", () => {
     const { i18n } = setup();
-    expect(i18n.LANGS).toEqual(CODES);
+    expect(i18n.LANGUAGES.map((l) => l.code)).toEqual(CODES);
     expect(i18n.LANGUAGES.map((l) => l.name)).toContain("Українська");
     expect(i18n.lang).toBe("en");
     expect(i18n.htmlLang).toBe("en");

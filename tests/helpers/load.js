@@ -3,12 +3,8 @@
 //
 // Each module gets its own seeded random stream (XT.rng.core / fx / audio), so cosmetic randomness in the
 // renderer can never shift the simulation. Timers and the clock go through XT.env, which the modules honour.
-import { installI18n } from "../../src/i18n.js";
-import { installCore } from "../../src/core.js";
-import { installRender } from "../../src/render.js";
-import { installAudio } from "../../src/audio.js";
+import { createApp } from "../../src/app";
 
-const INSTALL = { i18n: installI18n, core: installCore, render: installRender, audio: installAudio };
 // every browser global the modules touch; anything not provided by a test is removed again
 const GLOBALS = ["window", "navigator", "matchMedia", "addEventListener", "Howl", "Howler", "localStorage", "document"];
 
@@ -30,11 +26,12 @@ function setGlobals(values) {
   }
 }
 
-/** @param files module names in install order, e.g. ["core", "audio"]
+/** Builds the app's services (no interface) with seeded streams and a manual clock.
+ *  @param files ignored: every service is always built (kept so tests can say what they exercise)
  *  @param opts.seed seed of the core stream (fx = seed+1, audio = seed+2)
  *  @param opts.globals browser globals to provide (Howl, Howler, localStorage, document, ...);
- *         `setTimeout` is routed to the modules through XT.env instead of the real global */
-export function loadXT(files, { seed = 1, globals = {} } = {}) {
+ *         `setTimeout` is routed to the modules through the hooks instead of the real global */
+export function loadXT(_files, { seed = 1, globals = {} } = {}) {
   const { setTimeout = () => 0, ...rest } = globals;
   const noop = () => {};
   setGlobals({
@@ -44,13 +41,11 @@ export function loadXT(files, { seed = 1, globals = {} } = {}) {
     addEventListener: noop,
     ...rest,
   });
-  const XT = {
+  const hooks = {
     rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) },
     env: { setTimeout, now: () => 0 },
   };
-  // the core adapter reads its texts from XT.i18n, so that is always installed first
-  const order = files.includes("core") && !files.includes("i18n") ? ["i18n", ...files] : files;
-  for (const f of order) INSTALL[f](XT);
+  const XT = { ...hooks, ...createApp(hooks) };
   return XT;
 }
 
