@@ -3,7 +3,6 @@
    Talks to the game only through XT.core (commands, queries, events),
    draws only through XT.createRenderer and plays sound only through XT.audio. */
 import { createInstaller } from "./pwa.ts";
-import { createStableHeight } from "./stableHeight.ts";
 
 export function installUi(XT) {
   const C = XT.core,
@@ -966,14 +965,6 @@ export function installUi(XT) {
     fw.style.height = Math.floor(h) + "px";
     fitNames(); // the palette may have changed size with the layout
   }
-  // installed app only: a normal tab must follow its browser bars, or the bottom of the page would be cut off
-  const stable = createStableHeight((px) => (app.style.height = px == null ? "" : px + "px"));
-  const pin = () => stable.update(window.innerWidth, window.innerHeight, asApp);
-  window.addEventListener("resize", pin);
-  portrait.addEventListener?.("change", () => stable.reset());
-  for (const ev of ["fullscreenchange", "webkitfullscreenchange"])
-    document.addEventListener(ev, () => (stable.reset(), pin()));
-  pin();
   new ResizeObserver(fitField).observe(app);
   portrait.addEventListener?.("change", () => requestAnimationFrame(fitField));
 
