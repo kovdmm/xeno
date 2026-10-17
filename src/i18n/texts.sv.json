@@ -341,6 +341,24 @@
         "short": "Kärnvapen",
         "desc": "Efter 1,5 s: 35 % av hälsan (yngelmödrar 10 %) plus kraftig skada på allt inom radie 4"
       }
+    },
+    "levels": {
+      "crossroads": {
+        "name": "Korsningen",
+        "desc": "Två vägar möts i mitten. Klassikern."
+      },
+      "switchback": {
+        "name": "Serpentinen",
+        "desc": "En lång, slingrande väg mellan två murar. Varje våg tar samma väg."
+      },
+      "fronts": {
+        "name": "Tre fronter",
+        "desc": "Tre vägar att hålla samtidigt: fiender från tre håll."
+      },
+      "corner": {
+        "name": "Hörnet",
+        "desc": "En kort väg med en sväng och klippor i vägen."
+      }
     }
   }
 }

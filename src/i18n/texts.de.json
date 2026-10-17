@@ -341,6 +341,24 @@
         "short": "Atom",
         "desc": "Nach 1,5 s: 35 % der Lebenspunkte (Brutmütter 10 %) plus schwerer Schaden an allem im Radius 4"
       }
+    },
+    "levels": {
+      "crossroads": {
+        "name": "Kreuzung",
+        "desc": "Zwei Wege kreuzen sich in der Mitte. Der Klassiker."
+      },
+      "switchback": {
+        "name": "Serpentinen",
+        "desc": "Ein langer, gewundener Weg zwischen zwei Mauern. Jede Welle nimmt denselben Weg."
+      },
+      "fronts": {
+        "name": "Drei Fronten",
+        "desc": "Drei Wege, die gleichzeitig gehalten werden müssen: Feinde aus drei Richtungen."
+      },
+      "corner": {
+        "name": "Die Ecke",
+        "desc": "Ein kurzer Weg mit einer Biegung, Felsen im Weg."
+      }
     }
   }
 }

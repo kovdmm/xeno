@@ -30,8 +30,16 @@ export interface MapDef {
   width: number;
   height: number;
   routes: Record<RouteKey, Route>;
-  /** cells that cannot be built on or walked through */
-  walls?: Vec[];
+  /** blocks that cannot be built on or walked through */
+  walls?: Rect[];
+}
+
+/** A block of cells: x, y is its top-left cell. */
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 /** A level as written in the balance data. */

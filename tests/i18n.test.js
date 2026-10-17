@@ -128,9 +128,10 @@ describe("the texts of the game data cover the balance", () => {
     enemies: Object.keys(BALANCE.enemies),
     difficulties: Object.keys(BALANCE.difficulty),
     abilities: Object.keys(BALANCE.abilities),
+    levels: Object.keys(BALANCE.levels),
   };
 
-  it.each(CODES)("%s has a text for every tower, ultimate, enemy, difficulty and ability", (c) => {
+  it.each(CODES)("%s has a text for every tower, ultimate, enemy, difficulty, ability and level", (c) => {
     const g = TEXTS[c].game;
     for (const [section, list] of Object.entries(ids))
       expect(Object.keys(g[section]).sort(), `${c}.${section}`).toEqual([...list].sort());
@@ -141,6 +142,7 @@ describe("the texts of the game data cover the balance", () => {
       );
       for (const u of Object.values(g.towers[t].ults)) expect(u.name && u.desc).toBeTruthy();
     }
+    for (const l of ids.levels) expect(g.levels[l].name && g.levels[l].desc, l).toBeTruthy();
     for (const e of ids.enemies) expect(g.enemies[e].name, e).toBeTruthy();
     for (const d of ids.difficulties) expect(g.difficulties[d].name && g.difficulties[d].desc, d).toBeTruthy();
     for (const a of ids.abilities)
@@ -311,6 +313,24 @@ describe("the app facade (XT.i18n and the texts on XT.core data)", () => {
       expect(o.name, c).toBeTruthy();
       expect(o.name).not.toMatch(/\./);
     }
+  });
+});
+
+describe("level texts", () => {
+  // The board turns in portrait, so a description must not say where on the screen anything is.
+  const DIRECTION =
+    /(?<![a-z])(left|right|top|bottom|above|below|north|south|east|west)(?![a-z])|слева|справа|сверху|снизу|links|rechts|oben|unten|зліва|праворуч|згори|знизу|vänster|höger|uppifrån|nedifrån/i;
+  it.each(CODES)("%s: names are short and descriptions mention no screen directions", (c) => {
+    for (const [id, l] of Object.entries(TEXTS[c].game.levels)) {
+      expect(l.name.length, id).toBeLessThan(24);
+      expect(l.desc, `${c}.${id}`).not.toMatch(DIRECTION);
+    }
+  });
+
+  it("the matcher knows what it is looking for", () => {
+    expect("enemies from the left").toMatch(DIRECTION);
+    expect("Feinde von links").toMatch(DIRECTION);
+    expect("three lanes to hold").not.toMatch(DIRECTION);
   });
 });
 

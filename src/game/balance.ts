@@ -106,16 +106,20 @@ function validateLevel(
   }
   const walls = new Set<number>();
   if (M.walls !== undefined) {
-    if (!Array.isArray(M.walls)) bad(`${p}.map.walls`, "expected a list of cells");
+    if (!Array.isArray(M.walls)) bad(`${p}.map.walls`, "expected a list of blocks { x, y, w, h }");
     else
-      M.walls.forEach((c: unknown, i: number) => {
+      M.walls.forEach((r: Obj, i: number) => {
         const wp = `${p}.map.walls[${i}]`;
-        if (!isCell(c)) return bad(wp, "expected [x, y] with whole numbers");
-        if (!inside(c)) return bad(wp, "outside the board");
-        const k = c[1] * W + c[0];
-        if (gates.has(k)) bad(wp, "a wall on a gate");
-        if (walls.has(k)) bad(wp, "listed twice");
-        walls.add(k);
+        if (!isObj(r) || ![r.x, r.y, r.w, r.h].every(Number.isInteger))
+          return bad(wp, "expected { x, y, w, h } with whole numbers");
+        if (r.w < 1 || r.h < 1) return bad(wp, "w and h must be at least 1");
+        if (!inside([r.x, r.y]) || !inside([r.x + r.w - 1, r.y + r.h - 1])) return bad(wp, "outside the board");
+        for (let y = r.y; y < r.y + r.h; y++)
+          for (let x = r.x; x < r.x + r.w; x++) {
+            const k = y * W + x;
+            if (gates.has(k)) bad(wp, `covers the gate cell [${x}, ${y}]`);
+            walls.add(k);
+          }
       });
   }
   // every spawn cell must be able to reach an exit of its route (nothing is built yet)
