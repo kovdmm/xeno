@@ -2,6 +2,13 @@
 // instead of stopping at volume 0 so it resumes where it was.
 import type { AudioOut, LoopHandle } from "../out";
 
+/**
+ * Music is a background: it must never ask to be turned down. The loop is mixed loud on purpose (a full-scale
+ * lo-fi chiptune), so at the slider's default (0.5) it plays at a few percent of full scale, far under the effects;
+ * the top of the slider is still quieter than the old default.
+ */
+export const MUSIC_GAIN = 0.05;
+
 export class MusicPlayer {
   private loop: LoopHandle | null = null;
 
@@ -12,8 +19,8 @@ export class MusicPlayer {
     private sampleRate: number,
     /** the current music volume 0..1 */
     private volume: () => number,
-    /** music sits below the effects: the player's own gain on top of the volume */
-    private gain = 0.55,
+    /** the player's own gain on top of the volume slider: see MUSIC_GAIN */
+    private gain = MUSIC_GAIN,
   ) {}
 
   /** Composes and loads the loop (once) and starts it if the volume allows. */

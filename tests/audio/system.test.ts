@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createAudioSystem } from "../../src/audio/system";
 import { createGame } from "../../src/game/game";
 import { MIX_RULES } from "../../src/audio/sfx/mixRules";
+import { MUSIC_GAIN } from "../../src/audio/music/player";
 import { fakeOut, manualScheduler, memoryStore } from "../helpers/audio";
 import { mulberry32 } from "../helpers/load";
 
@@ -176,6 +177,27 @@ describe("music", () => {
     expect(s.A.musicPlaying()).toBe(false);
     s.sched.run();
     expect(s.A.musicPlaying()).toBe(true);
+  });
+});
+
+describe("the music is a background", () => {
+  it("at the default volume the loop plays quietly (under 0.12 of full scale), and never louder than the old default at the slider's top", () => {
+    const { A, out, sched } = setup();
+    sched.run();
+    expect(out.loops[0].volume).toBeCloseTo(A.musicVolume * MUSIC_GAIN);
+    expect(out.loops[0].volume).toBeLessThan(0.12);
+    A.setMusicVolume(1);
+    expect(out.loops[0].volume).toBeLessThan(0.5 * 0.55); // the old default
+  });
+
+  it("is quieter than the effects at their default volume", () => {
+    const { A, out, sched } = setup();
+    sched.run();
+    A.update(0.05, false);
+    A.play("build");
+    A.update(0.05, false);
+    const sfx = Math.max(...played(out).map((p) => p.volume));
+    expect(out.loops[0].volume).toBeLessThan(sfx);
   });
 });
 

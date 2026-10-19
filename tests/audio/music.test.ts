@@ -3,7 +3,7 @@ import { composeSong, type SongSpec } from "../../src/audio/music/composer";
 import { INSTRUMENTS } from "../../src/audio/music/instruments";
 import { loopLength, renderScore } from "../../src/audio/music/render";
 import { SINISTER } from "../../src/audio/music/songs/sinister";
-import { MusicPlayer } from "../../src/audio/music/player";
+import { MUSIC_GAIN, MusicPlayer } from "../../src/audio/music/player";
 import { fakeOut, fingerprint } from "../helpers/audio";
 
 const score = composeSong(SINISTER);
@@ -198,7 +198,7 @@ describe("music player", () => {
     p.build();
     expect(builds()).toBe(1);
     expect(out.loops).toHaveLength(1);
-    expect(out.loops[0].opts.volume).toBeCloseTo(0.5 * 0.55);
+    expect(out.loops[0].opts.volume).toBeCloseTo(0.5 * MUSIC_GAIN);
     expect(out.loops[0].opts.fadeEdges).toBeUndefined(); // music loops seamlessly
     expect(p.playing()).toBe(true);
   });
