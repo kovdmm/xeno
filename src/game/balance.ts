@@ -1,6 +1,6 @@
-// The game's numbers live in data/balance.json. This module types and validates that file, so a typo in
-// the JSON fails loudly at startup (and in tests) instead of producing NaN deep inside the simulation.
-import raw from "./data/balance.json";
+// The game's numbers live in data/balance.yaml. This module types and validates that file, so a typo in
+// the YAML fails loudly at startup (and in tests) instead of producing NaN deep inside the simulation.
+import raw from "./data/balance.yaml";
 import type { Balance } from "./types";
 
 const TOWERS = ["gun", "cannon", "frost", "missile", "laser", "plasma", "rail", "artillery"];

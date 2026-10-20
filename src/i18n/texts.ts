@@ -19,7 +19,7 @@ export interface TextEntry {
 export interface Texts {
   /** interface strings with {placeholders}; `credits` is a list of [role, name] rows */
   ui: { credits: [string, string][] } & Record<string, string | [string, string][]>;
-  /** texts of the game data, by section and id (the ids of src/game/data/balance.json) */
+  /** texts of the game data, by section and id (the ids of src/game/data/balance.yaml) */
   game: Record<"towers" | "enemies" | "difficulties" | "abilities" | "levels", Record<string, TextEntry>>;
 }
 

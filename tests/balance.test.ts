@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
+import { parse } from "yaml";
 import { BALANCE, parseBalance, validateBalance } from "../src/game/balance";
 import { createGame, type GameApi } from "../src/game/game";
 import type { GameEvent } from "../src/game/types";
@@ -20,10 +21,10 @@ const game = (mutate?: (b: any) => unknown, seed = 1) => {
   return g;
 };
 
-describe("balance.json", () => {
+describe("balance.yaml", () => {
   it("is the only data file and matches the bundled default", () => {
-    expect(readdirSync(new URL("../src/game/data/", import.meta.url))).toEqual(["balance.json"]);
-    const file = JSON.parse(readFileSync(new URL("../src/game/data/balance.json", import.meta.url), "utf8"));
+    expect(readdirSync(new URL("../src/game/data/", import.meta.url))).toEqual(["balance.yaml"]);
+    const file = parse(readFileSync(new URL("../src/game/data/balance.yaml", import.meta.url), "utf8"));
     expect(file).toEqual(BALANCE);
   });
 
@@ -33,8 +34,8 @@ describe("balance.json", () => {
   });
 
   it("contains no text meant for the player (that lives in src/i18n)", () => {
-    const text = readFileSync(new URL("../src/game/data/balance.json", import.meta.url), "utf8");
-    expect(text).not.toMatch(/"(name|name_en|desc|desc_en|short|short_en|label|label_en)"/);
+    const text = readFileSync(new URL("../src/game/data/balance.yaml", import.meta.url), "utf8");
+    expect(text).not.toMatch(/^s*(name|name_en|desc|desc_en|short|short_en|label|label_en):/m);
   });
 });
 

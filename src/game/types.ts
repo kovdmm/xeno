@@ -431,7 +431,7 @@ export interface Game {
   S: State;
   /** the level being played */
   L: Level;
-  /** all numbers of the game: see data/balance.json */
+  /** all numbers of the game: see data/balance.yaml */
   readonly B: Balance;
   diff: DiffKey;
   rand: Rng;
@@ -440,7 +440,7 @@ export interface Game {
   D(): Difficulty;
 }
 
-/* ---------- balance: the shape of data/balance.json ---------- */
+/* ---------- balance: the shape of data/balance.yaml ---------- */
 
 export interface Balance {
   board: {

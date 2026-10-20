@@ -2,18 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noImplicitAny": false,
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src",
-    "tests",
-    "e2e",
-    "scripts",
-    "*.config.ts"
-  ],
-  "exclude": [
-    "src/sw.ts"
-  ]
+  "include": ["src", "tests", "e2e", "scripts", "sim", "*.config.ts"],
+  "exclude": ["src/sw.ts"]
 }

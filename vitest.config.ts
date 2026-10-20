@@ -1,6 +1,8 @@
 import { defineConfig } from "vitest/config";
+import { yamlData } from "./scripts/yamlPlugin.ts";
 
 export default defineConfig({
+  plugins: [yamlData()],
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",

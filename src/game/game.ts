@@ -29,7 +29,7 @@ import type {
 } from "./types";
 
 export interface GameOptions {
-  /** all numbers of the game; defaults to data/balance.json */
+  /** all numbers of the game; defaults to data/balance.yaml */
   balance?: Balance;
   /** source of randomness for the simulation; tests pass a seeded one */
   rng?: Rng;

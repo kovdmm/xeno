@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, transformWithOxc, type Plugin } from "vite";
+import { yamlData } from "./scripts/yamlPlugin.ts";
 
 /** The service worker is TypeScript like everything else: it is compiled to /sw.js (a separate file, not part of
  *  the app bundle) when building, and on the fly by the dev server. */
@@ -25,5 +26,5 @@ function serviceWorker(): Plugin {
 export default defineConfig({
   // relative asset paths: the build works from any folder or sub-path
   base: "./",
-  plugins: [serviceWorker()],
+  plugins: [yamlData(), serviceWorker()],
 });

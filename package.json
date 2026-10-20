@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "PWA (browser) tower defence tactics game",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "vite --port 3000",
     "deploy": "yarn build && scp -r dist/. root@46.101.198.82:/var/www/xeno.kovalev.app/",
     "maintenance": "scp maintenance/index.html root@46.101.198.82:/var/www/xeno.kovalev.app/index.html",
+    "sim": "vitest run --config vitest.sim.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",
@@ -27,7 +29,8 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
   },
   "prettier": {
     "trailingComma": "all",
