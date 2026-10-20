@@ -12,7 +12,8 @@ yarn install
 yarn start                 # Vite dev server: http://localhost:3000
 yarn build                 # production build into dist/
 yarn preview               # look at dist/ locally
-yarn typecheck             # three tsc checks: src (strict), tests and configs, the service worker
+yarn typecheck             # four tsc checks: src (strict), tests and configs, the service worker, the highscore service
+yarn build:server          # the highscore service into dist-server/ (see "Highscores")
 ```
 
 External resources at runtime are Google Fonts and howler.js from a CDN (see `index.html`; howler is a classic
@@ -34,6 +35,8 @@ For working on the game together with other Claude Code sessions see `CLAUDE.md`
 | `src/main.ts`  | composition root: `createApp` → `createUi`; `window.XT` is only a handle for debugging           |
 | `src/sw.ts`    | the service worker (built to `sw.js` by a plugin in `vite.config.ts`)                            |
 | `sim/`         | the balance simulator: a bot plays the game (see "Balance simulator")                            |
+| `server/`      | the **highscore service** (node, sqlite) and its deploy files (see "Highscores")                 |
+| `scripts/`     | build helpers: icons, the YAML plugin, the build fingerprint, the service bundle, the smoke test |
 | `tests/`       | unit and characterisation tests (Vitest)                                                         |
 | `e2e/`         | browser tests (Playwright): screenshots and interface behaviour                                  |
 | `maintenance/` | a one-page "back soon" site, put on the server in place of the game with `yarn maintenance`      |
@@ -377,6 +380,12 @@ no stream is given, `Math.random` is used (for the simulation it is `createGame(
 (particles, shake) from shifting the simulation, and tests reproducible. In new code use the module's `rand()`, not
 `Math.random()`.
 
+The simulation's own stream is **seeded per game**: `newGame(difficulty, level, seed)` starts `mulberry32(seed)` and the ids
+over, so a game is a function of its seed and the player's commands (this is what the highscore table replays, see
+"Highscores"). The simulation must not read the clock, must not use `Math.random` itself, and must not use the engine's
+own `Math.sin/cos/atan2/hypot/pow/exp/log` or `**` (they differ in the last bit between Chrome, Firefox and Safari):
+use `src/game/dmath.ts`. A hygiene test fails on the forbidden ones.
+
 ## Tests
 
 ```sh
@@ -496,7 +505,99 @@ the "Install" button in the settings).
 - The icons are drawn from `public/icon.svg`: after changing the SVG run `yarn icons`.
 - To force a new version of the cache, change `CACHE` in `src/sw.ts` (built into `sw.js`).
 
+## Highscores
+
+A record is a **game**, not a number: the browser records the game, the server plays it again and takes the result from
+its own game. Nothing the client says about its score is used, so a score cannot be typed in or edited.
+
+### How a record is made
+
+1. **A seed from the server.** In the background (never waited for) the page asks `GET /api/run?level=&diff=` for the next
+   game on the chosen map and difficulty: a random 32-bit seed and a signed token (HMAC, valid six hours, used once). A game
+   made without one (no connection, an old page) plays exactly as always, it just cannot be entered. A game made before the
+   seed arrived and still untouched (no wave, no tower, no cheat) is silently started over on it (`session.reseed`).
+2. **Recording.** The game starts with `newGame(difficulty, level, seed)`. `src/game/recorder.ts` wraps the commands (place,
+   upgrade, sell, call a wave, cast) and counts ticks; the interface steps the game in whole ticks of `TICK = 1/60` s
+   (`src/ui/loop.ts`), so speed ×2/×3/×5 is just more ticks per frame. A cheat, or a step that is not a whole tick, makes the
+   game unrecordable (`core.run()` is `null`). A run is `{v, build, level, diff, seed, ticks, actions}` (`src/game/run.ts`);
+   a 100-wave game of a bot had about 300 commands, so a run is a few kilobytes.
+3. **Saving.** The end screen of an enterable game has a name field and "Save to the table": `POST /api/run {run, nick, token}`.
+4. **Replay.** The service checks the token (ours, not expired, not used, made for this very seed, map and difficulty), the
+   build (see below), that the same game was not entered before (a hash of the canonical text of the run), then replays the
+   run in a worker thread, one at a time, with a hard time limit. A run is refused when a command does not fit the game, the
+   game is not over at the recorded end, the recorded end is later than the game's, commands are left over or come after the
+   end, it has any field but the seven, or it takes more than 20 s of CPU: a game has exactly one valid text.
+5. **Entry.** The table gets the **replayed** result. Refusals are 422 (`rejected`), 409 (`build`, `used`, `duplicate`), 410
+   (token expired), 429 (too many), 503 (busy: the token is given back and the player may try again).
+
+### Rules
+
+- **Ranking** (per map and difficulty): a win first, then the waves **cleared** (all of waves 1..n fully killed or through),
+  then the score, then the shorter game. It is not the wave _called_: calling waves early stacks them, and "wave 40" with only
+  5 cleared must not beat a game that cleared 8. A name keeps its best result per map and difficulty.
+- **Names** (`src/nick.ts`, used by the server and the page): letters of any script, digits, space and `_ . ' -`, at most 16
+  characters, accents composed, stacks of combining marks and everything else removed (markup, controls, bidi marks, emoji);
+  nothing left, or a name from a short block list, becomes "Anonymous". Names are shown with `textContent` only.
+- **Limits**: a request body of 256 KB; the service allows five submissions and 120 seeds an hour per address (a hash of it,
+  the address itself is never stored); nginx adds 60 reads and 10 submissions a minute; a replay may take 20 s of CPU and
+  five wait at most (then the answer is 503 `busy`). A 100-wave game (192 000 ticks) replays in about 7 s on the server, the
+  longest the format allows (90 minutes of game time) in about 11 s.
+- A recording proves that a game was **legal**, not that a human played it: a bot that plays well can enter. That is accepted.
+
+### Rules for the simulation (what keeps replays equal)
+
+The server must compute exactly what the browser did, in Chrome, Firefox and Safari alike. So `src/game/` uses `dmath.ts` for
+sin/cos/atan2/hypot/pow/exp/log, no clock, no `Math.random` (the seeded stream only), no `**` (a hygiene test checks
+this). Two fingerprints guard it: `src/game/digests.ts` holds what node computes for `mathDigest()` (dmath over fixed inputs),
+`gameDigest()` (a scripted game with every tower and ability) and `runDigest()` (a whole recorded game);
+`e2e/determinism.spec.ts` computes the same in Chromium, Firefox and WebKit (install them once with
+`yarn playwright install firefox webkit`) and replays a run recorded in one engine in another. After a change that
+deliberately alters the game's numbers the digests change: run the tests, check that the new values are the intended ones,
+and copy them from the failure message into `digests.ts`.
+
+### The build must match
+
+Every run carries `SIM_BUILD`, a hash of every file of `src/game/` (including `balance.yaml`, comments too) except the three
+determinism-check files (`scripts/simBuild.ts`). The service accepts only runs of its own build (409 `build`; the page says
+"out of date, reload"). So **a change of `src/game/` or of the balance needs both sides rebuilt from the same commit**, in
+this order:
+
+1. merge it and run `yarn build:server`;
+2. `server/deploy/install.sh` on the server (upload as in `server/deploy/README.md`): the service now has the new build;
+3. `yarn deploy` the site.
+
+Between 2 and 3 a page that is still open on the old version gets "out of date" when it tries to save. Entries made on an
+earlier build stay in the table (their runs are kept compressed in the database, so they can be checked again; there is no
+tool for that yet).
+
+### Where the code is
+
+| What                                    | Where                                                                                                                                   |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| the run format, `replay()`, `SIM_BUILD` | `src/game/run.ts`                                                                                                                       |
+| recording, `core.run()`                 | `src/game/recorder.ts`, `src/core.ts`                                                                                                   |
+| engine-independent math, seeded rng     | `src/game/dmath.ts`, `src/game/rng.ts`                                                                                                  |
+| the page: seed, save box, records       | `src/scores.ts` (client of the service), `src/ui/records.ts`, `src/ui/session.ts`                                                       |
+| the service                             | `server/api.ts` (HTTP), `server/db.ts` (sqlite), `server/verifier.ts` + `server/replayWorker.ts`                                        |
+| the server's files and the runbook      | `server/deploy/` (README.md: install, smoke test, rollback), `yarn build:server`                                                        |
+| tests                                   | `tests/replay*.test.ts`, `tests/seed.test.ts`, `tests/dmath.test.ts`, `tests/server/`, `e2e/records.spec.ts`, `e2e/determinism.spec.ts` |
+
+### Operating it
+
+Install, update, the smoke test (`node dist-server/smoke.mjs https://xeno.kovalev.app`, five submissions, run it once an hour at
+most, then remove its entry) and the rollback are in `server/deploy/README.md`. Moderation, on the server, as the service's user:
+
+```sh
+runuser -u xeno -- env DB_PATH=/var/lib/xeno/highscores.db /usr/local/bin/node --disable-warning=ExperimentalWarning \
+  /opt/xeno-scores/admin.mjs top crossroads easy 20        # also: remove <id> | remove-nick <nick> | backup <file>
+journalctl -u xeno-scores -f                               # JSON lines; addresses appear only as hashes
+```
+
+The table is in `/var/lib/xeno/highscores.db`; a copy is made every night at 03:17 (kept two weeks) in `/var/lib/xeno/backup/`.
+
 ## Deploy
+
+The highscore service is deployed separately (see "Highscores"); the site is:
 
 ```sh
 yarn deploy      # yarn build, then scp dist/ to the server (see package.json); the site is https://xeno.kovalev.app/
