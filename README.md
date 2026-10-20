@@ -112,7 +112,7 @@ descriptions are not part of this file: they are in `src/i18n/texts.*.json`.
 #### Levels (`levels`)
 
 Each level is a separate map; the first in the file is the one a new player starts on, and the file lists the maps in
-the order of the campaign: `switchback`, `corner`, `crossroads`, `fronts`. The map is chosen in the settings ("Map");
+the order of the campaign: `switchback`, `corner`, `crossroads`, `fronts`. Map and difficulty are chosen together in the settings, in a grid of the maps (rows) by the difficulties (columns): a cell shows the best wave and a star after a victory, a closed one a lock and the rule that opens it;
 records are kept per map and difficulty (`xt-best-<map>-<difficulty>`; records of older versions are not read). The
 tests and the screenshot scenes play `crossroads` (the unit-test helper and the e2e harness pin it).
 

@@ -1012,6 +1012,152 @@ kbd {
     0 0 0 1px var(--acid),
     0 0 14px rgba(141, 255, 58, 0.35);
 }
+/* the campaign: maps as rows, difficulties as columns; a cell is open, closed (a lock and the rule) or the one played */
+.camp {
+  display: grid;
+  gap: 6px;
+}
+.cHead,
+.cRow {
+  display: grid;
+  grid-template-columns: minmax(96px, 1.3fr) repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
+}
+.cDiff {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.cDiff span {
+  overflow-wrap: anywhere;
+}
+.cDiff .sk {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+}
+.cDiff svg {
+  width: 16px;
+  height: 16px;
+}
+.cDiff svg.big {
+  display: block;
+  width: 28px;
+  height: 28px;
+  padding: 0; /* the generic .big (a button size) would eat the picture */
+}
+.cMap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+.cMap svg.map {
+  width: 100%;
+  max-width: 84px;
+  height: auto;
+  border: 1px solid #000;
+  border-radius: 3px;
+}
+.cMap b {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 15px;
+}
+.cMap small {
+  color: #bfb39c;
+  font-family: var(--f-body);
+  font-size: 12px;
+}
+.cc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 58px;
+  min-width: 0;
+  padding: 6px 4px;
+  text-transform: none;
+}
+.cc b {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 18px;
+}
+.cc small {
+  color: #bfb39c;
+  font-family: var(--f-body);
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: none;
+  overflow-wrap: anywhere;
+}
+.cc.on {
+  border-color: var(--acid);
+  box-shadow:
+    0 0 0 1px var(--acid),
+    0 0 14px rgba(141, 255, 58, 0.35);
+}
+.cc.lock {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.lockIc,
+.winIc {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.cWin {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  color: var(--hazard);
+}
+@media (max-width: 560px) {
+  .cHead,
+  .cRow {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .cHead > span {
+    display: none;
+  }
+  .cDiff {
+    font-size: 10px;
+    letter-spacing: 0;
+    text-transform: none;
+    text-align: center;
+  }
+  .cDiff span {
+    overflow-wrap: anywhere;
+  }
+  .cMap {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .cMap svg.map {
+    width: 64px;
+    flex: none;
+  }
+  .cMap small {
+    margin-left: auto;
+  }
+}
 .fsask {
   z-index: 8;
 }

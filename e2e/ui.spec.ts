@@ -27,6 +27,9 @@ const press = async (page: Page, key: string) => {
 };
 const rich = (page: Page) => core(page, (C) => C.cheat("hesoyam"));
 
+/** a cell of the campaign grid in the settings: the map in the row, the difficulty in the column */
+const cell = (map: string, diff: string) => `#campaign [data-l="${map}"][data-d="${diff}"]`;
+
 test.describe("screens and pause", () => {
   test.beforeEach(async ({ page }) => openGame(page));
 
@@ -336,9 +339,9 @@ test.describe("difficulty", () => {
   test("the difficulty is chosen in the settings, applied at once while nothing has been played", async ({ page }) => {
     await page.click("#pauseBtn");
     await page.click("#pSettings");
-    await expect(page.locator("#diffs .dcard")).toHaveCount(4);
-    await expect(page.locator('#diffs [data-d="easy"]')).toHaveClass(/\bon\b/);
-    await page.click('#diffs [data-d="hard"]');
+    await expect(page.locator("#campaign .cc")).toHaveCount(16); // 4 maps x 4 difficulties
+    await expect(page.locator(cell("crossroads", "easy"))).toHaveClass(/\bon\b/);
+    await page.click(cell("crossroads", "hard"));
     expect(await core(page, (C) => C.difficulty())).toBe("hard");
     expect(await page.evaluate(() => localStorage.getItem("xt-diff"))).toBe("hard");
     await expect(page.locator("#settings")).toBeHidden();
@@ -352,12 +355,12 @@ test.describe("difficulty", () => {
     await core(page, (C) => C.step(0.1));
     await page.click("#pauseBtn");
     await page.click("#pSettings");
-    await page.click('#diffs [data-d="hard"]');
+    await page.click(cell("crossroads", "hard"));
     await expect(page.locator("#confirm")).toBeVisible();
     await page.click("#confirmNo");
     await expect(page.locator("#confirm")).toBeHidden();
     expect(await core(page, (C) => C.difficulty())).toBe("easy");
-    await page.click('#diffs [data-d="hard"]');
+    await page.click(cell("crossroads", "hard"));
     await page.click("#confirmYes");
     expect(await core(page, (C) => C.difficulty())).toBe("hard");
     expect((await state(page)).wave).toBe(0); // a new game
@@ -366,7 +369,7 @@ test.describe("difficulty", () => {
   test("the choice is remembered after a reload", async ({ page }) => {
     await page.click("#pauseBtn");
     await page.click("#pSettings");
-    await page.click('#diffs [data-d="insane"]');
+    await page.click(cell("crossroads", "insane"));
     await page.reload();
     await page.waitForFunction(() => window.XT?.core);
     expect(await page.evaluate(() => localStorage.getItem("xt-diff"))).toBe("insane");
@@ -575,21 +578,22 @@ test.describe("levels (maps)", () => {
 
   test("the settings list every level with its picture, name and length; the current one is marked", async ({ page }) => {
     await openLevels(page);
-    const cards = page.locator("#levels .dcard");
-    await expect(cards).toHaveCount(4);
-    // the order of the campaign; the harness plays crossroads, so that one is marked
-    await expect(cards.first()).toContainText("Switchback");
-    await expect(cards.first()).toContainText("100 waves");
-    await expect(cards.first().locator("svg.map")).toHaveCount(1);
-    await expect(cards.nth(2)).toHaveClass(/\bon\b/);
-    await expect(cards.nth(2)).toContainText("Crossroads");
-    await expect(cards.nth(2)).toContainText("200 waves");
+    const rows = page.locator("#campaign .cRow");
+    await expect(rows).toHaveCount(4);
+    // the order of the campaign; the harness plays crossroads on easy, so that cell is marked
+    await expect(rows.first().locator(".cMap")).toContainText("Switchback");
+    await expect(rows.first().locator(".cMap")).toContainText("100 waves");
+    await expect(rows.first().locator(".cMap svg.map")).toHaveCount(1);
+    await expect(rows.nth(2).locator(".cMap")).toContainText("Crossroads");
+    await expect(rows.nth(2).locator(".cMap")).toContainText("200 waves");
+    await expect(page.locator("#campaign .cc.on")).toHaveCount(1);
+    await expect(page.locator(cell("crossroads", "easy"))).toHaveClass(/\bon\b/);
   });
 
   test("choosing a level before playing switches the board at once and fits the field to it", async ({ page }) => {
     const before = await boardAspectOnScreen(page);
     await openLevels(page);
-    await page.click('#levels [data-l="fronts"]');
+    await page.click(cell("fronts", "easy"));
     expect(await level(page)).toBe("fronts");
     expect(await core(page, (C) => [C.W, C.H, C.FINAL])).toEqual([23, 15, 150]);
     expect(await page.evaluate(() => localStorage.getItem("xt-level"))).toBe("fronts");
@@ -606,14 +610,14 @@ test.describe("levels (maps)", () => {
 
   test("a level with another shape re-fits the field (24 wide, then back to 22)", async ({ page }) => {
     await openLevels(page);
-    await page.click('#levels [data-l="switchback"]');
+    await page.click(cell("switchback", "easy"));
     await expect.poll(async () => {
       await tick(page, 3); // the layout is refitted on the next frame
       const a = await boardAspectOnScreen(page);
       return a.W === 24 && Math.abs(a.w / a.h - 24 / 15) < 0.03;
     }).toBe(true);
     await page.click("#pSettings"); // back on the pause screen, where the settings were opened from
-    await page.click('#levels [data-l="crossroads"]');
+    await page.click(cell("crossroads", "easy"));
     await expect.poll(async () => {
       await tick(page, 3); // the layout is refitted on the next frame
       const a = await boardAspectOnScreen(page);
@@ -628,12 +632,12 @@ test.describe("levels (maps)", () => {
     });
     await core(page, (C) => C.step(0.1));
     await openLevels(page);
-    await page.click('#levels [data-l="corner"]');
+    await page.click(cell("corner", "easy"));
     await expect(page.locator("#confirm")).toBeVisible();
     await expect(page.locator("#confirmTxt")).toContainText("The corner");
     await page.click("#confirmNo");
     expect(await level(page)).toBe("crossroads");
-    await page.click('#levels [data-l="corner"]');
+    await page.click(cell("corner", "easy"));
     await page.click("#confirmYes");
     expect(await level(page)).toBe("corner");
     expect((await state(page)).wave).toBe(0);
@@ -641,7 +645,7 @@ test.describe("levels (maps)", () => {
 
   test("the choice is remembered after a reload, and the title shows the map", async ({ page }) => {
     await openLevels(page);
-    await page.click('#levels [data-l="corner"]');
+    await page.click(cell("corner", "easy"));
     await page.reload();
     await page.waitForFunction(() => window.XT?.core);
     expect(await level(page)).toBe("corner");
@@ -649,12 +653,12 @@ test.describe("levels (maps)", () => {
     await expect(page.locator("#mLevel svg.map")).toHaveCount(1);
     await page.click("#mLevel"); // opens the settings
     await expect(page.locator("#settings")).toBeVisible();
-    await expect(page.locator('#levels [data-l="corner"]')).toHaveClass(/\bon\b/);
+    await expect(page.locator(cell("corner", "easy"))).toHaveClass(/\bon\b/);
   });
 
   test("texts state the length of the level being played", async ({ page }) => {
     await openLevels(page);
-    await page.click('#levels [data-l="corner"]');
+    await page.click(cell("corner", "easy"));
     await expect(page.locator("#banner")).toContainText("80 waves");
     await core(page, (C) => {
       C.sendWave();
@@ -667,7 +671,7 @@ test.describe("levels (maps)", () => {
 
   test("records are kept per level and difficulty", async ({ page }) => {
     await openLevels(page);
-    await page.click('#levels [data-l="switchback"]');
+    await page.click(cell("switchback", "easy"));
     await core(page, (C) => {
       C.sendWave();
       for (let i = 0; i < 4000 && !C.S.over; i++) C.step(0.05);
@@ -679,7 +683,7 @@ test.describe("levels (maps)", () => {
 
   test("the next-wave line names where the wave comes from, whatever the level's gates", async ({ page }) => {
     await openLevels(page);
-    await page.click('#levels [data-l="fronts"]');
+    await page.click(cell("fronts", "easy"));
     await tick(page, 12);
     // wave 1 uses the first route: east, left to right
     await expect(page.locator("#next")).toContainText("left → right");
@@ -693,7 +697,7 @@ test.describe("levels (maps)", () => {
 
   test("walls cannot be built on", async ({ page }) => {
     await openLevels(page);
-    await page.click('#levels [data-l="switchback"]');
+    await page.click(cell("switchback", "easy"));
     await core(page, (C) => C.cheat("hesoyam"));
     await press(page, "1");
     const before = (await state(page)).credits;
@@ -709,7 +713,7 @@ test.describe("levels (maps)", () => {
     await openGame(p);
     await p.click("#pauseBtn");
     await p.click("#pSettings");
-    await p.click('#levels [data-l="fronts"]');
+    await p.click(cell("fronts", "easy"));
     await tick(p, 12);
     const a = await p.evaluate(() => {
       const r = document.getElementById("field")!.getBoundingClientRect();
@@ -718,5 +722,64 @@ test.describe("levels (maps)", () => {
     expect(a.h).toBeGreaterThan(a.w); // turned
     expect(Math.abs(a.w / a.h - 15 / 23)).toBeLessThan(0.03);
     await ctx.close();
+  });
+});
+
+test.describe("the campaign grid", () => {
+  const openSettings = async (page: Page) => {
+    await page.click("#pauseBtn");
+    await page.click("#pSettings");
+  };
+  const level = (page: Page) => core(page, (C) => C.LEVEL);
+
+  test("a new player has one open cell; the closed ones say what opens them and cannot be chosen", async ({ page }) => {
+    await openGame(page, { newPlayer: true });
+    await openSettings(page);
+    await expect(page.locator("#campaign .cc:not(.lock)")).toHaveCount(1);
+    await expect(page.locator(cell("switchback", "easy"))).toHaveClass(/\bon\b/);
+    await expect(page.locator(cell("switchback", "normal"))).toBeDisabled();
+    await expect(page.locator(cell("switchback", "normal"))).toContainText("Reach wave 21 on Easy");
+    await expect(page.locator(cell("corner", "easy"))).toContainText("Reach wave 25 on Easy, Switchback");
+    expect(await level(page)).toBe("switchback");
+    await page.locator(cell("corner", "easy")).click({ force: true }); // a closed cell does nothing
+    expect(await level(page)).toBe("switchback");
+    await expect(page.locator("#settings")).toBeVisible();
+  });
+
+  test("the best waves open the next difficulty and the next map", async ({ page }) => {
+    await openGame(page, { newPlayer: true, storage: { "xt-best-switchback-easy": "25" } });
+    await openSettings(page);
+    await expect(page.locator(cell("switchback", "normal"))).toBeEnabled(); // 25 reaches 21
+    await expect(page.locator(cell("switchback", "hard"))).toBeDisabled(); // normal has no record
+    await expect(page.locator(cell("corner", "easy"))).toBeEnabled(); // 25 reaches 25
+    await expect(page.locator(cell("corner", "normal"))).toBeDisabled();
+    await expect(page.locator(cell("crossroads", "easy"))).toBeDisabled();
+    await page.click(cell("corner", "easy"));
+    expect(await level(page)).toBe("corner");
+    expect(await page.evaluate(() => localStorage.getItem("xt-level"))).toBe("corner");
+  });
+
+  test("an open cell shows its best wave and a star after a victory", async ({ page }) => {
+    await openGame(page, {
+      newPlayer: true,
+      storage: { "xt-best-switchback-easy": "100", "xt-won-switchback-easy": "1", "xt-best-switchback-normal": "7" },
+    });
+    await openSettings(page);
+    await expect(page.locator(cell("switchback", "easy"))).toContainText("100");
+    await expect(page.locator(cell("switchback", "easy"))).toHaveClass(/\bwon\b/);
+    await expect(page.locator(cell("switchback", "easy") + " .cWin")).toHaveCount(1);
+    await expect(page.locator(cell("switchback", "normal"))).toContainText("7");
+    await expect(page.locator(cell("switchback", "normal"))).not.toHaveClass(/\bwon\b/);
+    await expect(page.locator(cell("corner", "easy"))).toContainText("–"); // open, not played
+  });
+
+  test("with every map open (the bagowpw cheat) all sixteen cells can be chosen", async ({ page }) => {
+    await openGame(page, { newPlayer: true, storage: { "xt-allmaps": "1" } });
+    await openSettings(page);
+    await expect(page.locator("#campaign .cc")).toHaveCount(16);
+    await expect(page.locator("#campaign .cc.lock")).toHaveCount(0);
+    await page.click(cell("fronts", "insane"));
+    expect(await level(page)).toBe("fronts");
+    expect(await core(page, (C) => C.difficulty())).toBe("insane");
   });
 });

@@ -271,38 +271,49 @@ test.describe("texts follow the board's orientation", () => {
   });
 });
 
-test.describe("the map cards and the title in every language", () => {
+test.describe("the campaign grid and the title in every language", () => {
   for (const vp of [
     { width: 1280, height: 800, name: "desktop" },
     { width: 390, height: 844, name: "phone" },
   ])
     for (const l of LANGS)
-      test(`${vp.name} ${l.name}: names and descriptions fit their cards, the title buttons are not cut`, async ({ page }) => {
+      test(`${vp.name} ${l.name}: the grid and the rules of its closed cells fit, the title buttons are not cut`, async ({ page }) => {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await open(page);
         await choose(page, l.code);
         const problems = await page.evaluate(() => {
           const bad: string[] = [];
-          for (const el of document.querySelectorAll<HTMLElement>("#levels .dcard, #levels .dcard b, #levels .dcard small"))
-            if (el.scrollWidth > el.clientWidth + 1) bad.push("card text cut: " + el.textContent!.slice(0, 30));
+          const parts = "#campaign .cMap, #campaign .cMap b, #campaign .cMap small, #campaign .cc, #campaign .cc small, #campaign .cDiff, #campaign .cDiff span";
+          for (const el of document.querySelectorAll<HTMLElement>(parts))
+            if (el.scrollWidth > el.clientWidth + 1) bad.push("cut: " + el.textContent!.slice(0, 30));
           return bad;
         });
         expect(problems).toEqual([]);
-        // every level has a name and a description in this language (never the key path)
-        const texts = await page.evaluate(() =>
-          [...document.querySelectorAll("#levels .dcard")].map((c) => [c.querySelector("b")!.textContent, c.querySelector("small")!.textContent]),
-        );
-        expect(texts).toHaveLength(4);
-        for (const [name, desc] of texts) {
+        // a new player has one open cell and fifteen closed ones, each saying in this language what opens it
+        const grid = await page.evaluate(() => ({
+          open: document.querySelectorAll("#campaign .cc:not(.lock)").length,
+          rules: [...document.querySelectorAll("#campaign .cc.lock small")].map((s) => s.textContent!),
+          maps: Object.values(XT.core.LEVELS).map((m: any) => [m.name, m.desc]),
+        }));
+        expect(grid.open).toBe(1);
+        expect(grid.rules).toHaveLength(15);
+        for (const r of grid.rules) {
+          expect(r).toMatch(/\d/); // the wave to reach
+          expect(r).not.toMatch(/[{}]|lock(Diff|Map)/); // never a placeholder or a key
+        }
+        // every map has a name and a description in this language (never the key path)
+        expect(grid.maps).toHaveLength(4);
+        for (const [name, desc] of grid.maps) {
           expect(name).not.toMatch(/\./);
           expect(desc.length).toBeGreaterThan(20);
         }
-        // the title button names the chosen map: pick each level with the title open
+        // the title button names the chosen map: pick each map with the title open (all maps open, as after bagowpw)
+        await page.evaluate(() => localStorage.setItem("xt-allmaps", "1"));
         await page.click("#setClose");
         await page.evaluate(() => XT.ui.openMenu());
         for (const id of ["corner", "fronts", "switchback", "crossroads"]) {
           await page.click("#mLevel");
-          await page.click(`#levels [data-l="${id}"]`);
+          await page.click(`#campaign [data-l="${id}"][data-d="easy"]`);
           const cut = await page.evaluate(() => {
             const b = document.getElementById("mLevel")!;
             return b.scrollWidth > b.clientWidth + 2 ? b.textContent : "";

@@ -3,9 +3,17 @@
 import type { Locator, Page } from "@playwright/test";
 import type { GameCore } from "../src/core";
 
-export async function openGame(page: Page, { seed = 1 }: { seed?: number } = {}) {
+/**
+ * Opens the game on the title screen and presses play. The scenes and the tests play crossroads with every map open;
+ * `newPlayer` starts as a new player does (the first map, the campaign locks), and `storage` is written to localStorage
+ * first (records, wins), unless a key is already there.
+ */
+export async function openGame(
+  page: Page,
+  { seed = 1, newPlayer = false, storage = {} }: { seed?: number; newPlayer?: boolean; storage?: Record<string, string> } = {},
+) {
   await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
-  await page.addInitScript((seed) => {
+  await page.addInitScript(({ seed, newPlayer, storage }) => {
     const mulberry32 = (seed: number) => {
       let a = seed >>> 0;
       return () => {
@@ -18,8 +26,9 @@ export async function openGame(page: Page, { seed = 1 }: { seed?: number } = {})
     };
     // the scenes and the tests were made on this map; a new player starts on the first map of the data (switchback)
     try {
-      if (!localStorage.getItem("xt-level")) localStorage.setItem("xt-level", "crossroads");
-      if (!localStorage.getItem("xt-allmaps")) localStorage.setItem("xt-allmaps", "1"); // every map open, as after bagowpw
+      if (!newPlayer && !localStorage.getItem("xt-level")) localStorage.setItem("xt-level", "crossroads");
+      if (!newPlayer && !localStorage.getItem("xt-allmaps")) localStorage.setItem("xt-allmaps", "1"); // every map open, as after bagowpw
+      for (const [k, v] of Object.entries(storage)) if (localStorage.getItem(k) === null) localStorage.setItem(k, v);
     } catch {}
     // one stream per subsystem: effects never shift the simulation
     (window as unknown as { XT: unknown }).XT = {
@@ -40,7 +49,7 @@ export async function openGame(page: Page, { seed = 1 }: { seed?: number } = {})
         for (const cb of cbs) cb(now);
       }
     };
-  }, seed);
+  }, { seed, newPlayer, storage });
   await page.goto("/");
   await page.waitForSelector("#boot", { state: "hidden" }); // the loading screen
   await page.addStyleTag({ content: ".banner,.toast{visibility:hidden!important}" });
