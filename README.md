@@ -18,7 +18,7 @@ yarn typecheck             # three tsc checks: src (strict), tests and configs, 
 External resources at runtime are Google Fonts and howler.js from a CDN (see `index.html`; howler is a classic
 `<script>` and must load before the module). Offline the game still runs, but without sound and with system fonts.
 
-For working on the game together with other Claude Code sessions see `CLAUDE.md` and `COORDINATION.md`.
+For working on the game together with other Claude Code sessions see `CLAUDE.md` (the rules; the shared board is outside the repository, in `../xeno-board`).
 
 ## Structure
 
@@ -415,8 +415,8 @@ asks for permission to use it.
   `page.evaluate` functions have no use for written-out types), the other checks are the same. The package is
   `"type": "module"`, and the configs import their plugins with the `.ts` extension.
 - Comments and names in the code are in English, like the existing code.
-- Several Claude Code sessions may work in the same copy at once: see `CLAUDE.md` (the rules) and `COORDINATION.md`
-  (the board).
+- Several Claude Code sessions may work in the same copy at once: see `CLAUDE.md` (the rules) and the board in
+  `../xeno-board`, which is outside the repository because every session has its own worktree.
 
 ## Installing on a phone (PWA)
 
