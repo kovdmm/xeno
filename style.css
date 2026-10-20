@@ -832,6 +832,17 @@ canvas {
 .modal b {
   color: var(--text);
 }
+/* help: long paragraphs need air, or the lines merge into one wall of text */
+#helpText {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  line-height: 1.55;
+  max-width: 64ch;
+}
+#helpText p {
+  overflow-wrap: break-word;
+}
 .modal .note {
   color: var(--muted);
   font-size: 14px;
