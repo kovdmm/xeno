@@ -1,0 +1,82 @@
+# Feedback
+
+What the owner and their friends/colleagues said about the game, what it implies and where each item stands.
+Quotes are the owner's words (Russian, as written); the "Implies" lines are mine. Status: **open**, **in progress**,
+**done**. Source of the first part: the Google Keep note "Xeno feedback" (read 2026-10-20), of the second part: the
+owner's messages while planning the balance work (2026-10-20).
+
+## Direction agreed with the owner (2026-10-20)
+
+- The site was closed for maintenance while the feedback is worked on (`yarn maintenance`).
+- First the **walkthrough (progression) and a thought-out balance**, then the priorities are set again. The tutorial and
+  the analytics come last: "Обучение лучше сделать в конце, когда сделаем у игры понятную прогрессию (прохождение), когда
+  зафиксируемся по UI" and "Аналитику тоже лучше делать когда будет готов концепт игры".
+- Progression model chosen: a matrix of map × difficulty plus stars; towers unlock gradually.
+- Balance must stay completely in a data file, now YAML: "чтобы он полностью оставался в JSON файле … в идеале вообще
+  перейти на yaml файл из-за нативно поддерживаемых комментов" (done: `src/game/data/balance.yaml`).
+
+## From the Keep note
+
+### Critical
+
+| #   | Said                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Implies                                                                                                                                                                                                                          | Status                     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| 1   | "(critical) Я: нужно срочно прикрутить аналитику, кто сколько и куда заходит, что нажимает и как играет."                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | An off-the-shelf analytics service ("лучше воспользоваться готовыми решениями для аналитики"); events for visits, map and difficulty choice, death wave, tutorial completion. Wanted after the game concept is ready.            | open (deferred)            |
+| 2   | "(critical) Я: Нужно сделать прогрессию по уровням. Лёгкие карты -> тяжёлые, лёгкий уровень -> тяжёлый. Заставляя проходить пользователя все комбинации."                                                                                                                                                                                                                                                                                                                                                                                                                                  | A campaign: maps from easy to hard, difficulties from easy to hard, every combination to be passed. Agreed model: matrix + stars, gradual tower unlock; what counts as a "win" on a map (80–200 waves) is still to be discussed. | in progress                |
+| 3   | "(critical) Лазиз: немного непонятно как играть в начале. Я: Нужно инетрактивное начало игры, типа враги пойдут отсюда, пушки ставтье сюда и сюда, у пушки делайте апгрейд, ваша цель построить лабирит и не умереть, удачи. Можно воспользоваться библиоткеой driver.js. How to play переименовать в Xenopedia и внутри объяснение как играть, как строить лабиринты, примеры лабиринтов (svg), и бестиарий врагов, чтобы можно было познакомиться со всеми. После прохождения обучения его больше не показывать. Первый раз показывать в новой игре всем. Первая карта будет серпантин." | An interactive first game (driver.js), Xenopedia with how to play, maze examples (SVG) and a bestiary; shown once to everyone in a new game; first map is the serpentine (switchback).                                           | open (deferred to the end) |
+
+### High
+
+| #   | Said                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Implies                                                                                                                                                                                | Status      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| 4   | "(high) Я: Нужно больше читов, чит на открытие всех карт, чит на бессмертную базу для тестирования и т.д. Чит на бесплатные пушки. Мемный чит на то, чтобы враги начали высказывать "недовольство". Типа над врагами появляется тултип, типа "оо щикотно", "тепло", "ай, непрятно" и в таком духе."                                                                                                                                                                                     | More cheat codes next to `hesoyam` (all maps, immortal base, free turrets, enemies' speech bubbles). Cheated games are already flagged and excluded from records.                      | open        |
+| 5   | "(high) Я: Даже на самой простой карте серпантин я умудряюсь отхватывать пи**юлей на high уровне, нужно пересмотреть прогрессию баланса. Лёгкий уровень должен проходиться без cryo. А в сложном важен лабиринт и комбинации орудий. Overclock должен помимо урона слегка повышать радиус. Радиус у гаубицы слегка маловат, как у обычной пушки. Надо бы сделать его побольше, он и так в лабиринт особо не помещается, так что его редко строят, а надо, чтобы он тоже использовался." | See "Balance" below.                                                                                                                                                                   | in progress |
+| 6   | "(high) Я: Хотелось бы видеть в игре таблицу рекордов и чтобы каждый мог записать своё имя в таблицу"                                                                                                                                                                                                                                                                                                                                                                                   | A highscore table with names. Owner's answer on the backend: "можно написать примитивный сервер поверх sqlite на ноде". Needs protection from cheating (flagged games must not enter). | open        |
+| 7   | "(high) Я: Цвета у разных пушек сливаются. Может делать буквенное обозначение, типа S - sniper, M - minigun (буква специализации слева), а справа +n при апредйте."                                                                                                                                                                                                                                                                                                                     | A letter mark of the specialisation on the left and "+n" for upgrades on the right of each turret, in addition to colour.                                                              | open        |
+
+### Medium / low / lowest
+
+| #   | Said                                                                                                                                                                | Implies                                                                                                                                                          | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 8   | "(medium) Соня: выбор карт и сложность лучше разнести на другие экраны/диалоговые окна"                                                                             | A separate screen or dialog for the map and the difficulty; fits the campaign screen of item 2.                                                                  | open   |
+| 9   | "(critical) Я: Карты хорошо бы тоже выстроить по сложности от серпантина до 3 входов-выходов"                                                                       | Map order by difficulty; the owner's rule below: switchback, corner, crossroads, fronts. The default first map is still crossroads and has to become switchback. | open   |
+| 10  | "(low) Я: How to play тяжело читается, строки сливаются в полотно текста, нужно межстрочный интервал нормальный сделать и" (the sentence is cut off in the note)    | Readable line spacing in the help text; becomes part of Xenopedia.                                                                                               | open   |
+| 11  | "(medium) Я: Игре не хватает сохранений прогресса"                                                                                                                  | Saving of progress; the game keeps only the difficulty, the level and the best wave per map and difficulty now. Comes with the campaign (stars, unlocks).        | open   |
+| 12  | "(low) Я: Экран гаснет быстро на телефоне, надо запретить гасить экран как при медиа"                                                                               | Keep the screen awake while playing (the Wake Lock API).                                                                                                         | open   |
+| 13  | "(low) Я: модалки с крестиком на телефоне выглядят не привычно для мобилки". PWA сейчас работает буквально как браузер. Что если на мобилке проработать Mobile UX?" | Mobile-native dialogs (no close-cross windows) and a worked-out mobile UX.                                                                                       | open   |
+| 14  | "(low) Я: что если сделать "экран установки" на мобильной версии сайта?"                                                                                            | An install screen for the PWA on phones (an install button exists already).                                                                                      | open   |
+| 15  | "(lowest) Я: Музыкальный редактор нужно задеплоить на сабдомен и дать возможность делать музыку тем, кто хочет"                                                     | Deploy the music editor to a subdomain. The editor is now a separate repository, Tonegrid (`../tonegrid`).                                                       | open   |
+| 16  | "(low) Я: Нужно ограничить максимальное число одновременных волн, например 10-20 штук, чтобы не абузить перформанс."                                                | A cap on simultaneous waves (calling waves early stacks them).                                                                                                   | open   |
+
+### Already marked fixed or done in the note
+
+- "(fixed) Right - left, top - bottom on vertical screen means nothing"
+- "(done) Я: Игре нужен музыкальный редактор"
+- "(fixed) Я: Music still buggy when volume 0, 100"
+- "(fixed) [critical] Я: Громкость у музыки сильно большая, люди сразу хотят выключить или сильно убавить. Нужно сделать ей ненавязчивую громкость фоновой музыки"
+- "(fixed) Я: Звуки начала волны и потери здоровья не подходят игре"
+
+## Balance: what the owner said while planning
+
+Status of the whole block: **in progress** (the simulator `sim/` and the first balance pass exist, the rest is open).
+
+- **Map difficulty**: "Чем больше маршрутов, тем сложнее играть, чем короче путь, который надо проделать врагам, тем сложнее
+  играть. Обратное тоже верно, чем длинее путь, тем легче контрить врагов". Implies the order switchback < corner <
+  crossroads < fronts and a per-map difficulty coefficient.
+- **Waves are called early by necessity**: "Сейчас 100 и 200 волн это приколюха на 15-25 минут, потому что чтобы
+  строиться, тебе нужны эти вызовы волны раньше времени, иначе ты проиграешь". Kept as it is; easy and normal softened:
+  "на изи и normal смягчить, на изи смягчить сильнее, на нормал примерно вполовину, на хард пусть остаётся как есть.
+  Сейчас hard непроходимый, даже бонусных кредитов не хватает, чтобы строить а апать пушки". Done in a first pass (easy,
+  normal and a little of hard); hard still has to become passable.
+- **Abilities**: "Способности это финальная мера, таких денег обычно нет у игрока и это на случай, если он продолбался".
+  Balance is not tuned around them.
+- **Towers**: "Ценность rail в уроне по нескольким, ценность cannon в уроне по площади, а вот gun вначале просто имба, чисто
+  чтобы пережить 20-30 волн надо его апать в 5 уровень". The simulator confirms it: an all-gun bot beats every other
+  composition by 3–5 times, because the gun ultimate (rate ÷6 for a ×3 price of a cheap tower) is by far the best buy.
+  Open: rebalance the ultimates and the gun; the owner has not yet chosen how.
+- **Mazes are the real ceiling**: "В идеале построить maze, по которому будут очень долго ходить, поэтому методом отжига я ещё
+  на crossroads делал лабирит, который делал 166-167 клеток и там можно было продержаться до 300 уровней", and the idea
+  of a baked maze: "запечь достаточно хороший вариант лабиринта и потом при строительстве искать каждый раз варианты,
+  которые удлинят путь или оставят его неизменным". Done: the optimiser and the baked mazes (crossroads 335 cells over
+  both roads, ~167 each). Open: use them to calibrate the HP curve (a naive player should last 20–30 waves, a master
+  maze should last to the end of the map).
