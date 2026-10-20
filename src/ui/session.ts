@@ -66,6 +66,7 @@ export function createSession(
         st.best = C.S.wave;
         progress.saveBest(st.level, st.diff, st.best);
       }
+      if (e.won && !C.S.cheated) progress.saveWon(st.level, st.diff);
       $("over").classList.toggle("won", e.won);
       renderOver();
       screens.show("over");

@@ -1,6 +1,7 @@
 // The game as the rest of the app uses it: the simulation (src/game) with the player-facing texts put back onto
 // its data tables (`name`, `desc`, ... of towers, enemies, difficulties, abilities), which the simulation itself
 // does not have. The texts come from the translator and are live: they read the current language every time.
+import { campaignOf, lockOf } from "./game/campaign";
 import { pos } from "./game/combat";
 import { createGame, type GameApi } from "./game/game";
 import type { LevelDef, Rng } from "./game/types";
@@ -51,6 +52,7 @@ export type GameCore = Core & Pick<GameApi, "routePath" | "unitHP"> & { pos: typ
 export function createCore(i18n: TextSource, rng?: Rng): GameCore {
   const game = createGame({ rng });
   const B = game.balance;
+  const campaign = campaignOf(B);
   return {
     // the board follows the level being played
     get W() {
@@ -73,6 +75,8 @@ export function createCore(i18n: TextSource, rng?: Rng): GameCore {
     },
     LEVELS: Object.fromEntries(game.levelIds.map((id) => [id, levelInfo(id, game.balance.levels[id], i18n)])) as never,
     LKEYS: game.levelIds,
+    lockOf: (level: string, diff: string, best: (level: string, diff: string) => number) =>
+      lockOf(campaign.maps, campaign.diffs, level, diff, best),
     TT: withText(B.towers as never, "towers", i18n),
     TKEYS: Object.keys(B.towers),
     ET: withText(B.enemies as never, "enemies", i18n),

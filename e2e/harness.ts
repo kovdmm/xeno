@@ -19,6 +19,7 @@ export async function openGame(page: Page, { seed = 1 }: { seed?: number } = {})
     // the scenes and the tests were made on this map; a new player starts on the first map of the data (switchback)
     try {
       if (!localStorage.getItem("xt-level")) localStorage.setItem("xt-level", "crossroads");
+      if (!localStorage.getItem("xt-allmaps")) localStorage.setItem("xt-allmaps", "1"); // every map open, as after bagowpw
     } catch {}
     // one stream per subsystem: effects never shift the simulation
     (window as unknown as { XT: unknown }).XT = {

@@ -42,9 +42,9 @@ export function createUi(deps: UiDeps) {
     store,
     core.DKEYS,
     core.LKEYS.map((id) => ({ id, finalWave: core.LEVELS[id].finalWave })),
+    core.lockOf,
   );
-  const diff = progress.readDiff(),
-    level = progress.readLevel();
+  const { diff, level } = progress.readChoice();
   const state = createState(diff, level, progress.bestOf(level, diff));
   const renderer = deps.createRenderer($<HTMLCanvasElement>("field"));
   const desk = matchMedia(DESK_QUERY);

@@ -22,6 +22,7 @@ function setup() {
     newGame: () => Object.assign(C.S, { over: false, won: false, wave: 0 }),
   };
   const saved: unknown[][] = [];
+  const wins: unknown[][] = [];
   const credits = vi.fn();
   const shown: string[] = [];
   const ui = {
@@ -36,9 +37,9 @@ function setup() {
     sound: { play() {} },
     screens: { show: (id: string) => void shown.push(id), hide() {}, isOpen: () => false },
   } as unknown as UiContext;
-  const progress = { bestOf: () => 0, saveBest: (...a: unknown[]) => void saved.push(a) } as never;
+  const progress = { bestOf: () => 0, saveBest: (...a: unknown[]) => void saved.push(a), saveWon: (...a: unknown[]) => void wins.push(a) } as never;
   const session = createSession(ui, progress, credits, () => {});
-  return { C, ui, credits, saved, shown, session, fire: (e: GameEvent | object) => onEvent(e as GameEvent) };
+  return { C, ui, credits, saved, wins, shown, session, fire: (e: GameEvent | object) => onEvent(e as GameEvent) };
 }
 
 describe("the end of a game", () => {
@@ -53,6 +54,16 @@ describe("the end of a game", () => {
     expect(credits).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1800);
     expect(credits).toHaveBeenCalledOnce();
+  });
+
+  it("a win is recorded for the map and difficulty, unless the game was cheated", () => {
+    const { C, fire, wins } = setup();
+    Object.assign(C.S, { over: true, won: true, wave: 200 });
+    fire({ type: "end", won: true });
+    expect(wins).toEqual([["crossroads", "easy"]]);
+    Object.assign(C.S, { cheated: true });
+    fire({ type: "end", won: true });
+    expect(wins).toHaveLength(1);
   });
 
   it("starting a new game before the credits roll cancels them", () => {

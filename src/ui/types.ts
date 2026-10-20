@@ -1,5 +1,6 @@
 // What the interface knows about the rest of the app. The game, the translator, the sound and the renderer
 // are handed in (see createUi), so the interface can be built and tested with stand-ins for all of them.
+import type { Lock } from "../game/campaign";
 import type { GameApi } from "../game/game";
 import type {
   AbilityDef,
@@ -69,6 +70,8 @@ export interface Core extends Pick<
   readonly LEVEL: string;
   readonly LEVELS: Record<string, LevelInfo>;
   readonly LKEYS: string[];
+  /** the campaign's rule: what keeps a map × difficulty closed given the best waves (null: open) */
+  lockOf(level: string, diff: string, best: (level: string, diff: string) => number): Lock | null;
   readonly TT: Record<TowerType, TowerInfo>;
   readonly TKEYS: TowerType[];
   readonly ET: Record<EnemyType, WithText<EnemyDef>>;

@@ -4,6 +4,7 @@ import { describe, it, expect } from "vitest";
 import { fmt } from "../../src/ui/format";
 import { CheatTyper, escapeAction, hotkey, physicalDigit, physicalLetter, spaceAction } from "../../src/ui/keys";
 import { clearPicks, createState, speedOf, SPEEDS } from "../../src/ui/state";
+import { lockOf } from "../../src/game/campaign";
 import { createProgress } from "../../src/ui/progress";
 import { createScreens, SCREENS } from "../../src/ui/screens";
 import { fitAspect, turnsOnDesktop } from "../../src/ui/layout";
@@ -134,24 +135,64 @@ describe("UiState", () => {
 });
 
 describe("saved progress", () => {
+  const DIFFS = ["easy", "normal", "hard", "insane"];
   const LEVELS = [
-    { id: "crossroads", finalWave: 200 },
-    { id: "corner", finalWave: 80 },
+    { id: "crossroads", finalWave: 200, unlock: { difficulty: 20, nextMap: 25 } },
+    { id: "corner", finalWave: 80, unlock: { difficulty: 18 } },
   ];
   const make = (init = {}) => {
     const store = memoryStore(init);
-    return { store, p: createProgress(store, ["easy", "normal", "hard", "insane"], LEVELS) };
+    const lock = (level: string, diff: string, best: (l: string, d: string) => number) =>
+      lockOf(LEVELS, DIFFS, level, diff, best);
+    return { store, p: createProgress(store, DIFFS, LEVELS, lock) };
   };
 
-  it("defaults to easy and the first level, ignores unknown saved ones, remembers valid ones", () => {
-    const fresh = make().p;
-    expect([fresh.readDiff(), fresh.readLevel()]).toEqual(["easy", "crossroads"]);
-    const junk = make({ "xt-diff": "nightmare", "xt-level": "nowhere" }).p;
-    expect([junk.readDiff(), junk.readLevel()]).toEqual(["easy", "crossroads"]);
-    const { p } = make();
+  it("starts on the first map on easy, ignores unknown or closed saved choices, remembers an open one", () => {
+    expect(make().p.readChoice()).toEqual({ level: "crossroads", diff: "easy" });
+    expect(make({ "xt-diff": "nightmare", "xt-level": "nowhere" }).p.readChoice()).toEqual({
+      level: "crossroads",
+      diff: "easy",
+    });
+    // a closed choice (corner and hard are both locked at the start) is not kept
+    expect(make({ "xt-diff": "hard", "xt-level": "corner" }).p.readChoice()).toEqual({
+      level: "crossroads",
+      diff: "easy",
+    });
+    const { p } = make({ "xt-best-crossroads-easy": "20", "xt-best-crossroads-normal": "20" });
     p.saveDiff("hard");
-    p.saveLevel("corner");
-    expect([p.readDiff(), p.readLevel()]).toEqual(["hard", "corner"]);
+    p.saveLevel("crossroads");
+    expect(p.readChoice()).toEqual({ level: "crossroads", diff: "hard" });
+  });
+
+  it("closes what the best waves have not opened, and says why", () => {
+    const { p } = make();
+    expect(p.lockOf("crossroads", "easy")).toBeNull();
+    expect(p.lockOf("crossroads", "normal")).toEqual({ kind: "difficulty", from: "easy", need: 20 });
+    expect(p.lockOf("corner", "easy")).toEqual({ kind: "map", from: "crossroads", need: 25 });
+    p.saveBest("crossroads", "easy", 25);
+    expect(p.lockOf("crossroads", "normal")).toBeNull();
+    expect(p.lockOf("corner", "easy")).toBeNull();
+    expect(p.lockOf("corner", "normal")).toEqual({ kind: "difficulty", from: "easy", need: 18 });
+  });
+
+  it("the bagowpw cheat opens every map and difficulty", () => {
+    const { p } = make();
+    expect(p.lockOf("corner", "insane")).not.toBeNull();
+    p.openAllMaps();
+    expect(p.mapsOpen()).toBe(true);
+    expect(p.lockOf("corner", "insane")).toBeNull();
+  });
+
+  it("remembers a win per map and difficulty", () => {
+    const { p, store } = make();
+    expect(p.wonOf("crossroads", "easy")).toBe(false);
+    p.saveWon("crossroads", "easy");
+    expect([p.wonOf("crossroads", "easy"), p.wonOf("crossroads", "normal"), p.wonOf("corner", "easy")]).toEqual([
+      true,
+      false,
+      false,
+    ]);
+    expect(store.get("xt-won-crossroads-easy")).toBe("1");
   });
 
   it("keeps the best wave per level and difficulty, capped at that level's last wave", () => {
