@@ -1,401 +1,442 @@
 # Xeno-Tactics
 
-Браузерная tower-defense игра: 8 типов башен, 200 волн, 4 сложности, способности, музыка и звуки синтезируются
-на лету. Сборка — Vite, исходники — ES-модули в `src/`.
+A browser tower defence game: 8 tower types, up to 200 waves, 4 difficulties, 4 maps, player abilities, and music and
+sound effects synthesised on the fly. Built with Vite; the source is TypeScript modules in `src/`. It installs as a PWA.
 
-## Быстрый старт
+## Quick start
 
-Нужны Node.js 22+ и Yarn 1.
+Needs Node.js 22+ and Yarn 1.
 
 ```sh
 yarn install
-yarn start                 # dev-сервер Vite: http://localhost:3000
-yarn build                 # production-сборка в dist/
-yarn preview               # посмотреть dist/ локально
-yarn typecheck             # три проверки tsc: src (строго), тесты и конфиги, service worker
+yarn start                 # Vite dev server: http://localhost:3000
+yarn build                 # production build into dist/
+yarn preview               # look at dist/ locally
+yarn typecheck             # three tsc checks: src (strict), tests and configs, the service worker
 ```
 
-Внешние ресурсы в рантайме — шрифты Google и howler.js с CDN (см. `index.html`; howler — классический
-`<script>`, он должен загрузиться раньше модуля). Без сети игра работает, но без звука и с системными шрифтами.
+External resources at runtime are Google Fonts and howler.js from a CDN (see `index.html`; howler is a classic
+`<script>` and must load before the module). Offline the game still runs, but without sound and with system fonts.
 
-## Структура
+For working on the game together with other Claude Code sessions see `CLAUDE.md` and `COORDINATION.md`.
 
-| Файл          | Роль                                                                                            |
-| ------------- | ----------------------------------------------------------------------------------------------- |
-| `src/game/`   | **симуляция** на чистом TypeScript, без DOM, звука, цветов и текстов (см. ниже)                 |
-| `src/i18n/`   | **языки**: `texts.<код>.json` (en, ru, de, ua, sv), определение языка, переводчик (см. «Языки») |
-| `src/render/` | **рендер**: слои, рисовальщики спрайтов, эффекты, пол (см. «Рендер»)                            |
-| `src/audio/`  | **звук**: музыка, эффекты, микшер, плеер (см. ниже)                                             |
-| `src/ui/`     | **интерфейс**: экраны, HUD, палитра, ввод, настройки, цикл (см. «Интерфейс»)                    |
-| `src/core.ts` | игра для остального приложения: симуляция + «живые» тексты на таблицах данных                   |
-| `src/app.ts`  | собирает сервисы (переводчик, игра, фабрика рендерера, звук); тесты собирают те же с сидами     |
-| `src/main.ts` | корень композиции: `createApp` → `createUi`; `window.XT` — только ручка для отладки             |
-| `tests/`      | юнит- и характеризационные тесты (Vitest)                                                       |
-| `e2e/`        | браузерные тесты (Playwright): скриншоты и поведение интерфейса                                 |
+## Structure
 
-Всё на TypeScript и явных импортах: части получают друг друга аргументами (`createUi(deps)`, `createRenderer(canvas, deps)`,
-`createApp(hooks)`). В каждом из трёх «браузерных» файлов — `render/browser.ts`, `audio/browser.ts`, `i18n/browser.ts` —
-подключаются canvas, howler, localStorage; остальной код про браузер не знает.
+| Path           | Role                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| `src/game/`    | the **simulation**: pure TypeScript, no DOM, sound, colours or texts (see below)                 |
+| `src/i18n/`    | **languages**: `texts.<code>.json` (en, ru, de, ua, sv), language detection, the translator      |
+| `src/render/`  | **rendering**: layers, sprite painters, effects, the floor (see "Rendering")                     |
+| `src/audio/`   | **sound**: music, effects, mixer, player (see "Sound")                                           |
+| `src/ui/`      | **interface**: screens, HUD, palette, input, settings, the main loop (see "Interface")           |
+| `src/core.ts`  | the game as the rest of the app sees it: the simulation plus "live" texts over the data tables   |
+| `src/app.ts`   | assembles the services (translator, game, renderer factory, sound); tests assemble the same ones |
+| `src/main.ts`  | composition root: `createApp` → `createUi`; `window.XT` is only a handle for debugging           |
+| `src/sw.ts`    | the service worker (built to `sw.js` by a plugin in `vite.config.ts`)                            |
+| `sim/`         | the balance simulator: a bot plays the game (see "Balance simulator")                            |
+| `tests/`       | unit and characterisation tests (Vitest)                                                         |
+| `e2e/`         | browser tests (Playwright): screenshots and interface behaviour                                  |
+| `maintenance/` | a one-page "back soon" site, put on the server in place of the game with `yarn maintenance`      |
 
-### Симуляция (`src/game/`)
+Everything is TypeScript with explicit imports: the parts receive each other as arguments (`createUi(deps)`,
+`createRenderer(canvas, deps)`, `createApp(hooks)`). Three "browser" files — `render/browser.ts`, `audio/browser.ts`,
+`i18n/browser.ts` — connect canvas, howler and localStorage; the rest of the code knows nothing about the browser.
 
-Всё состояние лежит в одном объекте `State`, а логика — в функциях `(g: Game, …)`; синглтонов нет, `createGame({ rng })`
-создаёт независимую игру.
+### Simulation (`src/game/`)
 
-| Модуль              | Что внутри                                                                     |
-| ------------------- | ------------------------------------------------------------------------------ |
-| `types.ts`          | все типы: `State`, `Tower`, `Creep`, `Projectile` (union), `GameEvent` (union) |
-| `data/balance.yaml` | **все числа игры** в одном YAML с комментариями (см. «Баланс» ниже)                            |
-| `balance.ts`        | типизация и валидация `balance.yaml`; `BALANCE` — значения по умолчанию        |
-| `rules.ts`          | формулы: статы башни по уровню, цена улучшения, кривая здоровья                |
-| `grid.ts`           | поиск пути (BFS), `placeCheck`, проход врагов по полю                          |
-| `waves.ts`          | состав волн, спавн, таймер волн                                                |
-| `movement.ts`       | движение врагов, горение, лечение, прыжки                                      |
-| `targeting.ts`      | выбор цели и наведение                                                         |
-| `towers.ts`         | **реестр поведений башен** (стреляющие и непрерывные)                          |
-| `projectiles.ts`    | **реестр снарядов**: как летит и что делает при попадании                      |
-| `combat.ts`         | урон, броня, статусы, убийство и прорыв, конец игры                            |
-| `abilities.ts`      | способности игрока                                                             |
-| `game.ts`           | `createGame`: состояние, шина событий, команды, такт `step`                    |
+All state lives in one `State` object and the logic is in functions `(g: Game, …)`; there are no singletons, and
+`createGame({ rng })` creates an independent game.
 
-Чтобы **добавить башню**: запись в `balance.yaml` (`towers`), поведение в `towers.ts` (стрелок или непрерывная),
-тексты во **всех пяти** `src/i18n/texts.*.json`, затем цвет в рендере и звук в аудио. Типы и валидатор подскажут, где что пропущено
-(`yarn typecheck`, `yarn test`).
+| Module              | What is in it                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `types.ts`          | all the types: `State`, `Tower`, `Creep`, `Projectile` (union), `GameEvent` (union) |
+| `data/balance.yaml` | **every number of the game**, in one commented YAML file (see "Balance" below)      |
+| `balance.ts`        | typing and validation of `balance.yaml`; `BALANCE` holds the defaults               |
+| `rules.ts`          | formulas: tower stats by level, upgrade price, the health curve                     |
+| `grid.ts`           | path finding (BFS), `placeCheck`, enemies walking the field                         |
+| `waves.ts`          | wave composition, spawning, the wave timer                                          |
+| `movement.ts`       | enemy movement, burning, healing, jumping                                           |
+| `targeting.ts`      | choosing a target and aiming                                                        |
+| `towers.ts`         | the **registry of tower behaviours** (shooting and continuous)                      |
+| `projectiles.ts`    | the **registry of projectiles**: how each flies and what it does on a hit           |
+| `combat.ts`         | damage, armour, statuses, kills and leaks, the end of the game                      |
+| `abilities.ts`      | the player's abilities                                                              |
+| `game.ts`           | `createGame`: the state, the event bus, commands, the `step` tick                   |
 
-### Баланс (`src/game/data/balance.yaml`)
+To **add a tower**: an entry in `balance.yaml` (`towers`), a behaviour in `towers.ts` (a shooter or a continuous one),
+texts in **all five** `src/i18n/texts.*.json`, then a colour in the renderer and a sound in the audio. The types and the
+validator point out what is missing (`yarn typecheck`, `yarn test`).
 
-Все параметры игры и баланса лежат в одном файле; в коде симуляции числовых параметров нет (остались только
-математические константы вроде «центр клетки = 0.5»). Игра читает его как `g.B` (`Balance` в `types.ts`).
+### Balance (`src/game/data/balance.yaml`)
 
-| Раздел        | Что внутри                                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------------------- |
-| `board`       | радиус блокировки стройки идущим врагом (общий для всех уровней)                                        |
-| `levels`      | **уровни**: поле, маршруты, стены и длина игры каждой карты (см. ниже)                                  |
-| `economy`     | возврат при продаже, цена ультимейта, оверклок, бонусы за волну и за досрочный вызов, очки, чит-коды    |
-| `scaling`     | рост здоровья и наград врагов по волнам (квадратичный рост, ускорение после 100-й, сглаженный «подъём») |
-| `combat`      | броня, радиус и спад взрыва, горение, оглушение, чума, лекари, прыгуны, разброс спавна                  |
-| `shooting`    | максимум выстрелов за такт, скорость наведения, крио-пульс, перегрев лазера                             |
-| `projectiles` | скорость, смещение дула и радиус попадания каждого вида снарядов, параметры кассеты и ракет             |
-| `waves`       | порядок маршрутов, циклы врагов, формулы численности и лимиты, боссы, финал, смешанные волны, пауза     |
-| `towers`      | стоимость, урон, скорострельность, радиус по 4 уровням и **ультимейты как данные**                      |
-| `enemies`     | здоровье, скорость, награда, броня, размер, интервал спавна                                             |
-| `difficulty`  | множители и стартовые значения четырёх сложностей                                                       |
-| `abilities`   | цена, перезарядка, прицел и параметры действия каждой способности                                       |
+All the parameters of the game and of its balance live in one file, and every one of them can carry a comment. The
+simulation code has no numeric parameters of its own (only mathematical constants such as "the centre of a cell is
+0.5"). The game reads the file as `g.B` (`Balance` in `types.ts`). The YAML is turned into data by the plugin in
+`scripts/yamlPlugin.ts`, for the build, the dev server and the tests alike.
 
-**Ультимейты** описаны операциями над характеристиками уровня 4 и применяются в порядке `set` → `mul` → `div`:
+| Section       | What is in it                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------- |
+| `board`       | the radius around a walking enemy where building is blocked (shared by all levels)                            |
+| `levels`      | the **levels**: the field, routes, walls and length of each map (see below)                                   |
+| `economy`     | sell refund, ultimate price, overclock, bonuses for a wave and for calling one early, score, cheat codes      |
+| `scaling`     | growth of enemy health and rewards over the waves (quadratic, faster after wave 100, a smoothed "rise")       |
+| `combat`      | armour, blast radius and fall-off, burning, stun, plague, healers, jumpers, spawn spread                      |
+| `shooting`    | most shots per tick, aiming speed, the cryo pulse, laser overheating                                          |
+| `projectiles` | speed, muzzle offset and hit radius of each kind of projectile, cluster-bomb and rocket parameters            |
+| `waves`       | route order, enemy cycles, formulas for counts and their limits, bosses, the final wave, mixed waves, the gap |
+| `towers`      | cost, damage, fire rate and range for 4 levels, and the **ultimates as data**                                 |
+| `enemies`     | health, speed, reward, armour, size, spawn interval                                                           |
+| `difficulty`  | multipliers and starting values of the four difficulties                                                      |
+| `abilities`   | price, cooldown, aiming and the parameters of every ability                                                   |
 
-```json
-"sniper": { "mul": { "range": 1.7, "dmg": 6, "rate": 2 }, "set": { "prio": "strong" } }
+**Ultimates** are described as operations on the level-4 stats and applied in the order `set` → `mul` → `div`:
+
+```yaml
+ults:
+  sniper:
+    mul: { range: 1.7, dmg: 6, rate: 2 }
+    set: { prio: strong }
 ```
 
-Одна характеристика может встречаться только в одной операции.
+A stat may appear in one operation only.
 
-**Валидация.** `balance.ts` проверяет файл при запуске и в тестах: все башни, враги, сложности и способности на месте;
-массивы по уровням из 4 чисел; числа конечны и в допустимых пределах; уникальные горячие клавиши; враги в циклах
-волн известны и имеют формулу численности; маршруты лежат на поле. Ошибка называет путь к виновнику, например
+**Validation.** `balance.ts` checks the file at startup and in the tests: every tower, enemy, difficulty and ability is
+there; arrays per level have 4 numbers; numbers are finite and in range; hotkeys are unique; enemies in the wave
+cycles are known and have a count formula; routes lie on the field. An error names the path to the culprit, for example
 `towers.gun.ults.mini.div.rate: must be >= 5e-324`.
 
-**Подмена в тестах.** `createGame({ balance })` принимает любой набор чисел, поэтому тест может, например, удешевить
-башню, поменять размер поля или формулу волн, не трогая код (`tests/balance.test.ts`). Тексты названий и описаний
-в этот файл не входят: они в `src/i18n/texts.*.json`.
+**Replacing it in tests.** `createGame({ balance })` accepts any set of numbers, so a test can make a tower cheaper,
+change the size of the field or a wave formula without touching the code (`tests/balance.test.ts`). The names and
+descriptions are not part of this file: they are in `src/i18n/texts.*.json`.
 
-#### Уровни (`levels`)
+#### Levels (`levels`)
 
-Каждый уровень — отдельная карта; первый в файле играется по умолчанию. Выбор — в настройках («Карта»), рекорды хранятся
-отдельно для каждой карты и сложности (`xt-best-<карта>-<сложность>`; для первой карты ключи прежние).
+Each level is a separate map; the first in the file is played by default. The map is chosen in the settings ("Map");
+records are kept per map and difficulty (`xt-best-<map>-<difficulty>`; the first map keeps the old keys). The maps are
+`crossroads`, `switchback`, `fronts` and `corner`.
 
-```json
-"switchback": {
-  "finalWave": 100,
-  "map": {
-    "width": 24, "height": 15,
-    "routes": {
-      "main": { "spawn": [[0,1],[0,2],[0,3]], "exit": [[23,11],[23,12],[23,13]], "dir": [1,0] }
-    },
-    "walls": [{ "x": 0, "y": 4, "w": 20, "h": 1 }, { "x": 4, "y": 8, "w": 20, "h": 1 }]
-  }
-}
+```yaml
+switchback:
+  finalWave: 100
+  map:
+    width: 24
+    height: 15
+    routes:
+      main:
+        spawn: [[0, 1], [0, 2], [0, 3]]
+        exit: [[23, 11], [23, 12], [23, 13]]
+        dir: [1, 0]
+    walls:
+      - { x: 0, y: 4, w: 20, h: 1 }
+      - { x: 4, y: 8, w: 20, h: 1 }
 ```
 
-- **Маршруты** — сколько угодно, с любыми именами. `spawn` — клетки входа (на краю поля, рядом друг с другом),
-  `exit` — клетки выхода, `dir` — шаг, которым враг входит (за край поля, через клетки входа), `exitDir` — шаг, которым
-  он уходит через выход (по умолчанию равен `dir`; у карты `corner` вход слева, а выход снизу).
-- **Волны** берут маршруты по очереди: нечётная — первый, чётная — второй и так далее, а раз в несколько волн
-  (`waves.bothEvery`) — сразу все. На карте с одним маршрутом чередовать нечего.
-- **Стены** — блоки клеток `{ x, y, w, h }`: на них нельзя строить, через них нельзя идти; башни по-прежнему не могут
-  перекрыть дорогу совсем.
-- **Входы и выходы рисуются по этим клеткам**: пещера с венами — у середины клеток входа (шире вход — больше пещера),
-  ворота с «зебрами» — по рамке клеток выхода, воздушная полоса — прямая между краями у входа и у выхода.
-  Подписи «слева → направо» считаются из геометрии и поворачиваются вместе с полем, ничего не пишется по каждой карте.
-- **Проверка при запуске:** ворота на поле, на краю и не пересекаются; `dir`/`exitDir` — единичные шаги; стены не
-  закрывают ворота; **от каждой клетки входа можно дойти до выхода** (ошибка называет клетку).
-- **Тексты** карты — `game.levels.<id>.name` и `.desc` в каждом из `texts.*.json` (без слов «слева/сверху» —
-  поле поворачивается); тест напомнит, если забыли. Идентификатор — строчные буквы, цифры, `-` и `_`.
-- **Баланс.** Числа врагов и башен зависят только от номера волны, поэтому `finalWave` новой карты стоит подбирать
-  игрой: короткая карта с одной дорогой сложнее (по ней идёт каждая волна).
+- **Routes** — as many as you like, with any names. `spawn` is the entrance cells (on the edge of the field, next to
+  each other), `exit` the exit cells, `dir` the step an enemy enters with (off the edge of the field, through the
+  entrance cells), `exitDir` the step it leaves with through the exit (equal to `dir` by default; on `corner` the
+  entrance is on the left and the exit at the bottom).
+- **Waves** take the routes in turn: an odd wave the first, an even one the second and so on, and once in a few waves
+  (`waves.bothEvery`) all of them at once. On a map with one route there is nothing to alternate.
+- **Walls** are blocks of cells `{ x, y, w, h }`: no building on them and no walking through them; towers still cannot
+  block the road completely.
+- **Entrances and exits are drawn from these cells**: the cave with veins at the middle of the entrance cells (a wider
+  entrance, a bigger cave), the gate with zebra stripes along the frame of the exit cells, the air lane as a straight
+  line between the edges at the entrance and at the exit. Labels like "left → right" are computed from the geometry and
+  turn with the field, so nothing is written per map.
+- **Checks at startup:** the gates are on the field, on its edge and do not overlap; `dir`/`exitDir` are unit steps;
+  walls do not cover the gates; **every entrance cell can reach an exit** (the error names the cell).
+- **Texts** of a map are `game.levels.<id>.name` and `.desc` in every `texts.*.json` (without words like "left" or
+  "top": the field rotates); a test reminds you if you forget. The id is lower-case letters, digits, `-` and `_`.
+- **Balance.** The numbers of enemies and towers depend only on the wave number, so the `finalWave` of a new map is best
+  found by playing: a short map with one road is harder (every wave comes along it). The balance simulator below helps.
 
-### Интерфейс (`src/ui/`)
+#### Balance simulator (`sim/`)
 
-Интерфейс получает игру, переводчик, звук, рендерер и хранилище снаружи (`createUi(deps)`) и не знает про `window.XT`.
-Логика, тексты и разметка панелей — чистые функции; DOM трогают только модули, которым это нужно.
+`yarn sim` has a bot play every map × difficulty and prints how far it got (`SIM_LEVELS`, `SIM_DIFFS`,
+`SIM_STRATEGIES` and `SIM_SEEDS` narrow the run; `yarn sim sim/trace.sim.ts` shows the course of one game and
+`yarn sim sim/towers.sim.ts` the efficiency of each tower). It is not part of `yarn test`.
 
-| Модуль                           | Что внутри                                                                                  |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `index.ts`                       | собирает общий контекст и части, запускает цикл                                             |
-| `context.ts`, `types.ts`         | что получает каждая часть; что интерфейс знает об игре, звуке и переводчике                 |
-| `state.ts`                       | что у игрока «в руке»: выбранная башня, режим постройки, прицел, скорость, ориентация поля  |
-| `keys.ts`                        | **чистые** клавиши: раскладки, набор чит-кода, что делают Esc и пробел                      |
-| `cards.ts`, `view.ts`            | **чистые** панели (карточка башни, подсказки) и «что показать рендереру»                    |
-| `commands.ts`                    | построить, улучшить, продать, применить способность, вызвать волну; сообщения и звук ошибок |
-| `input.ts`                       | указатель на поле, клавиатура, кнопки главных экранов                                       |
-| `hud.ts`, `palette.ts`           | числа и панели, меняющие DOM только при изменениях; кнопки башен и способностей             |
-| `session.ts`, `settings.ts`      | партия, экран победы/поражения, заставка; язык, сложность с подтверждением                  |
-| `layout.ts`                      | подгонка поля под окно, поворот на десктопе                                                 |
-| `appMode.ts`, `soundControls.ts` | полный экран и установка приложения; кнопка и ползунки звука                                |
-| `progress.ts`, `loop.ts`         | сохранённые сложность и рекорды; игровой цикл                                               |
+### Interface (`src/ui/`)
 
-### Рендер (`src/render/`)
+The interface receives the game, translator, sound, renderer and storage from outside (`createUi(deps)`) and does not
+know about `window.XT`. The logic, texts and markup of the panels are pure functions; only the modules that need it
+touch the DOM.
 
-Расчёт отделён от рисования, «рюшки» (внешний вид) — от расчётов, а картинка собирается из слоёв, которые можно менять
-по отдельности.
+| Module                           | What is in it                                                                          |
+| -------------------------------- | -------------------------------------------------------------------------------------- |
+| `index.ts`                       | assembles the shared context and the parts, starts the loop                            |
+| `context.ts`, `types.ts`         | what each part receives; what the interface knows about the game, sound and translator |
+| `state.ts`                       | what the player "holds": the selected tower, build mode, aim, speed, field orientation |
+| `keys.ts`                        | **pure** keys: layouts, typing a cheat code, what Esc and space do                     |
+| `cards.ts`, `view.ts`            | **pure** panels (tower card, hints) and "what to show the renderer"                    |
+| `commands.ts`                    | build, upgrade, sell, use an ability, call a wave; error messages and sounds           |
+| `input.ts`                       | the pointer on the field, the keyboard, the buttons of the main screens                |
+| `hud.ts`, `palette.ts`           | numbers and panels that touch the DOM only on change; tower and ability buttons        |
+| `session.ts`, `settings.ts`      | a game, the win/loss screen, the intro; language, difficulty with confirmation         |
+| `layout.ts`                      | fitting the field to the window, rotating on desktop                                   |
+| `appMode.ts`, `soundControls.ts` | full screen and installing the app; the sound button and sliders                       |
+| `progress.ts`, `loop.ts`         | saved difficulty and records; the game loop                                            |
+| `routes.ts`, `mapThumb.ts`       | route labels computed from the geometry; the map thumbnails in the settings            |
 
-| Модуль                             | Что внутри                                                                                                  |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `renderer.ts`                      | собирает части и каждый кадр прогоняет слои; ничего не рисует сам                                           |
-| `pipeline.ts`                      | `DEFAULT_LAYERS` (порядок слоёв), `withLayers(base, {replace, remove, before, after})`, `runLayers`         |
-| `layers/*.ts`                      | **слои**: пол, ворота, трассы, башни, враги, лучи, снаряды, частицы, прицел, виньетки… (24 штуки, по файлу) |
-| `fx.ts`, `director.ts`             | **расчёт эффектов**: частицы, тексты, тряска, вспышки; события игры → эффекты. Ничего не рисуют             |
-| `towers.ts`, `aliens.ts`           | **рисовальщики спрайтов**: башни и пришельцы в единичной клетке, без состояния                              |
-| `theme.ts`, `color.ts`, `tiers.ts` | палитра, цветовая арифметика, цвета уровней и ульт                                                          |
-| `projection.ts`                    | поле → экран, поворот на 90° в портрете: единственное место, которое о нём знает                            |
-| `sprites.ts`, `glow.ts`            | кэш спрайтов (рисуется один раз), свечения с бюджетом на кадр                                               |
-| `floor.ts`, `quality.ts`           | пол и следы на нём; регулятор качества по реальному времени кадра                                           |
+### Rendering (`src/render/`)
 
-Слой — это `{ id, draw(frame) }`. Перед слоем выставляется матрица поля, состояние canvas сохраняется и
-восстанавливается вокруг него, поэтому слой не может «протечь» в соседний пунктиром или режимом смешивания. Чтобы
-поменять композицию, не трогая остальное:
+Calculation is separated from drawing, the "frills" (looks) from the calculations, and the picture is assembled from
+layers that can be changed one by one.
 
-```js
+| Module                             | What is in it                                                                                        |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `renderer.ts`                      | assembles the parts and runs the layers every frame; draws nothing itself                            |
+| `pipeline.ts`                      | `DEFAULT_LAYERS` (the order), `withLayers(base, {replace, remove, before, after})`, `runLayers`      |
+| `layers/*.ts`                      | the **layers**: floor, gates, lanes, towers, enemies, beams, projectiles, particles, aim, vignettes… |
+| `fx.ts`, `director.ts`             | **effect calculation**: particles, texts, shake, flashes; game events → effects. They draw nothing   |
+| `towers.ts`, `aliens.ts`           | **sprite painters**: towers and aliens in a unit cell, stateless                                     |
+| `theme.ts`, `color.ts`, `tiers.ts` | the palette, colour arithmetic, level and ultimate colours                                           |
+| `projection.ts`                    | field → screen, the 90° rotation in portrait: the only place that knows about it                     |
+| `sprites.ts`, `glow.ts`            | the sprite cache (drawn once), glows with a per-frame budget                                         |
+| `floor.ts`, `quality.ts`           | the floor and the marks on it; a quality governor driven by the real frame time                      |
+
+A layer is `{ id, draw(frame) }`. Before a layer the field matrix is set, and the canvas state is saved and restored
+around it, so a layer cannot "leak" a dash or a blend mode into its neighbour. To change the composition without
+touching anything else:
+
+```ts
 import { DEFAULT_LAYERS, withLayers } from "./render/pipeline";
 renderer.setLayers(withLayers(DEFAULT_LAYERS, { replace: { beams: myBeams }, remove: ["flicker"] }));
 ```
 
-Неизвестный id — ошибка, а не молчаливое «ничего не сделалось». Рендер не знает про `document`, `window`, время и
-`Math.random`: всё это ему передают (`RendererDeps`), поэтому его можно гонять на заглушке контекста; тест-гигиена
-следит за этим и за тем, что слои не импортируют друг друга.
+An unknown id is an error, not a silent "nothing happened". The renderer knows nothing about `document`, `window`, time
+or `Math.random`: all of that is passed in (`RendererDeps`), so it can run on a stub context; the hygiene test watches
+this, and that the layers do not import each other.
 
-### Звук (`src/audio/`)
+### Sound (`src/audio/`)
 
-Композиция, конкретная музыка, синтез и воспроизведение разделены; в системе нет ни одного обращения к DOM или
-состоянию игры, а howler.js знает один файл.
+Composition, the music itself, synthesis and playback are separate; the system has no access to the DOM or the game
+state, and howler.js is known to one file only.
 
-| Модуль                        | Что внутри                                                                                          |
-| ----------------------------- | --------------------------------------------------------------------------------------------------- |
-| `music/composer.ts`           | **композитор**: из песни (дорожки с нотами на сетке, как в piano roll) строит партитуру             |
-| `music/songs/sinister.ts`     | **конкретная песня** как данные (`sinister.json`): дорожки бас, арпеджио, дрон, kick, snare, hat, лид |
-| `music/score.ts`              | партитура: ноты (такт, длина, высота, инструмент, громкость), без звука                             |
-| `music/instruments.ts`        | инструменты партитуры (~40): голоса (волна, струна Карплуса-Страуса, FM, шум чипа, барабаны) и роль/режим каждого |
-| `music/modes.ts`              | **режимы звука** песни: `lofi` (по умолчанию), `chip` (8 бит), `clean` (чистый): частота, огрубление, моно-каналы |
-| `music/render.ts`             | синтез: партитура → один бесшовный луп из сэмплов                                                   |
-| `music/player.ts`             | плеер лупа: строит один раз, никогда не запускает вторую копию, на громкости 0 ставит на паузу      |
-| `sfx/recipes.ts`              | рецепты эффектов: длительность и функция сэмпла; шум из внедряемого генератора                      |
-| `sfx/mixRules.ts`             | правила микса: громкость, минимальный интервал, число голосов, приоритет                            |
-| `sfx/mixer.ts`                | **микшер** (чистая логика): слияние, интервалы, бюджет на 100 мс, приглушение при толпе             |
-| `sfx/cues.ts`                 | событие игры → название звука (чистая функция)                                                      |
-| `sfx/laser.ts`, `sfx/bank.ts` | гул лазера; банк эффектов, создаваемых при первом использовании и в фоне                            |
-| `out.ts`, `howlerOut.ts`      | интерфейс бэкенда `AudioOut` и его единственная реализация на howler.js                             |
-| `system.ts`                   | сборка: события → звуки → микшер → банк → бэкенд, плюс музыка и настройки                           |
+| Module                        | What is in it                                                                                            |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `music/composer.ts`           | the **composer**: turns a song (tracks of notes on a grid, like a piano roll) into a score               |
+| `music/songs/sinister.ts`     | **the game's song** as data (`sinister.json`): bass, arpeggio, drone, kick, snare, hat and lead tracks   |
+| `music/songs/demos.ts`        | two example songs in the other sound modes (`chip-demo.json`, `clean-demo.json`)                         |
+| `music/score.ts`              | the score: notes (beat, length, pitch, instrument, loudness), no sound in it                             |
+| `music/instruments.ts`        | the instruments (~40): voices (wave, plucked string, FM, chip noise, drums) with a role and a mode each  |
+| `music/modes.ts`              | the **sound modes**: `lofi` (default), `chip` (8-bit), `clean`: sample rate, rounding, one-note channels |
+| `music/render.ts`             | synthesis: a score → one seamless loop of samples                                                        |
+| `music/songSpec.ts`           | checks a song file (`validateSongSpec` / `parseSongSpec`) and prints it neatly (`formatSongSpec`)        |
+| `music/player.ts`             | the loop player: builds once, never starts a second copy, pauses at volume 0                             |
+| `sfx/recipes.ts`              | effect recipes: a duration and a sample function; noise from an injected generator                       |
+| `sfx/mixRules.ts`             | mix rules: volume, shortest interval, number of voices, priority                                         |
+| `sfx/mixer.ts`                | the **mixer** (pure logic): merging, intervals, a budget per 100 ms, ducking in a crowd                  |
+| `sfx/cues.ts`                 | game event → sound name (a pure function)                                                                |
+| `sfx/laser.ts`, `sfx/bank.ts` | the laser hum; the bank of effects, created on first use and in the background                           |
+| `out.ts`, `howlerOut.ts`      | the `AudioOut` backend interface and its only implementation, on howler.js                               |
+| `system.ts`                   | assembly: events → sounds → mixer → bank → backend, plus the music and the settings                      |
 
-Песня — это данные: `music/songs/sinister.json` (`SongSpec`): темп, долей в такте, число тактов и **дорожки**. Дорожка —
-имя, инструмент, громкость, `gate` (какую часть длины нота звучит), необязательное `echo` и список нот
-`[доля, высота MIDI, длина в долях, громкость 0..1]` (громкость можно не писать — это 1). У ударных высота и длина не
-важны (пишется `0` и `0.25`). Ноты лежат по тактам, по строке на такт. `music/songSpec.ts` проверяет файл
-(`validateSongSpec` / `parseSongSpec`: ошибки с путями вроде `tracks[2].notes[5][2]: must be between 0.0625 and Infinity`)
-и печатает его в аккуратном виде (`formatSongSpec`).
+**The song is data**: `music/songs/sinister.json` (`SongSpec`) is a tempo, beats per bar, the number of bars, an
+optional `sound` mode and the **tracks**. A track is a name, an instrument, a volume, a `gate` (how much of its length a
+note sounds), an optional `echo`, and a list of notes `[beat, MIDI pitch, length in beats, velocity 0..1]` (the velocity
+can be left out: it is 1). For drums the pitch and length do not matter (`0` and `0.25` are written). The notes are laid
+out by bar, a line per bar. `music/songSpec.ts` checks the file (errors come with paths such as
+`tracks[2].notes[5][2]: must be between 0.0625 and Infinity`) and prints it neatly.
 
-**Режимы звука.** Песня может указать `"sound"`; у режима свой набор инструментов и свой рендер:
+**Sound modes.** A song may name a `"sound"`; each mode has its own set of instruments and its own rendering:
 
-| Режим   | Звук                                                                  | Рендер                                  | Инструменты                                                                 |
-| ------- | --------------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------- |
-| `lofi`  | консольный (так звучит игра; режим по умолчанию)                      | 16 кГц, громкость в 40 ступеней         | `bass`, `arp`, `drone`, `lead`, `kick`, `snare`, `hat`                      |
-| `chip`  | 8 бит, как NES: 16 ступеней громкости, 4-битный треугольник, шум-LFSR | 22 кГц, 16 ступеней; **канал играет одну ноту за раз** (из аккорда остаётся верхняя, нота обрывается там, где начинается следующая) | `chipLead`, `chipLeadSoft`, `chipHarmony`, `chipArp`, `chipBass`, `chipKick`, `chipSnare`, `chipHat`, `chipOpenHat`, `chipTom`, `chipCrash` |
-| `clean` | гитары, клавишные, струнные, пады, барабанная установка               | 32 кГц, без огрубления                  | `guitar`, `nylon`, `guitarMuted`, `guitarElectric`, `bassPluck`, `bassSub`, `bassSynth`, `piano`, `epiano`, `bell`, `marimba`, `brass`, `flute`, `organ`, `synthLead`, `pad`, `strings`, `cleanKick`, `cleanSnare`, `cleanClap`, `cleanHat`, `cleanOpenHat`, `cleanTom`, `cleanCrash` |
+| Mode    | Sound                                                             | Rendering                                                                                                                   | Instruments                                                                                                                                                                                                                                                                           |
+| ------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lofi`  | console sound (how the game sounds; the default)                  | 16 kHz, loudness in 40 steps                                                                                                | `bass`, `arp`, `drone`, `lead`, `kick`, `snare`, `hat`                                                                                                                                                                                                                                |
+| `chip`  | 8-bit, like an NES: 16 loudness steps, 4-bit triangle, LFSR noise | 22 kHz, 16 steps; **a channel plays one note at a time** (of a chord the highest stays, a note stops where the next starts) | `chipLead`, `chipLeadSoft`, `chipHarmony`, `chipArp`, `chipBass`, `chipKick`, `chipSnare`, `chipHat`, `chipOpenHat`, `chipTom`, `chipCrash`                                                                                                                                           |
+| `clean` | guitars, keys, strings, pads, a drum kit                          | 32 kHz, no rounding                                                                                                         | `guitar`, `nylon`, `guitarMuted`, `guitarElectric`, `bassPluck`, `bassSub`, `bassSynth`, `piano`, `epiano`, `bell`, `marimba`, `brass`, `flute`, `organ`, `synthLead`, `pad`, `strings`, `cleanKick`, `cleanSnare`, `cleanClap`, `cleanHat`, `cleanOpenHat`, `cleanTom`, `cleanCrash` |
 
-Инструмент другого режима валидатор отвергает (`the clean sound has …`). Голоса: `tone` (волна + огибающая, слои-«хор», фильтр, овердрайв,
-ступенчатая огибающая), `pluck` (струна по Карплусу-Страусу: гитары и щипковый бас), `fm` (пара синусов: пианино, колокол, медь),
-`noise` (регистр сдвига чипа: барабаны 8 бит). У каждого инструмента есть роль (`bass`, `lead`, `kick`…): при смене режима песни в
-редакторе инструменты заменяются на «того же рода». Примеры: `songs/chip-demo.json`, `songs/clean-demo.json` (кнопки в редакторе).
+The validator rejects an instrument of another mode (`the clean sound has …`). The voices are `tone` (a wave with an
+envelope, chorus layers, a filter, overdrive, a stepped envelope), `pluck` (a Karplus-Strong string: guitars and the
+plucked bass), `fm` (a pair of sines: piano, bell, brass) and `noise` (the shift register of a chip: 8-bit drums). Every
+instrument has a role (`bass`, `lead`, `kick`, …), so when a song is moved to another mode in the editor, each
+instrument is swapped for one that plays the same part.
 
-Чтобы **добавить песню**: положите `<имя>.json` рядом с `sinister.json`, прочитайте его через `parseSongSpec` и отдайте
-`composeSong` + `renderScore` в плеере. Писать JSON руками не нужно: рядом с проектом лежит **редактор музыки**
-(**Tonegrid**, `../tonegrid`, отдельный репозиторий со своей копией звукового движка; она подтягивается командой `yarn sync-engine` в нём) — нотный редактор (piano roll на канвасе, как в FL Studio): нота ставится
-кликом, двигается и растягивается мышью, есть выделение рамкой, копирование, громкость каждой ноты, дорожки с
-mute/solo; прослушивание тем же композитором и рендерером, проверка тем же валидатором, сохранение в этом же формате.
-Чтобы **добавить эффект**: рецепт в `recipes.ts`, правило в `mixRules.ts`, событие → имя в `cues.ts`. Чтобы
-**сменить бэкенд** (например, на WebAudio): реализовать `AudioOut`, остальное не трогать.
+To **add a song**: put `<name>.json` next to `sinister.json`, read it with `parseSongSpec` and give it to `composeSong`
 
-### Языки (`src/i18n/`)
+- `renderScore` in the player. You do not have to write the JSON by hand: next to this project there is the **music
+  editor Tonegrid** (`../tonegrid`, a separate repository with its own copy of the sound engine, taken from here with
+  `yarn sync-engine` there). It is a piano roll on a canvas: a note is put with a click, moved and stretched with the
+  mouse, there are rectangle selection, copy and paste, the velocity of every note, tracks with mute/solo, playback with
+  the same composer and renderer, checking with the same validator, and saving in this same format.
 
-Английский — язык по умолчанию и эталон; поддерживаются русский (`ru`), немецкий (`de`), украинский (`ua`) и
-шведский (`sv`). Весь текст для игрока — по одному файлу на язык: `texts.en.json`, `texts.ru.json`,
-`texts.de.json`, `texts.ua.json`, `texts.sv.json`. В каждом два раздела:
+To **add an effect**: a recipe in `recipes.ts`, a rule in `mixRules.ts`, event → name in `cues.ts`. To **change the
+backend** (to WebAudio, say): implement `AudioOut` and leave the rest alone.
 
-- `ui` — строки интерфейса с `{плейсхолдерами}` и HTML-тегами (`<b>`, `<kbd>`, …); `credits` — список строк титров;
-- `game` — названия и описания данных игры по их id из `balance.yaml`: `towers` (вместе с `ults`), `enemies`,
-  `difficulties`, `abilities`, `routes`.
+### Languages (`src/i18n/`)
 
-**Выбор языка.** В настройках — обычный выпадающий список (`<select id="langSel">`), где язык назван на самом себе
-(English, Русский, Deutsch, Українська, Svenska). Выбор сохраняется в localStorage (`xt-lang`) и применяется сразу, без
-перезагрузки и без потери текущей партии. Если выбора нет, берётся первый известный язык из списка браузера
-(`uk-UA` → `ua`), иначе английский. `<html lang>` получает правильный тег (для украинского — `uk`).
+English is the default language and the reference; Russian (`ru`), German (`de`), Ukrainian (`ua`) and Swedish (`sv`)
+are supported. All text for the player is one file per language: `texts.en.json`, `texts.ru.json`, `texts.de.json`,
+`texts.ua.json`, `texts.sv.json`. Each has two sections:
 
-**Запасной язык.** Если в языке нет строки, показывается английская, а если нет и её — сам ключ. Поэтому
-недописанный перевод не ломает игру, но тесты такого не допускают (см. ниже).
+- `ui` — interface strings with `{placeholders}` and HTML tags (`<b>`, `<kbd>`, …); `credits` — the credit lines;
+- `game` — names and descriptions of the game's data by their ids from `balance.yaml`: `towers` (with `ults`),
+  `enemies`, `difficulties`, `abilities`, `levels`.
 
-**Добавить язык**:
+The name of the game, **Xeno-Tactics**, is not translated.
 
-1. Скопируйте `texts.en.json` в `texts.<код>.json` и переведите значения (ключи, `{плейсхолдеры}` и теги — как есть).
-2. Добавьте язык в `LANGUAGES` (`languages.ts`: код, название на самом языке, тег для `<html lang>`) и в `texts.ts`.
-3. Добавьте код в список `CODES` в `tests/i18n.test.ts` и в `e2e/language.spec.ts`.
+**Choosing a language.** In the settings there is an ordinary drop-down list (`<select id="langSel">`) in which each
+language is named in itself (English, Русский, Deutsch, Українська, Svenska). The choice is saved in localStorage
+(`xt-lang`) and applied at once, without a reload and without losing the current game. With no choice made, the first
+known language in the browser's list is taken (`uk-UA` → `ua`), otherwise English. `<html lang>` gets the right tag
+(`uk` for Ukrainian).
 
-Тесты проверяют каждый язык: те же ключи, что в английском; ни одной пустой строки; те же `{плейсхолдеры}` и HTML-теги
-в каждой строке; те же строки титров; тексты есть для каждой башни, ультимейта, врага, сложности, способности и маршрута
-из баланса; перевод не копия английского и написан своим алфавитом. Браузерные тесты (`e2e/language.spec.ts`)
-проверяют селектор, запоминание выбора, определение языка по браузеру и что ни одно название или кнопка не обрезаны ни на
-десктопе, ни на телефоне ни в одном языке.
+**Fallback.** If a language lacks a string, the English one is shown, and if that is missing too, the key itself. So an
+unfinished translation does not break the game, but the tests do not allow one (see below).
 
-**Тексты, зависящие от поворота поля.** В портрете поле повёрнуто на 90°: ось x доски идёт на экране сверху вниз, а
-ось y — справа налево. Поэтому «слева направо» превращается в «сверху вниз», а «по выбранному ряду» — в «по выбранному
-столбцу». Такие тексты лежат рядом с обычными в виде поля с суффиксом `Rotated`: `routes.h.labelRotated`,
-`routes.v.labelRotated`, `abilities.carpet.descRotated` (других нет, тест это фиксирует). UI читает тексты через
-`L(объект, поле)`: на повёрнутом поле он берёт `<поле>Rotated`, если оно есть, и перестраивает подсказки при каждом
-повороте устройства. Если добавляете текст с направлением («слева», «вверху», «ряд», «колонка»), заведите для него
-`...Rotated` во всех пяти языках. Браузерный тест сверяет подписи с реальной геометрией экрана.
+**Adding a language:**
 
-Тексты на данных ядра (`core.TT.gun.name` и т. п.) — «живые» свойства: они читают текущий язык при каждом
-обращении, поэтому смена языка не требует пересборки.
+1. Copy `texts.en.json` to `texts.<code>.json` and translate the values (keys, `{placeholders}` and tags stay as they are).
+2. Add the language to `LANGUAGES` (`languages.ts`: the code, its name in itself, the tag for `<html lang>`) and to `texts.ts`.
+3. Add the code to the `CODES` list in `tests/i18n.test.ts` and in `e2e/language.spec.ts`.
 
-### Случайные числа
+The tests check every language: the same keys as English; no empty string; the same `{placeholders}` and HTML tags in
+every string; the same credit lines; texts for every tower, ultimate, enemy, difficulty, ability and level from the
+balance; a translation that is not a copy of the English one and is written in its own alphabet. The browser tests
+(`e2e/language.spec.ts`) check the selector, remembering the choice, detecting the language from the browser, and that no
+name or button is cut off, on desktop or on a phone, in any language.
 
-У каждой подсистемы свой поток: `rng.core`, `rng.fx` (рендер), `rng.audio` (передаются в `createApp(hooks)`). Если поток не задан, берётся
-`Math.random` (для симуляции это `createGame({ rng })`). Это нужно, чтобы косметика (частицы, тряска) не сдвигала симуляцию, а тесты были воспроизводимы.
-В новом коде используйте `rand()` модуля, а не `Math.random()`.
+**Texts that depend on the rotation of the field.** In portrait the field is rotated by 90°: the x axis of the board runs
+top to bottom on the screen and the y axis right to left. So "left to right" becomes "top to bottom", and "along the
+chosen row" becomes "along the chosen column". Such texts sit next to the ordinary ones as a field with the suffix
+`Rotated` (today only `abilities.carpet.descRotated`; the test fixes that there are no others). The UI reads texts with
+`L(object, field)`: on a rotated field it takes `<field>Rotated` if there is one, and rebuilds the hints on every turn of
+the device. If you add a text with a direction ("left", "top", "row", "column"), add a `...Rotated` for it in all five
+languages. The names of routes are not texts: they are computed from the geometry of the map (`ui/routes.ts`).
 
-## Тесты
+Texts over the data of the core (`core.TT.gun.name` and the like) are "live" properties: they read the current language on
+every access, so changing the language needs no rebuild.
+
+### Random numbers
+
+Each subsystem has its own stream: `rng.core`, `rng.fx` (rendering), `rng.audio` (passed to `createApp(hooks)`). When
+no stream is given, `Math.random` is used (for the simulation it is `createGame({ rng })`). This keeps cosmetics
+(particles, shake) from shifting the simulation, and tests reproducible. In new code use the module's `rand()`, not
+`Math.random()`.
+
+## Tests
 
 ```sh
-yarn test            # Vitest: ~245 тестов, несколько секунд (эффекты синтезируются лениво)
-yarn test:watch      # то же в режиме наблюдения
-yarn test:coverage   # Vitest + покрытие: таблица в консоли и HTML-отчёт в coverage/index.html
-yarn sim             # симулятор баланса (sim/): бот играет все карты × сложности, печатает, до какой волны дошёл
-                     # (SIM_LEVELS, SIM_DIFFS, SIM_STRATEGIES, SIM_SEEDS сужают прогон; `yarn sim sim/trace.sim.ts` — ход одной партии)
-yarn test:visual     # Playwright: скриншоты canvas
-yarn test:all        # оба набора подряд
+yarn test            # Vitest: ~470 tests, a few seconds (effects are synthesised lazily)
+yarn test:watch      # the same in watch mode
+yarn test:coverage   # Vitest + coverage: a table in the console and an HTML report in coverage/index.html
+yarn sim             # the balance simulator (sim/): see "Balance simulator"
+yarn test:visual     # Playwright: canvas screenshots and interface behaviour (~140 tests)
+yarn test:all        # both suites in a row
 ```
 
 ### Vitest (`tests/`)
 
-Модули импортируются напрямую, без браузера (`tests/helpers/load.ts`):
+Modules are imported directly, without a browser (`tests/helpers/load.ts`):
 
-- `loadXT([], { seed, globals })` собирает через `createApp` **свежие** сервисы на каждый вызов (состояние между
-  тестами не протекает), ставит заглушки браузерных глобалов (`Howl`, `localStorage`, `document`, …) на
-  `globalThis` и отдаёт `{core, i18n, audio, createRenderer, rng, env}`. Глобалы, которые тест не передал, удаляются;
-- каждому потоку `rng.*` задан сид; `setTimeout` и часы идут через `hooks.env`, чтобы тест управлял временем;
-- `tests/hygiene.test.ts` следит, чтобы `Math.random` оставался только как значение по умолчанию в трёх модулях;
-- `run(core, seconds)` крутит симуляцию шагом 25 мс, как игровой цикл.
+- `loadXT([], { seed, globals })` assembles **fresh** services through `createApp` on every call (no state leaks
+  between tests), puts stubs of the browser globals (`Howl`, `localStorage`, `document`, …) on `globalThis` and returns
+  `{core, i18n, audio, createRenderer, rng, env}`. Globals the test did not pass are removed;
+- every `rng.*` stream gets a seed; `setTimeout` and the clock go through `hooks.env`, so a test controls time;
+- `tests/hygiene.test.ts` makes sure `Math.random` stays only as the default in three modules;
+- `run(core, seconds)` runs the simulation in steps of 25 ms, like the game loop.
 
-| Файл                    | Что проверяет                                                                                                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/core.test.ts`    | таблицы данных, статы, цены улучшений, pathfinding, `placeCheck`, экономика, 200 волн, способности                                                                              |
-| `tests/audio/*.test.ts` | музыка (композитор, рендер с отпечатком сэмплов, плеер), эффекты (рецепты, микшер, соответствие событий звукам, лазер, банк), система на фейковом выводе, адаптер Howler, фасад |
-| `tests/balance.test.ts` | валидатор `balance.yaml` (ловит ошибки с путём), подмена чисел меняет поведение игры                                                                                            |
-| `tests/hygiene.test.ts` | `Math.random` только как дефолт потоков, нет следов IIFE и `window.XT` вне `main.ts`                                                                                            |
-| `tests/i18n.test.ts`    | полнота всех пяти языков (ключи, плейсхолдеры, HTML-теги, кредиты, покрытие id из баланса), определение языка, переводчик с запасным английским, живые тексты на данных ядра    |
-| `tests/render/`         | части рендера: проекция, регулятор качества, эффекты, кэш спрайтов, цвета, композиция слоёв                                                                                     |
-| `tests/render.test.ts`  | прогон 45 волн на заглушке 2D-контекста: не падает, не оставляет мусор в состоянии ctx; рендер не влияет на симуляцию                                                           |
+| File                    | What it checks                                                                                                                                                                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/core.test.ts`    | the data tables, stats, upgrade prices, pathfinding, `placeCheck`, the economy, 200 waves, abilities                                                                                                                                |
+| `tests/audio/*.test.ts` | music (composer, rendering with a sample fingerprint, sound modes, instruments' pitch, song validator, player), effects (recipes, mixer, events → sounds, laser, bank), the system on a fake output, the Howler adapter, the facade |
+| `tests/balance.test.ts` | the `balance.yaml` validator (errors with a path), replacing numbers changes the game                                                                                                                                               |
+| `tests/levels.test.ts`  | the maps: gates, walls, reachability, texts of every level                                                                                                                                                                          |
+| `tests/hygiene.test.ts` | `Math.random` only as the default of the streams, no IIFE leftovers and no `window.XT` outside `main.ts`, the composer knows no sound and the renderer no songs                                                                     |
+| `tests/i18n.test.ts`    | completeness of all five languages (keys, placeholders, HTML tags, credits, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                |
+| `tests/render/`         | the parts of rendering: projection, the quality governor, effects, the sprite cache, colours, the layer composition                                                                                                                 |
+| `tests/render.test.ts`  | 45 waves on a stub 2D context: it does not crash, leaves no mess in the ctx state; rendering does not influence the simulation                                                                                                      |
+| `tests/ui/`             | the pure logic of the interface: commands, keys, panels, routes, sessions                                                                                                                                                           |
 
-Golden-тест core хранится в `tests/__snapshots__/`. Если вы **намеренно** поменяли баланс — обновите:
-`yarn vitest run -u`. Если не меняли, а снапшот разошёлся — это регрессия.
+The golden test of core is kept in `tests/__snapshots__/`. If you changed the balance **on purpose**, update it:
+`yarn vitest run -u`. If you did not and the snapshot differs, that is a regression.
 
-Покрытие считается только по `src/` и только для Vitest (скриншот-тесты в него не входят). Интерфейс (`src/ui`) покрыт
-юнит-тестами логики и текстовых панелей, а отрисовка DOM — браузерными тестами `e2e/ui.spec.ts`. HTML-отчёт: откройте `coverage/index.html`, там построчная
-подсветка непокрытых строк.
+Coverage is counted only over `src/` and only for Vitest (screenshot tests are not in it). The interface (`src/ui`) is
+covered by unit tests of the logic and the text panels, and the DOM drawing by the browser tests in `e2e/ui.spec.ts`.
+The HTML report: open `coverage/index.html`, where the uncovered lines are highlighted.
 
-### Скриншот-тесты (`e2e/`)
+### Screenshot tests (`e2e/`)
 
-Снимается только `#field` (canvas), чтобы не зависеть от шрифтов HUD. Время, `requestAnimationFrame` и
-случайные числа подменены (`e2e/harness.ts`), поэтому кадры воспроизводимы побайтно: игра не идёт сама, тест
-сам продвигает её на N кадров по 1/60 с (`tick(page, n)`).
+Only `#field` (the canvas) is shot, to be independent of the HUD fonts. Time, `requestAnimationFrame` and random
+numbers are replaced (`e2e/harness.ts`), so the frames are reproducible byte for byte: the game does not run by itself,
+the test advances it by N frames of 1/60 s (`tick(page, n)`).
 
-Первый запуск на машине:
+The first run on a machine:
 
 ```sh
 npx playwright install chromium
 yarn test:visual
 ```
 
-Сервер (`vite dev` на `127.0.0.1:4173`) поднимается автоматически, поэтому тесты идут по исходникам `src/`,
-а не по собранному `dist/`.
+The server (`vite dev` on `127.0.0.1:4173`) starts automatically, so the tests run on the sources in `src/`, not on the
+built `dist/`.
 
-- Сцены (расстановка башен, волны) лежат в `e2e/scenes.ts`, сами проверки — в `e2e/visual.spec.ts`. Сцена —
-  функция от `XT.core`; она сериализуется в страницу, поэтому не должна замыкаться на переменные модуля.
-- **Эталонные снимки зависят от платформы** (`*-win32.png` и т. д.). Эталоны для другой ОС или CI нужно
-  сгенерировать там же: `yarn test:visual:update`.
-- Если картинка изменилась намеренно: `yarn test:visual:update`, затем **просмотрите** изменённые PNG в
-  `e2e/visual.spec.ts-snapshots/` перед коммитом.
-- При падении подробности и дифф-картинки — в `test-results/` и `playwright-report/` (в git не попадают;
+- Scenes (an arrangement of towers, waves) are in `e2e/scenes.ts`, the checks themselves in `e2e/visual.spec.ts`. A scene
+  is a function of `XT.core`; it is serialised into the page, so it must not close over module variables.
+- **The reference screenshots depend on the platform** (`*-win32.png` and so on). References for another OS or for CI
+  have to be generated there: `yarn test:visual:update`.
+- If the picture changed on purpose: `yarn test:visual:update`, then **look through** the changed PNGs in
+  `e2e/visual.spec.ts-snapshots/` before committing.
+- When a test fails, the details and diff images are in `test-results/` and `playwright-report/` (not in git;
   `npx playwright show-report`).
 
-### Добавить сцену
+### Adding a scene
 
-1. Опишите расстановку в `SCENES` (`e2e/scenes.ts`).
-2. Добавьте `test(...)` в `e2e/visual.spec.ts`: `scene(page, "имя", кадры)`, затем `shot(page, "имя-снимка")`.
-3. `yarn test:visual:update`, проверьте PNG глазами.
+1. Describe the arrangement in `SCENES` (`e2e/scenes.ts`).
+2. Add a `test(...)` to `e2e/visual.spec.ts`: `scene(page, "name", frames)`, then `shot(page, "shot-name")`.
+3. `yarn test:visual:update`, and check the PNG with your eyes.
 
-### Регрессия «музыка задваивается»
+### Regression: "the music doubles"
 
-`e2e/music-autoplay.spec.ts` и `e2e/music-blocked.spec.ts` проверяют на **настоящем howler.js** (берётся из
-`node_modules`, та же версия 2.2.4, что и на CDN), что при любых изменениях громкости музыки играет ровно одна
-копия цикла: качание ползунка, переход через 0 и обратно, изменение во время синтеза и декодирования, сохранённая
-громкость 0, настоящий диалог настроек, заблокированный автозапуск (до первого клика). Фейковый Howl в vitest
-этого не ловит, потому что загружается мгновенно, а реальный — асинхронно и с очередью разблокировки звука.
+`e2e/music-autoplay.spec.ts` and `e2e/music-blocked.spec.ts` check on the **real howler.js** (taken from `node_modules`,
+the same version 2.2.4 as on the CDN) that under any changes of the music volume exactly one copy of the loop plays:
+wiggling the slider, crossing 0 and back, a change during synthesis and decoding, a saved volume of 0, the real
+settings dialog, a blocked autoplay (before the first click). The fake Howl in vitest does not catch this, because it
+loads instantly while the real one loads asynchronously and with a queue for unlocking the sound.
 
-## Playwright MCP для Claude Code
+## Playwright MCP for Claude Code
 
-`.mcp.json` в корне подключает `@playwright/mcp`: Claude Code в этой папке может сам открывать игру в браузере,
-кликать и делать скриншоты. Ничего устанавливать не нужно, сервер стартует через `npx`; при первом запуске Claude
-Code спросит разрешение на него.
+`.mcp.json` in the root connects `@playwright/mcp`: Claude Code in this folder can open the game in a browser itself,
+click and take screenshots. Nothing needs installing: the server starts through `npx`; on the first start Claude Code
+asks for permission to use it.
 
-## Рабочий процесс
+## Workflow
 
-- Форматирование: Prettier (`printWidth: 120`, `trailingComma: all`) — `npx prettier --write <файлы>`.
-- Перед коммитом: `yarn test:all`. Рефакторинг не должен менять ни поведение (golden-тест), ни картинку
-  (скриншоты); если меняет — это должно быть сознательным решением с обновлением эталонов.
-- Весь код — TypeScript: `src/`, тесты (`tests/`), браузерные тесты (`e2e/`), конфиги (`*.config.ts`), скрипты
-  (`scripts/`, запускаются через `tsx`) и service worker (`src/sw.ts`, его в `sw.js` собирает плагин в `vite.config.ts`;
-  в сборку приложения он не входит). `src/` проверяется строго; в тестах разрешён неявный `any` (у заглушек и
-  `page.evaluate`-функций всё равно нет смысла выписывать типы), остальные проверки те же.
-- Комментарии и имена в коде — на английском, как в существующем коде.
+- Formatting: Prettier (`printWidth: 120`, `trailingComma: all`) — `npx prettier --write <files>`.
+- Before a commit: `yarn test:all`. A refactoring must not change the behaviour (the golden test) or the picture (the
+  screenshots); if it does, that must be a conscious decision with the references updated.
+- All code is TypeScript: `src/`, tests (`tests/`), browser tests (`e2e/`), configs (`*.config.ts`), scripts
+  (`scripts/`, run with `tsx`) and the service worker (`src/sw.ts`, which a plugin in `vite.config.ts` builds into
+  `sw.js`; it is not part of the app bundle). `src/` is checked strictly; tests may have an implicit `any` (stubs and
+  `page.evaluate` functions have no use for written-out types), the other checks are the same. The package is
+  `"type": "module"`, and the configs import their plugins with the `.ts` extension.
+- Comments and names in the code are in English, like the existing code.
+- Several Claude Code sessions may work in the same copy at once: see `CLAUDE.md` (the rules) and `COORDINATION.md`
+  (the board).
 
-## Установка на смартфон (PWA)
+## Installing on a phone (PWA)
 
-Игру можно поставить как приложение: `public/manifest.json` (имя, иконки, режим `standalone`: не `fullscreen`, иначе на Android системное меню снизу глючит; в установленном приложении игра не предлагает полный экран), `src/sw.ts` (собирается в `sw.js`) (кэш — игра запускается без сети), `src/pwa.ts` (логика кнопки «Установить» в настройках).
+The game can be installed as an app: `public/manifest.json` (name, icons, the `standalone` display mode — not
+`fullscreen`, or the system menu at the bottom glitches on Android; in the installed app the game does not offer full
+screen), `src/sw.ts` (built into `sw.js`; the cache makes the game start without a network), `src/pwa.ts` (the logic of
+the "Install" button in the settings).
 
-- Android/Chrome: в настройках кнопка «Установить приложение» вызывает системный диалог.
-- iPhone/iPad: Safari не даёт диалога, кнопка подсказывает «Поделиться → На экран “Домой”».
-- Установка работает только по HTTPS (или localhost). Service worker включается в собранной версии; в dev — только с `?sw`, чтобы кэш не показывал старый код.
-- Иконки рисуются из `public/icon.svg`: поправили SVG — запустите `yarn icons`.
-- Чтобы выпустить новую версию кэша принудительно, поменяйте `CACHE` в `src/sw.ts` (собирается в `sw.js`).
+- Android/Chrome: the "Install the app" button in the settings brings up the system dialog.
+- iPhone/iPad: Safari gives no dialog, so the button suggests "Share → Add to Home Screen".
+- Installing works only over HTTPS (or localhost). The service worker is on in the built version; in dev only with
+  `?sw`, so the cache does not show old code.
+- The icons are drawn from `public/icon.svg`: after changing the SVG run `yarn icons`.
+- To force a new version of the cache, change `CACHE` in `src/sw.ts` (built into `sw.js`).
 
-## Деплой
+## Deploy
 
 ```sh
-yarn deploy      # yarn build, затем scp dist/ на сервер (см. package.json)
-yarn maintenance # положить на сайт страницу-заглушку `maintenance/index.html` вместо игры (на время работ)
+yarn deploy      # yarn build, then scp dist/ to the server (see package.json); the site is https://xeno.kovalev.app/
+yarn maintenance # put the maintenance page `maintenance/index.html` on the site in place of the game (during work)
 ```
 
-Заглушка — отдельный одностраничный файл `maintenance/index.html` (без скриптов и сборки, `noindex`). `yarn maintenance` копирует
-его по scp в `index.html` на сервере; игра при этом остаётся лежать рядом (`assets/`, `sw.js`), так что **вернуть игру** —
-обычный `yarn deploy`. Установленное приложение (PWA) отдаёт страницы «сеть в приоритете», поэтому во время работ
-пользователи тоже увидят заглушку, а после деплоя — снова игру.
-
+The maintenance page is a separate one-page file, `maintenance/index.html` (no scripts, no build, `noindex`).
+`yarn maintenance` copies it by scp to `index.html` on the server; the game stays next to it (`assets/`, `sw.js`), so to
+**bring the game back** just run `yarn deploy`. The installed app (PWA) serves pages "network first", so during the work
+users will see the maintenance page too, and the game again after a deploy.
