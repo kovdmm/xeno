@@ -49,6 +49,8 @@ export function loadXT(
     env: { setTimeout, now: () => 0 },
   };
   const XT = { ...hooks, ...createApp(hooks) };
+  // the tests were written on this map; a new player starts on the first map of the data (the easiest one)
+  XT.core.newGame(undefined, "crossroads");
   return XT;
 }
 

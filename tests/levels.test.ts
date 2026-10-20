@@ -21,9 +21,9 @@ const L0 = (b) => b.levels.crossroads.map;
 
 describe("the levels in the data", () => {
   it("there are several, the first is the default, and each is valid", () => {
-    expect(levelIds(BALANCE)).toEqual(["crossroads", "switchback", "fronts", "corner"]);
+    expect(levelIds(BALANCE)).toEqual(["switchback", "corner", "crossroads", "fronts"]); // the order of the campaign
     expect(validateBalance(BALANCE)).toEqual([]);
-    expect(createGame().level.id).toBe("crossroads");
+    expect(createGame().level.id).toBe("switchback");
   });
 
   it.each(levelIds(BALANCE))("%s: the board, the routes and the fields follow the data", (id) => {
@@ -128,7 +128,8 @@ describe("walls", () => {
     const L = g.level,
       walls = wallSet(L);
     expect(walls.size).toBe(40);
-    for (const [x, y] of g.routePath("main")) if (x >= 0 && y >= 0 && x < L.width && y < L.height) expect(walls.has(y * L.width + x)).toBe(false);
+    for (const [x, y] of g.routePath("main"))
+      if (x >= 0 && y >= 0 && x < L.width && y < L.height) expect(walls.has(y * L.width + x)).toBe(false);
   });
 
   it("make the road long: the walk is much longer than the straight line", () => {
@@ -146,7 +147,12 @@ describe("walls", () => {
   });
 
   it("blocks of cells expand to cells", () => {
-    expect(cellsOf([{ x: 1, y: 2, w: 2, h: 2 }])).toEqual([[1, 2], [2, 2], [1, 3], [2, 3]]);
+    expect(cellsOf([{ x: 1, y: 2, w: 2, h: 2 }])).toEqual([
+      [1, 2],
+      [2, 2],
+      [1, 3],
+      [2, 3],
+    ]);
   });
 });
 
@@ -171,21 +177,23 @@ describe("changing the level", () => {
     const g = game("corner");
     g.newGame("easy", "nowhere");
     expect(g.level.id).toBe("corner");
-    expect(createGame({ level: "nowhere" }).level.id).toBe("crossroads");
+    expect(createGame({ level: "nowhere" }).level.id).toBe("switchback");
   });
 
-  it("the simulation of the first level is what it always was (the golden file covers it in full)", () => {
+  it("the level option and newGame(level) give the same game (the golden file covers the simulation in full)", () => {
     const a = game("crossroads", BALANCE, 5);
     a.cheat("hesoyam");
     a.place("gun", 5, 5);
     a.sendWave();
     for (let i = 0; i < 400; i++) a.step(0.05);
-    const b = createGame({ rng: mulberry32(5) });
+    const b = createGame({ rng: mulberry32(5), level: "crossroads" });
     b.cheat("hesoyam");
     b.place("gun", 5, 5);
     b.sendWave();
     for (let i = 0; i < 400; i++) b.step(0.05);
-    expect(JSON.stringify([a.S.credits, a.S.score, a.S.lives])).toBe(JSON.stringify([b.S.credits, b.S.score, b.S.lives]));
+    expect(JSON.stringify([a.S.credits, a.S.score, a.S.lives])).toBe(
+      JSON.stringify([b.S.credits, b.S.score, b.S.lives]),
+    );
   });
 });
 

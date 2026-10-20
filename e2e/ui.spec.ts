@@ -384,7 +384,7 @@ test.describe("the end of a game", () => {
     await tick(page, 6);
     await expect(page.locator("#over")).toBeVisible();
     await expect(page.locator("#overTtl")).toHaveText("Base destroyed");
-    expect(await page.evaluate(() => localStorage.getItem("xt-best-easy"))).not.toBeNull();
+    expect(await page.evaluate(() => localStorage.getItem("xt-best-crossroads-easy"))).not.toBeNull();
     await page.click("#restart");
     await expect(page.locator("#over")).toBeHidden();
     const s = await state(page);
@@ -577,12 +577,13 @@ test.describe("levels (maps)", () => {
     await openLevels(page);
     const cards = page.locator("#levels .dcard");
     await expect(cards).toHaveCount(4);
-    await expect(cards.first()).toHaveClass(/\bon\b/);
-    await expect(cards.first()).toContainText("Crossroads");
-    await expect(cards.first()).toContainText("200 waves");
-    await expect(cards.nth(1)).toContainText("Switchback");
-    await expect(cards.nth(1)).toContainText("100 waves");
-    await expect(cards.nth(1).locator("svg.map")).toHaveCount(1);
+    // the order of the campaign; the harness plays crossroads, so that one is marked
+    await expect(cards.first()).toContainText("Switchback");
+    await expect(cards.first()).toContainText("100 waves");
+    await expect(cards.first().locator("svg.map")).toHaveCount(1);
+    await expect(cards.nth(2)).toHaveClass(/\bon\b/);
+    await expect(cards.nth(2)).toContainText("Crossroads");
+    await expect(cards.nth(2)).toContainText("200 waves");
   });
 
   test("choosing a level before playing switches the board at once and fits the field to it", async ({ page }) => {

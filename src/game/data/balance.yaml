@@ -4,25 +4,11 @@
 
 board:
   enemyBlockRadius: 0.75
-# The maps. finalWave: the wave whose clearing wins. hp: multiplies the HP of every enemy on the map; the simulator
-# bot (a maze builder) reaches about 24 waves on normal everywhere but on fronts, where it stops at 16 with 1.0, so
-# fronts gets 0.85 (the maps stay different on purpose, fronts is still the hardest).
+# The maps, in the order of the campaign: the first is the one a new player starts on. finalWave: the wave whose
+# clearing wins. hp: multiplies the HP of every enemy on the map; the simulator's maze bot reaches about 24 waves on
+# normal everywhere but on fronts, where it stops at 16 with 1.0, so fronts gets 0.85 (the maps stay different on
+# purpose, fronts is still the hardest).
 levels:
-  crossroads:
-    finalWave: 200
-    hp: 1
-    map:
-      width: 22
-      height: 15
-      routes:
-        h:
-          spawn: [[0, 6], [0, 7], [0, 8]]
-          exit: [[21, 6], [21, 7], [21, 8]]
-          dir: [1, 0]
-        v:
-          spawn: [[10, 0], [11, 0], [12, 0]]
-          exit: [[10, 14], [11, 14], [12, 14]]
-          dir: [0, 1]
   switchback:
     finalWave: 100
     hp: 1
@@ -43,25 +29,6 @@ levels:
           y: 8
           w: 20
           h: 1
-  fronts:
-    finalWave: 150
-    hp: 0.85
-    map:
-      width: 23
-      height: 15
-      routes:
-        east:
-          spawn: [[0, 3], [0, 4], [0, 5]]
-          exit: [[22, 3], [22, 4], [22, 5]]
-          dir: [1, 0]
-        west:
-          spawn: [[22, 9], [22, 10], [22, 11]]
-          exit: [[0, 9], [0, 10], [0, 11]]
-          dir: [-1, 0]
-        south:
-          spawn: [[10, 0], [11, 0], [12, 0]]
-          exit: [[10, 14], [11, 14], [12, 14]]
-          dir: [0, 1]
   corner:
     finalWave: 80
     hp: 1
@@ -87,6 +54,40 @@ levels:
           y: 9
           w: 3
           h: 3
+  crossroads:
+    finalWave: 200
+    hp: 1
+    map:
+      width: 22
+      height: 15
+      routes:
+        h:
+          spawn: [[0, 6], [0, 7], [0, 8]]
+          exit: [[21, 6], [21, 7], [21, 8]]
+          dir: [1, 0]
+        v:
+          spawn: [[10, 0], [11, 0], [12, 0]]
+          exit: [[10, 14], [11, 14], [12, 14]]
+          dir: [0, 1]
+  fronts:
+    finalWave: 150
+    hp: 0.85
+    map:
+      width: 23
+      height: 15
+      routes:
+        east:
+          spawn: [[0, 3], [0, 4], [0, 5]]
+          exit: [[22, 3], [22, 4], [22, 5]]
+          dir: [1, 0]
+        west:
+          spawn: [[22, 9], [22, 10], [22, 11]]
+          exit: [[0, 9], [0, 10], [0, 11]]
+          dir: [-1, 0]
+        south:
+          spawn: [[10, 0], [11, 0], [12, 0]]
+          exit: [[10, 14], [11, 14], [12, 14]]
+          dir: [0, 1]
 # Money. The player earns from kills (enemies.*.rw, grown by scaling.rewardGrowth), from clearing a wave
 # (waveClearBonus) and from calling a wave early (earlyBonusPerSecond per second left on the timer).
 economy:

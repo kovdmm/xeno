@@ -16,6 +16,10 @@ export async function openGame(page: Page, { seed = 1 }: { seed?: number } = {})
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
       };
     };
+    // the scenes and the tests were made on this map; a new player starts on the first map of the data (switchback)
+    try {
+      if (!localStorage.getItem("xt-level")) localStorage.setItem("xt-level", "crossroads");
+    } catch {}
     // one stream per subsystem: effects never shift the simulation
     (window as unknown as { XT: unknown }).XT = {
       rng: { core: mulberry32(seed), fx: mulberry32(seed + 1), audio: mulberry32(seed + 2) },

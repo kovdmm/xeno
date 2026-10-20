@@ -16,7 +16,7 @@ const problems = (mutate: (b: any) => unknown) => {
 const game = (mutate?: (b: any) => unknown, seed = 1) => {
   const b = clone();
   mutate?.(b);
-  const g = createGame({ rng: mulberry32(seed), balance: b });
+  const g = createGame({ rng: mulberry32(seed), balance: b, level: "crossroads" }); // the map these tests were written on
   g.S.credits = 1e6;
   return g;
 };
@@ -158,7 +158,7 @@ describe("the numbers really drive the game (an injected balance changes behavio
   });
 
   it("a level's hp coefficient scales the HP of every enemy on it, and only on it", () => {
-    const [first, other] = Object.keys(BALANCE.levels);
+    const [first, other] = ["crossroads", "fronts"]; // the map `game` plays, and another one
     const firstHp = (hp: number, level: string) => {
       const g = game((b) => (b.levels[level].hp = hp));
       g.sendWave();

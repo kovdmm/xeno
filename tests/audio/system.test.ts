@@ -228,7 +228,7 @@ describe("laser hum", () => {
 
 describe("with the real game", () => {
   const game = () => {
-    const g = createGame({ rng: mulberry32(2) });
+    const g = createGame({ rng: mulberry32(2), level: "crossroads" });
     g.S.credits = 1e6;
     return g;
   };

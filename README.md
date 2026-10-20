@@ -111,9 +111,10 @@ descriptions are not part of this file: they are in `src/i18n/texts.*.json`.
 
 #### Levels (`levels`)
 
-Each level is a separate map; the first in the file is played by default. The map is chosen in the settings ("Map");
-records are kept per map and difficulty (`xt-best-<map>-<difficulty>`; the first map keeps the old keys). The maps are
-`crossroads`, `switchback`, `fronts` and `corner`.
+Each level is a separate map; the first in the file is the one a new player starts on, and the file lists the maps in
+the order of the campaign: `switchback`, `corner`, `crossroads`, `fronts`. The map is chosen in the settings ("Map");
+records are kept per map and difficulty (`xt-best-<map>-<difficulty>`; records of older versions are not read). The
+tests and the screenshot scenes play `crossroads` (the unit-test helper and the e2e harness pin it).
 
 ```yaml
 switchback:

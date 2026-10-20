@@ -2,14 +2,7 @@
 // layout maths, the text panels and what the renderer is asked to show.
 import { describe, it, expect } from "vitest";
 import { fmt } from "../../src/ui/format";
-import {
-  CheatTyper,
-  escapeAction,
-  hotkey,
-  physicalDigit,
-  physicalLetter,
-  spaceAction,
-} from "../../src/ui/keys";
+import { CheatTyper, escapeAction, hotkey, physicalDigit, physicalLetter, spaceAction } from "../../src/ui/keys";
 import { clearPicks, createState, speedOf, SPEEDS } from "../../src/ui/state";
 import { createProgress } from "../../src/ui/progress";
 import { createScreens, SCREENS } from "../../src/ui/screens";
@@ -115,7 +108,15 @@ describe("Escape and Space", () => {
 describe("UiState", () => {
   it("starts paused with nothing in hand, and clearPicks empties the hand", () => {
     const s = createState("hard", "corner", 7);
-    expect([s.paused, s.sel, s.build, s.aim, s.diff, s.level, s.best]).toEqual([true, null, null, null, "hard", "corner", 7]);
+    expect([s.paused, s.sel, s.build, s.aim, s.diff, s.level, s.best]).toEqual([
+      true,
+      null,
+      null,
+      null,
+      "hard",
+      "corner",
+      7,
+    ]);
     s.build = "gun";
     s.aim = "meteor";
     s.sel = {} as Tower;
@@ -166,18 +167,18 @@ describe("saved progress", () => {
     expect(p.bestOf("crossroads", "normal")).toBe(200);
   });
 
-  it("the first level keeps the keys older versions used, the others get their own", () => {
+  it("keeps a record per map and difficulty under a key of its own", () => {
     const { p, store } = make();
     p.saveBest("crossroads", "hard", 7);
     p.saveBest("corner", "hard", 9);
-    expect(store.get("xt-best-hard")).toBe("7");
+    expect(store.get("xt-best-crossroads-hard")).toBe("7");
     expect(store.get("xt-best-corner-hard")).toBe("9");
+    expect([p.bestOf("crossroads", "hard"), p.bestOf("corner", "hard"), p.bestOf("corner", "easy")]).toEqual([7, 9, 0]);
   });
 
-  it("the old single record belongs to the first level on easy", () => {
-    const { p } = make({ "xt-best": "12" });
-    expect(p.bestOf("crossroads", "easy")).toBe(12);
-    expect(p.bestOf("crossroads", "hard")).toBe(0);
+  it("does not read the records of older versions (no migration)", () => {
+    const { p } = make({ "xt-best": "12", "xt-best-easy": "5" });
+    expect(p.bestOf("crossroads", "easy")).toBe(0);
     expect(p.bestOf("corner", "easy")).toBe(0);
   });
 });

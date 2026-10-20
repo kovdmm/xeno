@@ -9,7 +9,7 @@ export interface Progress {
   /** the saved level; the first one when nothing valid is saved */
   readLevel(): string;
   saveLevel(id: string): void;
-  /** the best wave reached on a level at a difficulty (the old single record counts for the first level, easy) */
+  /** the best wave reached on a level at a difficulty */
   bestOf(level: string, diff: DiffKey): number;
   saveBest(level: string, diff: DiffKey, wave: number): void;
   /** the "bagowpw" cheat: every map is open (for the campaign's locks; cheated games stay out of the records) */
@@ -17,14 +17,14 @@ export interface Progress {
   openAllMaps(): void;
 }
 
-/** `levels` are the ids in order with their length; the first level keeps the keys older versions used. */
+/** `levels` are the ids in order with their length. */
 export function createProgress(
   store: KeyValueStore,
   diffs: readonly string[],
   levels: readonly { id: string; finalWave: number }[],
 ): Progress {
   const first = levels[0].id;
-  const key = (level: string, diff: string) => (level === first ? "xt-best-" + diff : `xt-best-${level}-${diff}`);
+  const key = (level: string, diff: string) => `xt-best-${level}-${diff}`;
   const num = (k: string) => +(store.get(k) ?? 0) || 0;
   return {
     readDiff() {
@@ -39,7 +39,7 @@ export function createProgress(
     saveLevel: (id) => store.set("xt-level", id),
     bestOf(level, diff) {
       const cap = levels.find((l) => l.id === level)?.finalWave ?? 0;
-      return Math.min(cap, num(key(level, diff)) || (level === first && diff === "easy" ? num("xt-best") : 0));
+      return Math.min(cap, num(key(level, diff)));
     },
     saveBest: (level, diff, wave) => store.set(key(level, diff), String(wave)),
     mapsOpen: () => store.get("xt-allmaps") === "1",
