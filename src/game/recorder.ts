@@ -41,8 +41,10 @@ export function createRecorder(game: GameApi) {
       return r;
     }) as GameApi["upgrade"],
     sell: ((t) => {
+      // only a sale that really happens is a command: a stale tower (sold already, or of a game before) is nothing
+      const onBoard = !!t && !game.S.over && game.S.towers.includes(t);
       const v = game.sell(t);
-      if (t) log("s", t.id);
+      if (onBoard) log("s", t.id);
       return v;
     }) as GameApi["sell"],
     sendWave: ((early) => {

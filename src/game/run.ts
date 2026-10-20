@@ -4,13 +4,15 @@
 // the player claims is never trusted.
 import { TICK } from "./constants";
 import { createGame } from "./game";
-import type { Balance } from "./types";
+import type { Balance, State } from "./types";
 
 /** a fingerprint of the simulation code and data the run was played on (scripts/simBuild.ts) */
 export const SIM_BUILD: string = typeof __SIM_BUILD__ === "undefined" ? "dev" : __SIM_BUILD__;
 
 /** the most a run may have: 90 minutes of game time, and a generous number of commands */
 export const RUN_LIMITS = { ticks: 90 * 60 * 60, actions: 20000 } as const;
+
+const RUN_KEYS = ["v", "build", "level", "diff", "seed", "ticks", "actions"];
 
 /** [tick, op, ...args]; the tick is the number of ticks stepped before the command was given */
 export type Action =
@@ -36,8 +38,11 @@ export interface Run {
 /** what a finished game came to */
 export interface Outcome {
   won: boolean;
-  /** the last wave called */
+  /** the last wave called (what the end screen says) */
   wave: number;
+  /** the waves that were really dealt with: all of 1..cleared are fully killed or through. This ranks, not `wave`:
+   *  calling waves early stacks them and must not buy a place */
+  cleared: number;
   score: number;
   lives: number;
   /** game time in seconds */
@@ -51,10 +56,23 @@ export type ReplayError =
   | "diff"
   | "action" // a command that cannot be given at that moment: the run does not match the game
   | "unfinished" // the game was not over at the recorded end
+  | "build" // recorded on another simulation than this one
   | "cheated"
   | "slow"; // the replay took longer than allowed
 
 export type ReplayResult = { ok: true; outcome: Outcome } | { ok: false; error: ReplayError; detail?: string };
+
+/** the most CPU time a replay may take when the caller does not say (ms): there is no replay without a deadline */
+export const DEFAULT_DEADLINE_MS = 15000;
+/** the clock is read every this many ticks */
+const DEADLINE_EVERY = 16;
+
+/** How a game came to its end. */
+export function outcomeOf(S: State): Outcome {
+  let cleared = 0;
+  while (S.left[cleared + 1] === 0) cleared++;
+  return { won: S.won, wave: S.wave, cleared, score: S.score, lives: S.lives, seconds: S.t };
+}
 
 const fail = (error: ReplayError, detail?: string): ReplayResult => ({ ok: false, error, detail });
 const isInt = (v: unknown, min: number, max: number): v is number =>
@@ -66,6 +84,9 @@ export function checkRun(run: unknown, B: Balance): ReplayResult | null {
   if (typeof run !== "object" || run === null) return fail("format", "not an object");
   const r = run as Record<string, unknown>;
   if (r.v !== 1 || typeof r.build !== "string") return fail("format", "version");
+  // exactly these seven fields: a run with a note tucked in is another text for the same game
+  const keys = Object.keys(r);
+  if (keys.length !== RUN_KEYS.length || !RUN_KEYS.every((k) => keys.includes(k))) return fail("format", "fields");
   if (typeof r.level !== "string" || !Object.hasOwn(B.levels, r.level)) return fail("level");
   if (typeof r.diff !== "string" || !Object.hasOwn(B.difficulty, r.diff)) return fail("diff");
   if (!isInt(r.seed, 0, 0xffffffff)) return fail("format", "seed");
@@ -101,38 +122,46 @@ export function checkRun(run: unknown, B: Balance): ReplayResult | null {
 }
 
 /**
- * Plays the run again from its seed and returns how the game ended. `deadlineMs` bounds the CPU time (checked every
- * few hundred ticks); a run that does not match the game (a command that fails, a game that is not over at the
- * recorded end) is an error, not a result.
+ * Plays the run again from its seed and returns how the game ended. A run that does not match the game is an error,
+ * not a result: a command that fails, a game that is not over at the recorded end, a recorded end that is later than
+ * the game's, commands left over. So a game has exactly one encoding. `deadlineMs` (DEFAULT_DEADLINE_MS if not given)
+ * bounds the CPU time, `build` is the simulation the run must have been recorded on (SIM_BUILD).
  */
 export function replay(
   run: unknown,
-  opts: { balance?: Balance; deadlineMs?: number; now?: () => number } = {},
+  opts: { balance?: Balance; deadlineMs?: number; build?: string; now?: () => number } = {},
 ): ReplayResult {
   const game = createGame({ balance: opts.balance });
   const B = game.balance;
   const bad = checkRun(run, B);
   if (bad) return bad;
   const r = run as Run;
+  if (r.build !== (opts.build ?? SIM_BUILD)) return fail("build");
+  const deadline = opts.deadlineMs ?? DEFAULT_DEADLINE_MS;
   const now = opts.now ?? (() => performance.now());
   const t0 = now();
 
   try {
     game.newGame(r.diff, r.level, r.seed);
     let next = 0;
-    for (let tick = 0; ; tick++) {
+    let tick = 0;
+    for (; ; tick++) {
       while (next < r.actions.length && r.actions[next][0] === tick) {
+        // the recorder never logs a command of a finished game: it would be a second way to write the same game
+        if (game.S.over) return fail("format", "a command after the game ended");
         const err = apply(game, r.actions[next++]);
         if (err) return fail("action", `tick ${tick}: ${err}`);
       }
       if (tick >= r.ticks || game.S.over) break;
       game.step(TICK);
-      if (opts.deadlineMs !== undefined && (tick & 255) === 0 && now() - t0 > opts.deadlineMs) return fail("slow");
+      if (tick % DEADLINE_EVERY === 0 && now() - t0 > deadline) return fail("slow");
     }
     const S = game.S;
     if (S.cheated) return fail("cheated");
     if (!S.over) return fail("unfinished");
-    return { ok: true, outcome: { won: S.won, wave: S.wave, score: S.score, lives: S.lives, seconds: S.t } };
+    if (tick !== r.ticks) return fail("format", "the run goes on after the game ended");
+    if (next !== r.actions.length) return fail("format", "commands left over");
+    return { ok: true, outcome: outcomeOf(S) };
   } catch (e) {
     // a hostile run must not take the server down
     return fail("action", "exception: " + (e instanceof Error ? e.message : String(e)));
@@ -149,6 +178,9 @@ function apply(game: ReturnType<typeof createGame>, a: Action): string | null {
     case "u": {
       const t = game.S.towers.find((x) => x.id === a[2]);
       if (!t) return "upgrade: no tower " + a[2];
+      // an ultimate is one of the tower's own two (a name like "constructor" is not)
+      if (a[3] !== undefined && !Object.hasOwn(game.balance.towers[t.type].ults, a[3]))
+        return "upgrade: no such ultimate";
       const res = game.upgrade(t, a[3]);
       return res.ok ? null : "upgrade " + res.code;
     }

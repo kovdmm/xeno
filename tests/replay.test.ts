@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { TICK } from "../src/game/constants";
 import { createGame, type GameApi } from "../src/game/game";
 import { createRecorder } from "../src/game/recorder";
-import { replay, RUN_LIMITS, SIM_BUILD, type Run } from "../src/game/run";
+import { outcomeOf, replay, RUN_LIMITS, SIM_BUILD, type Run } from "../src/game/run";
 import { loadXT } from "./helpers/load";
 import type { Tower } from "../src/game/types";
 import { autoPlay } from "./helpers/player";
@@ -49,13 +49,7 @@ function fullRun(seed = 21) {
   }
   return { game, rec, run: rec.run() };
 }
-const ended = (game: GameApi) => ({
-  won: game.S.won,
-  wave: game.S.wave,
-  score: game.S.score,
-  lives: game.S.lives,
-  seconds: game.S.t,
-});
+const ended = (game: GameApi) => outcomeOf(game.S);
 
 describe("a recorded run replays to the same game", () => {
   it("the result of the replay is the result of the game that was played, to the bit", () => {
@@ -250,10 +244,7 @@ describe("the app's core records seeded games and leaves the tests' games alone"
     }
     const run = C.run();
     expect(run).not.toBeNull();
-    expect(replay(run)).toEqual({
-      ok: true,
-      outcome: { won: C.S.won, wave: C.S.wave, score: C.S.score, lives: C.S.lives, seconds: C.S.t },
-    });
+    expect(replay(run)).toEqual({ ok: true, outcome: outcomeOf(C.S) });
   });
 
   it("a game of a test, with the test's own random stream, has no seed and no run", () => {

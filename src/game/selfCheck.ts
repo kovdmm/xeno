@@ -4,7 +4,7 @@
 import { TICK } from "./constants";
 import { createGame, type GameApi } from "./game";
 import { createRecorder } from "./recorder";
-import { replay, type Outcome, type Run } from "./run";
+import { outcomeOf, replay, type Outcome, type Run } from "./run";
 import type { Tower, TowerType } from "./types";
 
 const TYPES: TowerType[] = ["gun", "cannon", "frost", "missile", "laser", "plasma", "rail", "artillery", "gun", "rail"];
@@ -91,7 +91,7 @@ export function recordedGame(seed = 21): { run: Run; ended: Outcome } {
   const run = rec.run();
   if (!run) throw new Error("the scripted game did not end");
   const S = game.S;
-  return { run, ended: { won: S.won, wave: S.wave, score: S.score, lives: S.lives, seconds: S.t } };
+  return { run, ended: outcomeOf(S) };
 }
 
 /** what the recorded game came to and a hash of its commands, as text: the same in every engine */

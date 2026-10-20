@@ -10,4 +10,4 @@ export const GAME_DIGEST =
 
 /** `runDigest()` of selfCheck.ts: a whole game played through the recorder (place, upgrade, sell, waves) */
 export const RUN_DIGEST =
-  '{"ended":{"won":false,"wave":13,"score":2559,"lives":0,"seconds":85.96666666666307},"commands":23,"ticks":5158,"hash":1388593696}';
+  '{"ended":{"won":false,"wave":13,"cleared":3,"score":2559,"lives":0,"seconds":85.96666666666307},"commands":23,"ticks":5158,"hash":1388593696}';

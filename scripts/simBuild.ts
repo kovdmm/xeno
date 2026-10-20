@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+/** the files of src/game that only check the simulation (determinism fingerprints), by exact name */
+export const NOT_THE_GAME = new Set(["digests.ts", "dmathCheck.ts", "selfCheck.ts"]);
+
 /**
  * A fingerprint of the simulation: every source file of src/game and the balance data. A recorded run only
  * replays to the same result on the same simulation, so the client puts this into the run and the server accepts
@@ -14,7 +17,7 @@ export function simBuild(root = "src/game"): string {
     for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
       const p = join(dir, e.name);
       if (e.isDirectory()) walk(p);
-      else if (/\.(ts|yaml)$/.test(e.name) && !/(Check|digests|selfCheck)\.ts$/.test(e.name)) files.push(p);
+      else if (/\.(ts|yaml)$/.test(e.name) && !NOT_THE_GAME.has(e.name)) files.push(p);
     }
   };
   walk(root);
