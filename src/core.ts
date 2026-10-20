@@ -4,6 +4,7 @@
 import { campaignOf, lockOf } from "./game/campaign";
 import { pos } from "./game/combat";
 import { createGame, type GameApi } from "./game/game";
+import { createRecorder } from "./game/recorder";
 import type { LevelDef, Rng } from "./game/types";
 import type { Core, I18n } from "./ui/types";
 
@@ -48,9 +49,13 @@ function levelInfo(id: string, d: LevelDef, i18n: TextSource) {
 /** What the rest of the app gets: the interface view of the game plus what the renderer reads. */
 export type GameCore = Core & Pick<GameApi, "routePath" | "unitHP"> & { pos: typeof pos };
 
-/** Builds the game. `rng` is the simulation's own random stream (tests pass a seeded one). */
-export function createCore(i18n: TextSource, rng?: Rng): GameCore {
+/**
+ * Builds the game. `rng` is the simulation's own random stream (tests pass a seeded one); without it every new game
+ * is seeded from `newSeed`, so that it can be recorded and replayed.
+ */
+export function createCore(i18n: TextSource, rng?: Rng, newSeed?: () => number): GameCore {
   const game = createGame({ rng });
+  const rec = createRecorder(game);
   const B = game.balance;
   const campaign = campaignOf(B);
   return {
@@ -88,15 +93,18 @@ export function createCore(i18n: TextSource, rng?: Rng): GameCore {
       return game.S;
     },
     on: game.on,
-    newGame: game.newGame,
-    step: game.step,
-    // commands
-    place: game.place,
-    upgrade: game.upgrade,
-    sell: game.sell,
-    sendWave: game.sendWave,
-    cast: game.cast,
-    cheat: game.cheat,
+    // a game is seeded (and so can be recorded and replayed) unless a test hands in its own random stream
+    newGame: (difficulty?: string, level?: string, seed?: number) =>
+      rec.newGame(difficulty, level, seed ?? (rng ? undefined : newSeed?.())),
+    step: rec.step,
+    // commands: all go through the recorder
+    place: rec.place,
+    upgrade: rec.upgrade,
+    sell: rec.sell,
+    sendWave: rec.sendWave,
+    cast: rec.cast,
+    cheat: rec.cheat,
+    run: rec.run,
     // queries (read-only)
     stats: game.stats,
     st: game.towerStats,

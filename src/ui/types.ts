@@ -2,6 +2,7 @@
 // are handed in (see createUi), so the interface can be built and tested with stand-ins for all of them.
 import type { Lock } from "../game/campaign";
 import type { GameApi } from "../game/game";
+import type { Run } from "../game/run";
 import type {
   AbilityDef,
   AbilityKey,
@@ -59,6 +60,8 @@ export interface Core extends Pick<
 > {
   /** starts a game; a level id changes the board */
   newGame(difficulty?: string, level?: string, seed?: number): State;
+  /** the finished game as a recording the server can replay; null while it goes on, or if it cannot be replayed */
+  run(): Run | null;
   readonly S: State;
   readonly W: number;
   readonly H: number;

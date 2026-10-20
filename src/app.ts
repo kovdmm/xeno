@@ -19,7 +19,8 @@ export interface Hooks {
 export function createApp(hooks: Hooks = {}) {
   const store = localStorageStore();
   const i18n = createBrowserI18n(store);
-  const core = createCore(i18n, hooks.rng?.core);
+  // a game is seeded from the clock-free browser random (tests give the core a stream of its own instead)
+  const core = createCore(i18n, hooks.rng?.core, () => Math.floor(Math.random() * 2 ** 32));
   const createRenderer = browserRenderer(core, { rand: hooks.rng?.fx, clock: hooks.env?.now });
   const audio = createBrowserAudio({
     storage: store,

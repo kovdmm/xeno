@@ -1,7 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { createGame } from "../src/game/game";
-import { GAME_DIGEST } from "../src/game/digests";
-import { gameDigest, scriptedGame } from "../src/game/selfCheck";
+import { GAME_DIGEST, RUN_DIGEST } from "../src/game/digests";
+import { gameDigest, recordedGame, replay, runDigest, scriptedGame } from "../src/game/selfCheck";
+
+describe("a whole game through the recorder", () => {
+  it("ends the recorded way, bit for bit (the browsers must agree: e2e/determinism.spec.ts)", () => {
+    expect(runDigest()).toBe(RUN_DIGEST);
+  });
+
+  it("replays to the same end", () => {
+    const { run, ended } = recordedGame();
+    expect(replay(run)).toEqual({ ok: true, outcome: ended });
+  });
+});
 
 describe("seeded games", () => {
   it("the same seed gives the same game, whatever was played before", () => {

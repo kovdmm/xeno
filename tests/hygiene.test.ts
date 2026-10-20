@@ -26,9 +26,18 @@ describe("source hygiene", () => {
     expect(word("Howl", "Howler").test("new Howl({})")).toBe(true);
   });
 
-  it("Math.random appears only as the default random stream of the three subsystems, once each", () => {
-    const allowed = { "game/game.ts": 1, "render/browser.ts": 1, "audio/browser.ts": 1 };
+  it("Math.random appears only as the default random stream of the three subsystems and the seed of a new game, once each", () => {
+    const allowed = { "game/game.ts": 1, "render/browser.ts": 1, "audio/browser.ts": 1, "app.ts": 1 };
     for (const f of files) expect((f.text.match(/Math\.random/g) || []).length, f.name).toBe(allowed[f.name] ?? 0);
+  });
+
+  it("the simulation uses dmath for sin, cos, atan2, hypot, pow, exp and log: the engines' own differ in the last bit", () => {
+    const native = /Math\.(sin|cos|tan|asin|acos|atan2?|sinh|cosh|tanh|hypot|pow|exp|expm1|log|log2|log10|cbrt)\b|\*\*/;
+    for (const f of under("game")) {
+      if (f.name === "game/dmath.ts") continue;
+      expect(code(f), f.name).not.toMatch(native);
+    }
+    expect(code(files.find((f) => f.name === "game/dmath.ts")!)).not.toMatch(/Math\.(sin|cos|atan2|hypot|pow)\b/);
   });
 
   it("window.XT is only a debugging handle set in main.ts: no other module reads or writes it", () => {
@@ -71,7 +80,9 @@ describe("source hygiene", () => {
   it("the renderer (src/render) gets the browser, time and randomness from outside, and only reads the game", () => {
     for (const f of under("render").filter((x) => x.name !== "render/browser.ts")) {
       const c = code(f);
-      expect(c, f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia", "i18n"));
+      expect(c, f.name).not.toMatch(
+        word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia", "i18n"),
+      );
       expect(c, f.name).not.toMatch(/Math\.random|performance\.now/);
       // from the game: types, and the gate helper
       expect(f.text, f.name).not.toMatch(/import (?!type)[^;]*from "\.\.\/(\.\.\/)?game\/(?!constants")/);
@@ -89,7 +100,9 @@ describe("source hygiene", () => {
     for (const n of PURE) {
       const f = files.find((x) => x.name === `ui/${n}.ts`);
       expect(f, n).toBeDefined();
-      expect(code(f), f.name).not.toMatch(word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia"));
+      expect(code(f), f.name).not.toMatch(
+        word("document", "window", "localStorage", "requestAnimationFrame", "matchMedia"),
+      );
     }
     for (const f of under("ui")) {
       expect(code(f), f.name).not.toMatch(word("Howl", "Howler", "localStorage"));

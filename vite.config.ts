@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, transformWithOxc, type Plugin } from "vite";
+import { simBuildDefine } from "./scripts/simBuild.ts";
 import { yamlData } from "./scripts/yamlPlugin.ts";
 
 /** The service worker is TypeScript like everything else: it is compiled to /sw.js (a separate file, not part of
@@ -27,4 +28,5 @@ export default defineConfig({
   // relative asset paths: the build works from any folder or sub-path
   base: "./",
   plugins: [yamlData(), serviceWorker()],
+  define: simBuildDefine(),
 });
