@@ -2,6 +2,7 @@
 // narrow it with SIM_LEVELS, SIM_DIFFS, SIM_STRATEGIES (comma lists) and SIM_SEEDS (a count).
 import { it } from "vitest";
 import { BALANCE } from "../src/game/balance";
+import { patched } from "./patch";
 import type { DiffKey } from "../src/game/types";
 import { play, STRATEGIES, type Outcome } from "./bot";
 
@@ -12,6 +13,7 @@ const strategies = list("SIM_STRATEGIES", ["patient", "rush", "greedy"]);
 const seeds = +(process.env.SIM_SEEDS ?? 3);
 
 it("matrix", { timeout: 6 * 3600 * 1000 }, () => {
+  const balance = patched();
   const rows: string[] = [];
   const header = ["level", "diff", "strategy", "waves (per seed)", "of", "won", "minutes", "lives", "early", "walk"];
   for (const level of levels)
@@ -19,7 +21,7 @@ it("matrix", { timeout: 6 * 3600 * 1000 }, () => {
       for (const name of strategies) {
         const out: Outcome[] = [];
         for (let seed = 1; seed <= seeds; seed++)
-          out.push(play({ balance: BALANCE, level, diff, strategy: STRATEGIES[name], seed }));
+          out.push(play({ balance, level, diff, strategy: STRATEGIES[name], seed }));
         const avg = (f: (o: Outcome) => number) => out.reduce((a, o) => a + f(o), 0) / out.length;
         rows.push(
           [
