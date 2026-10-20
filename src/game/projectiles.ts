@@ -1,5 +1,6 @@
 // How each kind of projectile flies and what it does on arrival. Adding a kind: a type in types.ts and an
 // entry in UPDATE below.
+import { cos, sin, hypot, atan2 } from "./dmath";
 import { areaHit, ex, ey, hit, ignite, stun } from "./combat";
 import type { Bullet, Creep, Game, Howitzer, Missile, Plasma, Projectile, ProjKind, Shell } from "./types";
 
@@ -26,8 +27,8 @@ function explode(g: Game, p: Shell): void {
         x: p.tx,
         y: p.ty,
         tgt: null,
-        tx: p.tx + Math.cos(a) * r,
-        ty: p.ty + Math.sin(a) * r,
+        tx: p.tx + cos(a) * r,
+        ty: p.ty + sin(a) * r,
         dmg: p.dmg * bm.damageFraction,
         sp: bm.splash,
         spd: bm.speed,
@@ -46,7 +47,7 @@ const bullet: Updater<Bullet> = (g, p, dt) => {
   }
   const dx = ex(p.tgt) - p.x,
     dy = ey(p.tgt) - p.y,
-    d = Math.hypot(dx, dy),
+    d = hypot(dx, dy),
     s = p.spd * dt;
   if (d <= s + g.B.projectiles.bullet.hitRadius) {
     hit(g, p.tgt, p.dmg, p.pierce);
@@ -65,7 +66,7 @@ const shell: Updater<Shell> = (g, p, dt) => {
   }
   const dx = p.tx - p.x,
     dy = p.ty - p.y,
-    d = Math.hypot(dx, dy),
+    d = hypot(dx, dy),
     s = p.spd * dt;
   if (d <= s) {
     p.dead = true;
@@ -89,7 +90,7 @@ const missile: Updater<Missile> = (g, p, dt) => {
       bd = M.retargetRange * M.retargetRange;
     for (const c of g.S.creeps) {
       if (c.dead || !(c.fly ? p.air : p.ground)) continue;
-      const q = (ex(c) - p.x) ** 2 + (ey(c) - p.y) ** 2;
+      const q = (ex(c) - p.x) * (ex(c) - p.x) + (ey(c) - p.y) * (ey(c) - p.y);
       if (q < bd) {
         bd = q;
         b = c;
@@ -103,8 +104,8 @@ const missile: Updater<Missile> = (g, p, dt) => {
   }
   const dx = ex(p.tgt) - p.x,
     dy = ey(p.tgt) - p.y,
-    d = Math.hypot(dx, dy);
-  let da = Math.atan2(dy, dx) - p.ang;
+    d = hypot(dx, dy);
+  let da = atan2(dy, dx) - p.ang;
   while (da > Math.PI) da -= 6.283;
   while (da < -Math.PI) da += 6.283;
   p.ang += da * Math.min(1, dt * M.turnRate);
@@ -117,8 +118,8 @@ const missile: Updater<Missile> = (g, p, dt) => {
     g.emit({ type: "explode", kind: "missile", x: p.x, y: p.y, r: p.sp || M.defaultBlast });
     return;
   }
-  p.x += Math.cos(p.ang) * s;
-  p.y += Math.sin(p.ang) * s;
+  p.x += cos(p.ang) * s;
+  p.y += sin(p.ang) * s;
 };
 
 /** plasma bolt: ignites the target; the nova ultimate also ignites everything around it */
@@ -130,7 +131,7 @@ const plasma: Updater<Plasma> = (g, p, dt) => {
   }
   const dx = ex(p.tgt) - p.x,
     dy = ey(p.tgt) - p.y,
-    d = Math.hypot(dx, dy),
+    d = hypot(dx, dy),
     s = p.spd * dt;
   if (d <= s + P.hitRadius) {
     const c = p.tgt;
@@ -156,7 +157,7 @@ const howitzer: Updater<Howitzer> = (g, p, dt) => {
   const f = Math.max(0, Math.min(1, p.f));
   p.x = p.sx + (p.tx - p.sx) * f;
   p.y = p.sy + (p.ty - p.sy) * f;
-  p.h = Math.sin(Math.PI * f) * g.B.projectiles.howitzer.arcHeight;
+  p.h = sin(Math.PI * f) * g.B.projectiles.howitzer.arcHeight;
   if (p.f >= 1) {
     p.dead = true;
     areaHit(g, p.tx, p.ty, p.sp, p.dmg, true, false);

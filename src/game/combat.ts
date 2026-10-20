@@ -1,4 +1,5 @@
 // Damage, status effects and the consequences of death or escape.
+import { hypot } from "./dmath";
 import type { Creep, Game, Vec } from "./types";
 
 /** Position of a creep including its drawing offset inside the cell. */
@@ -44,7 +45,7 @@ export function areaHit(
   const k = g.B.combat;
   for (const c of g.S.creeps) {
     if (c.dead || (c.fly && !air)) continue;
-    const q = Math.hypot(ex(c) - x, ey(c) - y);
+    const q = hypot(ex(c) - x, ey(c) - y);
     if (q > r + c.r * k.splashPad) continue;
     hit(g, c, dmg * (q < r * k.splashCore ? 1 : k.splashEdge), pierce);
     if (extra) extra(c);

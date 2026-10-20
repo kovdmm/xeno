@@ -1,5 +1,6 @@
 // What each tower type does on its turn. To add a tower: a row in data/towers.ts plus one entry here
 // (a `shooter` that fires projectiles/beams, or a `continuous` one that acts every tick).
+import { cos, sin, atan2 } from "./dmath";
 import { ex, ey, hit, stun } from "./combat";
 import { aimAt, findTarget, findTargets, inR } from "./targeting";
 import { statsOf } from "./rules";
@@ -14,8 +15,8 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
     const P = g.B.projectiles.bullet;
     g.S.proj.push({
       k: "b",
-      x: t.x + Math.cos(t.ang) * P.muzzle,
-      y: t.y + Math.sin(t.ang) * P.muzzle,
+      x: t.x + cos(t.ang) * P.muzzle,
+      y: t.y + sin(t.ang) * P.muzzle,
       tgt: c,
       dmg: s.dmg,
       spd: s.prio === "strong" ? P.strongSpeed : P.speed,
@@ -29,8 +30,8 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
     g.S.proj.push({
       k: "s",
       src: "cannon",
-      x: t.x + Math.cos(t.ang) * P.muzzle,
-      y: t.y + Math.sin(t.ang) * P.muzzle,
+      x: t.x + cos(t.ang) * P.muzzle,
+      y: t.y + sin(t.ang) * P.muzzle,
       tgt: c,
       tx: ex(c),
       ty: ey(c),
@@ -51,8 +52,8 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
       const side = k % 2 ? 1 : -1;
       g.S.proj.push({
         k: "m",
-        x: t.x + Math.cos(t.ang + side * P.sideAngle) * P.sideOffset,
-        y: t.y + Math.sin(t.ang + side * P.sideAngle) * P.sideOffset,
+        x: t.x + cos(t.ang + side * P.sideAngle) * P.sideOffset,
+        y: t.y + sin(t.ang + side * P.sideAngle) * P.sideOffset,
         tgt: target,
         dmg: s.multi ? s.dmg : s.dmg / P.pairDamageDivisor,
         v: P.speed,
@@ -70,8 +71,8 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
     const P = g.B.projectiles.plasma;
     g.S.proj.push({
       k: "pl",
-      x: t.x + Math.cos(t.ang) * P.muzzle,
-      y: t.y + Math.sin(t.ang) * P.muzzle,
+      x: t.x + cos(t.ang) * P.muzzle,
+      y: t.y + sin(t.ang) * P.muzzle,
       tgt: c,
       dmg: s.dmg,
       burn: s.burn,
@@ -85,17 +86,17 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
 
   /** instant hit along a line, through everything */
   rail(g, t, s, c, big) {
-    const a = Math.atan2(ey(c) - t.y, ex(c) - t.x);
+    const a = atan2(ey(c) - t.y, ex(c) - t.x);
     t.ang = a;
-    const x2 = t.x + Math.cos(a) * s.range,
-      y2 = t.y + Math.sin(a) * s.range;
+    const x2 = t.x + cos(a) * s.range,
+      y2 = t.y + sin(a) * s.range;
     for (const e of g.S.creeps) {
       if (e.dead) continue;
       const px = ex(e) - t.x,
         py = ey(e) - t.y,
-        proj = px * Math.cos(a) + py * Math.sin(a);
+        proj = px * cos(a) + py * sin(a);
       if (proj < 0 || proj > s.range) continue;
-      if (Math.abs(-px * Math.sin(a) + py * Math.cos(a)) <= e.r + g.B.projectiles.rail.halfWidth * s.width)
+      if (Math.abs(-px * sin(a) + py * cos(a)) <= e.r + g.B.projectiles.rail.halfWidth * s.width)
         hit(g, e, s.dmg, true);
     }
     g.emit({ type: "rail", tower: t, x: t.x, y: t.y, x2, y2, width: s.width, big });
@@ -104,8 +105,8 @@ const SHOOTERS: Partial<Record<TowerType, Shooter>> = {
   artillery(g, t, s, c) {
     const P = g.B.projectiles.howitzer;
     const targets = s.multi ? findTargets(g, t, s, s.multi) : [c];
-    const ox = t.x + Math.cos(t.ang) * P.muzzle,
-      oy = t.y + Math.sin(t.ang) * P.muzzle;
+    const ox = t.x + cos(t.ang) * P.muzzle,
+      oy = t.y + sin(t.ang) * P.muzzle;
     targets.forEach((target, k) => {
       g.S.proj.push({
         k: "a",

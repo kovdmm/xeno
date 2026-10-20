@@ -4,6 +4,7 @@ import { BALANCE } from "./balance";
 import { buildOrigin, footprint, placeCheck, recompute, routePath, towerAt } from "./grid";
 import { levelIds, makeLevel } from "./level";
 import { moveCreep } from "./movement";
+import { mulberry32 } from "./rng";
 import { updateProjectile } from "./projectiles";
 import { statsOf, towerStats, unitHP, upCost } from "./rules";
 import { updateTower } from "./towers";
@@ -33,6 +34,8 @@ export interface GameOptions {
   balance?: Balance;
   /** source of randomness for the simulation; tests pass a seeded one */
   rng?: Rng;
+  /** seeds the simulation's random stream (ignored when `rng` is given) */
+  seed?: number;
   difficulty?: DiffKey;
   /** the level to start on; the first of the balance data by default */
   level?: string;
@@ -43,7 +46,8 @@ export interface GameApi {
   /** the current state; replaced by a new object on every `newGame` */
   readonly S: State;
   on(fn: (e: GameEvent) => void): () => void;
-  newGame(difficulty?: string, level?: string): State;
+  /** with a seed the random stream and the ids start over, so the game can be replayed from its commands */
+  newGame(difficulty?: string, level?: string, seed?: number): State;
   step(dt: number): void;
   // commands
   place(type: TowerType, x: number, y: number): PlaceResult;
@@ -120,7 +124,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
     L: makeLevel(B, opts.level && Object.hasOwn(B.levels, opts.level) ? opts.level : levelIds(B)[0]),
     B,
     diff: opts.difficulty && Object.hasOwn(B.difficulty, opts.difficulty) ? opts.difficulty : "easy",
-    rand: opts.rng ?? Math.random,
+    rand: opts.rng ?? (opts.seed !== undefined ? mulberry32(opts.seed) : Math.random),
     emit: (e) => {
       for (const fn of listeners) fn(e);
     },
@@ -128,9 +132,14 @@ export function createGame(opts: GameOptions = {}): GameApi {
     D: () => B.difficulty[g.diff],
   };
 
-  function newGame(difficulty?: string, level?: string): State {
+  function newGame(difficulty?: string, level?: string, seed?: number): State {
     if (difficulty && Object.hasOwn(B.difficulty, difficulty)) g.diff = difficulty as DiffKey;
     if (level && Object.hasOwn(B.levels, level) && level !== g.L.id) g.L = makeLevel(B, level);
+    if (seed !== undefined) {
+      // a seeded game is a function of the seed and the commands: same stream, same ids, whatever was played before
+      g.rand = mulberry32(seed);
+      nextId = 1;
+    }
     g.S = initialState(g);
     recompute(g);
     g.emit({ type: "reset" });

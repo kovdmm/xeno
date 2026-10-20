@@ -2,6 +2,7 @@
 // strategy says so, calls waves early. It does not build mazes (it never blocks or lengthens a path on purpose),
 // so what it reaches is a floor for what a thoughtful human reaches, not an average.
 import { createGame, type GameApi } from "../src/game/game";
+import { mulberry32 } from "../src/game/rng";
 import type { Balance, DiffKey, Tower, TowerType } from "../src/game/types";
 import { mapKey, type Baked } from "./maze";
 import mazes from "./mazes.json";
@@ -133,16 +134,8 @@ export interface Outcome {
   earlyShare: number;
 }
 
-export function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// moved to the game (the server replays runs with it); the simulator keeps importing it from here
+export { mulberry32 };
 
 /** a player does not call waves back to back: at least this many seconds between two early calls */
 const MIN_CALL_GAP = 6;

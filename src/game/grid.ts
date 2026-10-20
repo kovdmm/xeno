@@ -1,4 +1,5 @@
 // The board: pathfinding fields, route paths and placement rules.
+import { hypot } from "./dmath";
 import { DIRS, INF, mid } from "./constants";
 import { exitDir, reservedCells, routeKeys, wallSet } from "./level";
 import type { Balance, Game, PlaceCode, RouteKey, Tower, TowerType, Vec } from "./types";
@@ -107,7 +108,7 @@ export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
   for (const c of S.creeps) {
     if (c.fly || c.dead) continue;
     for (const i of idx) {
-      if (c.ti === i || (c.ci === i && Math.hypot(c.x - (i % W), c.y - ((i / W) | 0)) < g.B.board.enemyBlockRadius))
+      if (c.ti === i || (c.ci === i && hypot(c.x - (i % W), c.y - ((i / W) | 0)) < g.B.board.enemyBlockRadius))
         return "pcEnemy";
     }
   }

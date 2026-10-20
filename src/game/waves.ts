@@ -1,4 +1,5 @@
 // Wave composition, spawning and the wave timer. Every number comes from balance.waves / scaling / combat.
+import { pow, atan2 } from "./dmath";
 import { mid } from "./constants";
 import { exitDir, routeKeys } from "./level";
 import { diffHP, hpScale } from "./rules";
@@ -85,7 +86,7 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
     X = exitDir(g.L, e.route),
     Df = g.D(),
     dh = diffHP(B, Df, n),
-    hs = T.fly ? Math.pow(hpScale(B, n), B.scaling.flyerHpExponent) : hpScale(B, n);
+    hs = T.fly ? pow(hpScale(B, n), B.scaling.flyerHpExponent) : hpScale(B, n);
   const m = hs * (T.boss ? Math.sqrt(dh) : dh) * (e.m || 1) * g.L.hp;
   const c: Creep = {
     id: g.newId(),
@@ -114,7 +115,7 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
     oy: 0,
     x: 0,
     y: 0,
-    ang: Math.atan2(R.dir[1], R.dir[0]),
+    ang: atan2(R.dir[1], R.dir[0]),
     dx: R.dir[0],
     dy: R.dir[1],
     // flyers use gx/gy, ground units tx/ty/ti/ci; the other set stays at its neutral value

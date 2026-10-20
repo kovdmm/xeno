@@ -1,4 +1,5 @@
 // Player abilities: pricing, casting and their runtime (meteors, fire zones, bombers, nukes).
+import { cos, sin, hypot } from "./dmath";
 import { areaHit, ex, ey, hit } from "./combat";
 import { unitHP } from "./rules";
 import type { AbilityKey, CastResult, Game, Vec } from "./types";
@@ -32,8 +33,8 @@ export function cast(g: Game, k: AbilityKey, pt?: Vec): CastResult {
         r = Math.sqrt(g.rand()) * A.r!;
       S.meteors.push({
         kind: "meteor",
-        x: p![0] + Math.cos(a) * r,
-        y: p![1] + Math.sin(a) * r,
+        x: p![0] + cos(a) * r,
+        y: p![1] + sin(a) * r,
         t: i * A.interval!,
         fall: A.fall!,
         dmg: A.damageUnits! * U,
@@ -79,7 +80,7 @@ export function stepAbilities(g: Game, dt: number): void {
     z.t -= dt;
     for (const c of S.creeps) {
       if (c.dead || c.fly) continue;
-      if (Math.hypot(ex(c) - z.x, ey(c) - z.y) <= z.r) hit(g, c, z.dps * dt, true);
+      if (hypot(ex(c) - z.x, ey(c) - z.y) <= z.r) hit(g, c, z.dps * dt, true);
     }
   }
   S.zones = S.zones.filter((z) => z.t > 0);
@@ -105,7 +106,7 @@ export function stepAbilities(g: Game, dt: number): void {
       n.done = true;
       for (const c of S.creeps) {
         if (c.dead) continue;
-        if (Math.hypot(ex(c) - n.x, ey(c) - n.y) <= n.r + c.r)
+        if (hypot(ex(c) - n.x, ey(c) - n.y) <= n.r + c.r)
           hit(g, c, c.max * (c.boss ? NUKE.bossHpFraction! : NUKE.hpFraction!) + n.dmg, true);
       }
       g.emit({ type: "explode", kind: "nuke", x: n.x, y: n.y, r: n.r });

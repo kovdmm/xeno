@@ -57,7 +57,7 @@ export interface Core extends Pick<
   | "difficulty"
 > {
   /** starts a game; a level id changes the board */
-  newGame(difficulty?: string, level?: string): State;
+  newGame(difficulty?: string, level?: string, seed?: number): State;
   readonly S: State;
   readonly W: number;
   readonly H: number;

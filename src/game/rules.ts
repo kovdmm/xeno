@@ -1,4 +1,5 @@
 // Pure formulas: tower stats by level, upgrade prices, enemy health curve. Every number comes from the balance.
+import { pow } from "./dmath";
 import type { Balance, Difficulty, Tower, TowerStats, TowerType, UltEffect } from "./types";
 
 /** Applies an ultimate to a stat block: first `set`, then `mul`, then `div`. */
@@ -34,10 +35,10 @@ export function towerStats(B: Balance, type: TowerType, lvl: number, ult?: strin
     applyEffect(s, d.ults[ult]);
   }
   if (oc) {
-    const m = Math.pow(B.economy.overclock.damageGrowth, oc);
+    const m = pow(B.economy.overclock.damageGrowth, oc);
     s.dmg *= m;
     s.burn *= m;
-    s.range *= Math.pow(B.economy.overclock.rangeGrowth, oc);
+    s.range *= pow(B.economy.overclock.rangeGrowth, oc);
   }
   return s;
 }
@@ -51,7 +52,7 @@ export function upCost(B: Balance, t: Pick<Tower, "type" | "lvl" | "oc">): numbe
     o = B.economy.overclock;
   if (t.lvl < 3) return c[t.lvl + 1];
   if (t.lvl === 3) return c[3] * B.economy.ultimateCostMultiplier;
-  return Math.round(c[3] * o.costBase * Math.pow(o.costGrowth, t.oc));
+  return Math.round(c[3] * o.costBase * pow(o.costGrowth, t.oc));
 }
 
 /** 0 → 1 smoothstep over the midgame ramp: how far into it wave n is. */
@@ -65,7 +66,7 @@ export const diffHP = (B: Balance, D: Difficulty, n: number): number => 1 + (D.h
 export function hpScale(B: Balance, n: number): number {
   const c = B.scaling;
   let m = 1 + c.linear * (n - 1) + c.quadratic * (n - 1) * (n - 1);
-  if (n > c.lateFromWave) m *= Math.pow(c.lateGrowth, n - c.lateFromWave);
+  if (n > c.lateFromWave) m *= pow(c.lateGrowth, n - c.lateFromWave);
   return m;
 }
 

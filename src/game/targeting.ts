@@ -1,4 +1,5 @@
 // Choosing and aiming at targets.
+import { atan2 } from "./dmath";
 import { INF } from "./constants";
 import { ex, ey } from "./combat";
 import { progress } from "./movement";
@@ -42,7 +43,7 @@ export function findTargets(g: Game, t: Tower, s: TowerStats, n: number): Creep[
 
 /** Turns the tower towards creep c, at a finite speed. */
 export function aimAt(g: Game, t: Tower, c: Creep, dt: number): void {
-  const ta = Math.atan2(ey(c) - t.y, ex(c) - t.x);
+  const ta = atan2(ey(c) - t.y, ex(c) - t.x);
   let da = ta - t.ang;
   while (da > Math.PI) da -= 6.283;
   while (da < -Math.PI) da += 6.283;
