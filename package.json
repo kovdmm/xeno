@@ -16,8 +16,9 @@
     "test:all": "vitest run && playwright test",
     "test:coverage": "vitest run --coverage",
     "build": "vite build",
+    "build:server": "tsx scripts/buildServer.ts",
     "preview": "vite preview --port 3000",
-    "typecheck": "tsc && tsc -p tsconfig.test.json && tsc -p tsconfig.sw.json",
+    "typecheck": "tsc && tsc -p tsconfig.test.json && tsc -p tsconfig.sw.json && tsc -p tsconfig.server.json",
     "icons": "tsx scripts/make-icons.ts"
   },
   "devDependencies": {
