@@ -11,7 +11,7 @@ export interface InputDeps {
   menu: { open(): void; newGame(): void; openSettings(): void; openHelp(): void };
   credits: { close(): void };
   toggleSound(): void;
-  closeScreen(id: "settings" | "help"): void;
+  closeScreen(id: "settings" | "help" | "records"): void;
 }
 
 export function installInput(ui: UiContext, d: InputDeps) {
@@ -64,6 +64,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
     if (!C.cheat(code)) ui.toast(t("cheatBad"));
   });
   const open = (): OpenScreens => ({
+    records: screens.isOpen("records"),
     settings: screens.isOpen("settings"),
     help: screens.isOpen("help"),
     pause: screens.isOpen("pause"),
@@ -96,6 +97,9 @@ export function installInput(ui: UiContext, d: InputDeps) {
     }
     if (k === "escape") {
       switch (escapeAction(open(), !!(st.build || st.sel || st.aim))) {
+        case "close-records":
+          d.closeScreen("records");
+          break;
         case "close-settings":
           d.closeScreen("settings");
           break;

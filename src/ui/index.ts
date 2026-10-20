@@ -14,6 +14,8 @@ import { DESK_QUERY, installLayout } from "./layout";
 import { startLoop } from "./loop";
 import { createPalette } from "./palette";
 import { createProgress } from "./progress";
+import { createRecords, type Records } from "./records";
+import { createScoresClient } from "../scores";
 import { createScreens } from "./screens";
 import { createSession } from "./session";
 import { installSettings } from "./settings";
@@ -101,7 +103,13 @@ export function createUi(deps: UiDeps) {
   const hud = createHud(ui, palette);
   const commands = createCommands(ui, hud.drawSpeed);
   const credits = installCredits(ui);
-  const session = createSession(ui, progress, credits.open, () => applyLang());
+  const scoresClient = deps.scores ?? createScoresClient();
+  let records: Records;
+  const session = createSession(ui, progress, credits.open, () => applyLang(), {
+    takeSeed: (l, d) => records.takeSeed(l, d),
+    onEnd: () => records.onEnd(),
+  });
+  records = createRecords(ui, scoresClient, { onSeed: () => session.reseed() });
   const soundControls = installSoundControls(ui);
   const layout = { refit: () => {}, fit: () => {} };
   const appMode = installAppMode(ui, () => layout.refit());

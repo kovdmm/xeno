@@ -221,6 +221,7 @@
           <button class="big" id="mLevel"></button>
           <button class="big" id="mDiff"></button>
           <button class="big" id="mSettings" data-i="settings"></button>
+          <button class="big" id="mRecords" data-i="recordsBtn"></button>
           <button class="big" id="mHelp" data-i="help"></button>
         </div>
         <p class="mbest" id="mBest"></p>
@@ -246,11 +247,54 @@
       <div class="menuIn">
         <h2 class="scrTitle" id="overTtl">Base destroyed</h2>
         <div class="overTxt" id="overTxt"></div>
+        <!-- the finished game can be entered into the table (only when it started from the server's seed) -->
+        <div class="saveBox" id="saveBox" hidden>
+          <label class="saveLbl"
+            ><span data-i="saveNick"></span
+            ><input
+              id="saveNick"
+              type="text"
+              maxlength="16"
+              autocomplete="nickname"
+              spellcheck="false"
+              enterkeyhint="done"
+          /></label>
+          <button class="big go" id="saveBtn" data-i="saveBtn"></button>
+          <p class="note" id="saveMsg" role="status" aria-live="polite"></p>
+        </div>
         <div class="mbtns">
           <button class="big go" id="restart" data-i="restart"></button>
+          <button class="big" id="overRecords" data-i="recordsBtn"></button>
           <button class="big" id="overDiff" data-i="settings"></button>
           <button class="big" id="overMenu" data-i="mainMenu"></button>
         </div>
+      </div>
+    </div>
+
+    <div class="modal" id="records" hidden>
+      <div class="in plate">
+        <div class="mhead">
+          <h2 data-i="recordsBtn"></h2>
+          <button class="icon x" id="recClose" data-i-label="close">✕</button>
+        </div>
+        <div class="recPick">
+          <select id="recLevel" data-i-label="recMap"></select>
+          <select id="recDiff" data-i-label="recDiff"></select>
+        </div>
+        <p class="note" id="recStatus" role="status" aria-live="polite"></p>
+        <table class="recTable">
+          <thead>
+            <tr>
+              <th data-i="recRank"></th>
+              <th data-i="recName"></th>
+              <th data-i="recWaves"></th>
+              <th data-i="recScore"></th>
+              <th data-i="recTime"></th>
+            </tr>
+          </thead>
+          <tbody id="recBody"></tbody>
+        </table>
+        <p class="note" data-i="recNote"></p>
       </div>
     </div>
 

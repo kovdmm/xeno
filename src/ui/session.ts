@@ -13,6 +13,11 @@ export function createSession(
   openCredits: () => void,
   /** the length of the game changed with the level: texts that state it must be written again */
   onLengthChange: () => void,
+  /** the highscore table's part: the server's seed for a new game, and what to do when a game has ended */
+  scores: { takeSeed(level: string, diff: string): number | undefined; onEnd(): void } = {
+    takeSeed: () => undefined,
+    onEnd: () => {},
+  },
 ) {
   const { core: C, state: st, t, L, $, screens } = ui;
 
@@ -23,7 +28,7 @@ export function createSession(
   function newGame() {
     clearTimeout(creditsTimer);
     st.best = progress.bestOf(st.level, st.diff);
-    C.newGame(st.diff, st.level);
+    C.newGame(st.diff, st.level, scores.takeSeed(st.level, st.diff));
     clearPicks(st);
     $("banner").hidden = false;
     $("banner").textContent = t("banner", { d: L(C.DIFF[st.diff]), f: C.FINAL });
@@ -32,6 +37,19 @@ export function createSession(
       length = C.FINAL;
       onLengthChange();
     }
+  }
+
+  /**
+   * The server's seed arrived after the game was made, and the game is still untouched (nothing built, no wave
+   * called, no cheat): start it over on that seed, so that it can be entered into the table. Nobody can tell.
+   */
+  function reseed() {
+    const s = C.S;
+    if (s.started || s.over || s.towers.length || s.cheated) return;
+    const seed = scores.takeSeed(st.level, st.diff);
+    if (seed === undefined) return;
+    C.newGame(st.diff, st.level, seed);
+    clearPicks(st);
   }
 
   function renderOver() {
@@ -70,6 +88,7 @@ export function createSession(
       $("over").classList.toggle("won", e.won);
       renderOver();
       screens.show("over");
+      scores.onEnd();
       if (e.won) creditsTimer = setTimeout(() => C.S.won && C.S.over && openCredits(), 1800); // over the win screen
     } else if (e.type === "sold" && st.sel === e.tower) st.sel = null;
     else if (e.type === "cheat") {
@@ -81,7 +100,7 @@ export function createSession(
     }
   });
 
-  return { newGame, renderOver, openMenu };
+  return { newGame, renderOver, openMenu, reseed };
 }
 
 export type Session = ReturnType<typeof createSession>;

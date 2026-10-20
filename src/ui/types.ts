@@ -3,6 +3,7 @@
 import type { Lock } from "../game/campaign";
 import type { GameApi } from "../game/game";
 import type { Run } from "../game/run";
+import type { ScoresClient } from "../scores";
 import type {
   AbilityDef,
   AbilityKey,
@@ -125,6 +126,8 @@ export interface UiDeps {
   sound?: Sound;
   createRenderer(canvas: HTMLCanvasElement): Renderer;
   store: KeyValueStore;
+  /** the highscore service; the real one (relative to the page) when absent */
+  scores?: ScoresClient;
 }
 
 export type { Tower, Vec };

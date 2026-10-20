@@ -1171,11 +1171,11 @@ kbd {
 }
 /* phone layout: settings and help are full-screen pages with a back arrow in a fixed top bar, not windows
    with a cross in the corner (the desktop layout keeps the windows) */
-body:not(.desk) :is(#settings, #help) {
+body:not(.desk) :is(#settings, #help, #records) {
   padding: 0;
   background: var(--metal-lo, #14110e);
 }
-body:not(.desk) :is(#settings, #help) .in {
+body:not(.desk) :is(#settings, #help, #records) .in {
   max-width: none;
   min-height: 100%;
   margin: 0;
@@ -1188,11 +1188,11 @@ body:not(.desk) :is(#settings, #help) .in {
   background: none;
   animation: pageIn 0.2s ease-out;
 }
-body:not(.desk) :is(#settings, #help) .in::before,
-body:not(.desk) :is(#settings, #help) .in::after {
+body:not(.desk) :is(#settings, #help, #records) .in::before,
+body:not(.desk) :is(#settings, #help, #records) .in::after {
   display: none;
 }
-body:not(.desk) :is(#settings, #help) .mhead {
+body:not(.desk) :is(#settings, #help, #records) .mhead {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -1202,7 +1202,7 @@ body:not(.desk) :is(#settings, #help) .mhead {
   background: var(--metal-lo, #14110e);
   border-bottom: 1px solid var(--edge);
 }
-body:not(.desk) :is(#settings, #help) .mhead .x {
+body:not(.desk) :is(#settings, #help, #records) .mhead .x {
   order: -1;
   width: 44px;
   height: 44px;
@@ -1211,13 +1211,13 @@ body:not(.desk) :is(#settings, #help) .mhead .x {
   border: 0;
   box-shadow: none;
 }
-body:not(.desk) :is(#settings, #help) .mhead .x::before {
+body:not(.desk) :is(#settings, #help, #records) .mhead .x::before {
   content: "‹";
   font-size: 38px;
   line-height: 1;
   color: var(--acid);
 }
-body:not(.desk) :is(#settings, #help) h2 {
+body:not(.desk) :is(#settings, #help, #records) h2 {
   font-size: 20px;
 }
 @keyframes pageIn {
@@ -1227,9 +1227,100 @@ body:not(.desk) :is(#settings, #help) h2 {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  body:not(.desk) :is(#settings, #help) .in {
+  body:not(.desk) :is(#settings, #help, #records) .in {
     animation: none;
   }
+}
+
+/* ---------- the highscore table ---------- */
+.saveBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px auto 10px;
+  width: min(100%, 360px);
+}
+.saveLbl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: left;
+}
+.saveLbl input {
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 18px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+}
+.saveLbl input:focus {
+  outline: none;
+  border-color: var(--acid);
+}
+.saveBox .note {
+  min-height: 1.3em;
+  margin: 0;
+  text-align: center;
+}
+.recPick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.recPick select {
+  flex: 1 1 140px;
+  min-height: 44px;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+}
+.recTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.recTable th {
+  padding: 6px 8px;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+  border-bottom: 1px solid var(--edge);
+}
+.recTable td {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.recTable td.rk {
+  width: 2.5em;
+  color: var(--muted);
+}
+.recTable td.nm {
+  max-width: 11em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.recTable td.sc,
+.recTable td.tm,
+.recTable td.wv,
+.recTable th:nth-child(n + 3) {
+  text-align: right;
+}
+.recTable tr.me td {
+  color: var(--acid);
 }
 
 /* a sheet from the bottom edge instead of a window in the middle: what phones are used to */
