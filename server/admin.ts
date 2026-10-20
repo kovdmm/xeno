@@ -2,6 +2,7 @@
 //   node admin.mjs top <level> <diff> [n]   list the table
 //   node admin.mjs remove <id>              delete one entry
 //   node admin.mjs remove-nick <nick>       delete every entry of a name
+//   node admin.mjs backup <file>            a consistent copy of the database (the file must not exist yet)
 // Uses the same database as the service (DB_PATH, or $STATE_DIRECTORY/highscores.db).
 import { join } from "node:path";
 import { openDb } from "./db";
@@ -19,8 +20,11 @@ if (cmd === "top" && a && b) {
   console.log("removed", db.removeScore(Number(a)));
 } else if (cmd === "remove-nick" && a) {
   console.log("removed", db.removeNick(a));
+} else if (cmd === "backup" && a) {
+  db.backup(a);
+  console.log("saved", a);
 } else {
-  console.error("usage: admin.mjs top <level> <diff> [n] | remove <id> | remove-nick <nick>");
+  console.error("usage: admin.mjs top <level> <diff> [n] | remove <id> | remove-nick <nick> | backup <file>");
   process.exitCode = 1;
 }
 db.close();

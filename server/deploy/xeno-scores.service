@@ -1,0 +1,41 @@
+# /etc/systemd/system/xeno-scores.service: the Xeno-Tactics highscore service.
+# Built on the pattern of arranger-web.service: its own user, its own state directory, an EnvironmentFile, no new
+# privileges, the file system read-only except the state directory.
+[Unit]
+Description=Xeno-Tactics highscores
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=xeno
+Group=xeno
+EnvironmentFile=/etc/xeno/scores.env
+# /var/lib/xeno, created and owned by the unit's user; the database is /var/lib/xeno/highscores.db
+StateDirectory=xeno
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/xeno
+ExecStart=/usr/local/bin/node --disable-warning=ExperimentalWarning /opt/xeno-scores/scores.mjs
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+ReadWritePaths=/var/lib/xeno
+
+# one core and 1 GB are shared with nginx and Arranger: a replay must not starve them
+MemoryMax=300M
+TasksMax=64
+Nice=10
+CPUWeight=50
+
+[Install]
+WantedBy=multi-user.target

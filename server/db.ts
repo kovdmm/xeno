@@ -209,6 +209,8 @@ export function openDb(path: string) {
     removeScore: (id: number): number => Number(q.remove.run(id).changes),
     removeNick: (nick: string): number => Number(q.removeNick.run(nickKey(nick)).changes),
     count: (): number => (q.count.get() as { n: number }).n,
+    /** a consistent copy of the whole database, made while the service runs (the file must not exist yet) */
+    backup: (to: string): void => void db.prepare("VACUUM INTO ?").run(to),
     close: () => db.close(),
   };
 }
