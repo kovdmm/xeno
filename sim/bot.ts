@@ -3,6 +3,8 @@
 // so what it reaches is a floor for what a thoughtful human reaches, not an average.
 import { createGame, type GameApi } from "../src/game/game";
 import type { Balance, DiffKey, Tower, TowerType } from "../src/game/types";
+import { mapKey, type Baked } from "./maze";
+import mazes from "./mazes.json";
 
 /** What a sensible player builds first: guns hit both ground and air, missiles only fly-by targets. */
 const OPENING: TowerType[] = ["gun", "gun", "gun", "gun", "cannon", "gun", "frost", "gun", "missile"];
@@ -17,6 +19,8 @@ export interface Strategy {
   opening?: TowerType[];
   /** put every upgrade into the most upgraded turret instead of the least upgraded one */
   focus?: boolean;
+  /** build along the baked longest maze of the level (sim/mazes.json) instead of the greedy placement */
+  maze?: boolean;
 }
 
 const BASIC: TowerType[] = ["gun", "cannon", "frost", "missile"];
@@ -48,6 +52,13 @@ export const STRATEGIES: Record<string, Strategy> = {
   },
   "no-gun": { name: "no-gun", towers: ["cannon", "rail", "plasma", "laser"], opening: [], callAt: 4, focus: true },
   "mix-focus": { name: "mix-focus", towers: BASIC, callAt: 4, focus: true },
+  // the same compositions on the longest maze
+  "maze-gun": { name: "maze-gun", towers: ["gun"], opening: [], callAt: 4, maze: true },
+  "maze-gun-cannon": { name: "maze-gun-cannon", towers: ["gun", "gun", "cannon"], opening: [], callAt: 4, maze: true },
+  "maze-gun-rail": { name: "maze-gun-rail", towers: ["gun", "gun", "rail"], opening: [], callAt: 4, maze: true },
+  "maze-gun-frost": { name: "maze-gun-frost", towers: ["gun", "gun", "frost"], opening: [], callAt: 4, maze: true },
+  "maze-mix": { name: "maze-mix", towers: BASIC, callAt: 4, maze: true },
+  "maze-patient": { name: "maze-patient", towers: ["gun"], opening: [], callAt: -1, maze: true },
 };
 
 export interface Outcome {
@@ -62,6 +73,8 @@ export interface Outcome {
   /** game time in minutes */
   minutes: number;
   towers: number;
+  /** the summed walk of the enemies at the end of the game (cells, over all routes) */
+  walk: number;
   /** waves called early / all waves */
   earlyShare: number;
 }
@@ -187,18 +200,25 @@ export function play(opts: {
     return game.balance.towers[type].cost[0];
   };
 
+  // the baked maze of this level, unless the map has changed since it was made
+  const baked = (mazes as unknown as Record<string, Baked>)[level];
+  const maze = strategy.maze && baked && baked.key === mapKey(balance, level) ? baked : undefined;
+  if (strategy.maze && !maze) throw new Error(`no up-to-date baked maze for "${level}": run yarn sim sim/bake.sim.ts`);
+
   function spend() {
     for (let guard = 0; guard < 20; guard++) {
-      const wantTowers = Math.min(45, 5 + Math.floor(S().wave / 3));
+      const wantTowers = maze ? 6 + Math.floor(S().wave * 0.9) : Math.min(45, 5 + Math.floor(S().wave / 3));
       if (S().towers.length < wantTowers) {
         const opening = strategy.opening ?? OPENING;
         const type = built < opening.length ? opening[built] : strategy.towers[built % strategy.towers.length];
         const d = game.balance.towers[type];
         if (S().credits < d.cost[0]) return;
         const size = d.size || 1;
-        const spot = ranked(game, d.range[0] + 0.5, type === "missile" || (!!d.air && built % 3 === 2)).find(
-          ([x, y]) => game.placeCheck(x, y, size) === "",
-        );
+        const air = type === "missile" || (!!d.air && built % 3 === 2);
+        const fits = ([x, y]: [number, number]) => game.placeCheck(x, y, size) === "";
+        const spot =
+          (maze && size === 1 && !air ? maze.order.find(fits) : undefined) ??
+          ranked(game, d.range[0] + 0.5, air).find(fits);
         if (!spot) {
           built++; // nowhere for this type: try the next one
           if (built > 200) return;
@@ -259,6 +279,7 @@ export function play(opts: {
     lives: S().lives,
     minutes: Math.round(S().t / 6) / 10,
     towers: S().towers.length,
+    walk: walkLength(game, new Set()),
     earlyShare: S().wave ? Math.round((early / S().wave) * 100) / 100 : 0,
   };
 }

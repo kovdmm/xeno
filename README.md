@@ -154,7 +154,10 @@ switchback:
 
 `yarn sim` has a bot play every map × difficulty and prints how far it got (`SIM_LEVELS`, `SIM_DIFFS`,
 `SIM_STRATEGIES` and `SIM_SEEDS` narrow the run; `yarn sim sim/trace.sim.ts` shows the course of one game and
-`yarn sim sim/towers.sim.ts` the efficiency of each tower). It is not part of `yarn test`.
+`yarn sim sim/towers.sim.ts` the efficiency of each tower). `yarn sim sim/bake.sim.ts` searches the longest maze of every map
+(simulated annealing over the turret cells, money ignored) and bakes it into `sim/mazes.json`, which the `maze-*`
+strategies of the bot build along; `yarn sim sim/mazecurve.sim.ts` prints how the walk grows with the towers built.
+Rebake after changing a map (a stale maze is refused). It is not part of `yarn test`.
 
 ### Interface (`src/ui/`)
 

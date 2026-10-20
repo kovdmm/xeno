@@ -13,7 +13,7 @@ const seeds = +(process.env.SIM_SEEDS ?? 3);
 
 it("matrix", { timeout: 6 * 3600 * 1000 }, () => {
   const rows: string[] = [];
-  const header = ["level", "diff", "strategy", "waves (per seed)", "of", "won", "minutes", "lives", "early"];
+  const header = ["level", "diff", "strategy", "waves (per seed)", "of", "won", "minutes", "lives", "early", "walk"];
   for (const level of levels)
     for (const diff of diffs)
       for (const name of strategies) {
@@ -32,6 +32,7 @@ it("matrix", { timeout: 6 * 3600 * 1000 }, () => {
             avg((o) => o.minutes).toFixed(1),
             avg((o) => o.lives).toFixed(1),
             avg((o) => o.earlyShare).toFixed(2),
+            avg((o) => o.walk).toFixed(0),
           ].join("\t"),
         );
         process.stdout.write(rows[rows.length - 1] + "\n");
