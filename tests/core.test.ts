@@ -223,20 +223,24 @@ describe("waves", () => {
   beforeEach(() => fresh());
 
   it("makeWave is well formed for every wave on every difficulty", () => {
+    // the faults are collected and checked once: an expect() per enemy of 800 waves would be the slowest test there is
+    const faults: string[] = [];
     for (const d of C.DKEYS) {
       C.newGame(d);
       for (let n = 1; n <= C.FINAL; n++) {
-        const w = C.makeWave(n);
-        expect(w.list.length, `${d} #${n}`).toBeGreaterThan(0);
-        expect(["h", "v", "both"]).toContain(w.route);
+        const w = C.makeWave(n),
+          at = `${d} #${n}`;
+        if (!w.list.length) faults.push(`${at}: empty`);
+        if (!["h", "v", "both"].includes(w.route)) faults.push(`${at}: route ${w.route}`);
         for (const e of w.list) {
-          expect(C.ET[e.type], `${d} #${n} ${e.type}`).toBeDefined();
-          expect(e.gap).toBeGreaterThan(0);
-          expect(e.m).toBeGreaterThan(0);
-          expect(["h", "v"]).toContain(e.route);
+          if (!C.ET[e.type]) faults.push(`${at}: unknown enemy ${e.type}`);
+          if (!(e.gap > 0)) faults.push(`${at}: gap ${e.gap}`);
+          if (!(e.m > 0)) faults.push(`${at}: multiplier ${e.m}`);
+          if (!["h", "v"].includes(e.route)) faults.push(`${at}: route ${e.route}`);
         }
       }
     }
+    expect(faults).toEqual([]);
   });
 
   it("every tenth wave is a boss wave, the last one is the queen", () => {
