@@ -55,7 +55,7 @@ describe("tower stats and upgrade cost", () => {
   });
 
   it("ultimates modify level-4 stats and make everything piercing", () => {
-    expect(C.st("gun", 4, "mini").rate).toBeCloseTo(C.TT.gun.rate[3] / 6);
+    expect(C.st("gun", 4, "mini").rate).toBeCloseTo(C.TT.gun.rate[3] / C.TT.gun.ults.mini.div.rate);
     const sn = C.st("gun", 4, "sniper");
     expect(sn.dmg).toBe(C.TT.gun.dmg[3] * 6);
     expect(sn.range).toBeCloseTo(C.TT.gun.range[3] * 1.7);
@@ -376,8 +376,8 @@ describe("simulation", () => {
     const dealt = 1000 - c.hp;
     expect(count("shot")).toBeGreaterThan(0);
     expect(dealt).toBeGreaterThan(0);
-    // 7 dmg bullets: floor is 25% = 1.75 per hit
-    expect(dealt % 1.75).toBeCloseTo(0, 5);
+    // the floor is 25% of a bullet per hit
+    expect(dealt % (C.TT.gun.dmg[0] * 0.25)).toBeCloseTo(0, 5);
   });
 
   it("air/ground capabilities", () => {
