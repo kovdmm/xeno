@@ -63,6 +63,58 @@ export function createInstaller(
   };
 }
 
+interface WakeLockSentinelLike {
+  released: boolean;
+  release(): Promise<void>;
+  addEventListener(type: "release", cb: () => void): void;
+}
+interface WakeLockNavigator {
+  wakeLock?: { request(type: "screen"): Promise<WakeLockSentinelLike> };
+}
+
+/**
+ * Keeps the screen from dimming while the last `sync(true)` is in force (the Wake Lock API). The browser drops
+ * the lock itself when the tab is hidden, so `sync` has to be called again when the tab comes back. Where the
+ * API is missing or refuses (no permission, low battery), nothing happens and nothing is thrown.
+ */
+export function createWakeLock(nav: WakeLockNavigator, isVisible: () => boolean) {
+  let sentinel: WakeLockSentinelLike | null = null;
+  let pending = false;
+  let want = false;
+
+  async function sync(wanted: boolean = want): Promise<void> {
+    want = wanted;
+    if (!nav.wakeLock) return;
+    if (want && isVisible()) {
+      if ((sentinel && !sentinel.released) || pending) return;
+      pending = true;
+      try {
+        const s = await nav.wakeLock.request("screen");
+        s.addEventListener("release", () => {
+          if (sentinel === s) sentinel = null;
+        });
+        // the player may have paused while the browser was thinking
+        if (want && isVisible()) sentinel = s;
+        else await s.release();
+      } catch {
+        /* refused: the screen may dim, which is no worse than before */
+      } finally {
+        pending = false;
+      }
+    } else if (sentinel) {
+      const s = sentinel;
+      sentinel = null;
+      try {
+        await s.release();
+      } catch {
+        /* already released */
+      }
+    }
+  }
+
+  return { sync, held: () => !!sentinel && !sentinel.released };
+}
+
 /** Registers the service worker that makes the game start offline. Never throws. */
 export async function registerWorker(url = "sw.js"): Promise<boolean> {
   if (!("serviceWorker" in navigator) || !window.isSecureContext) return false;

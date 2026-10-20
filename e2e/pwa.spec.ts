@@ -112,3 +112,41 @@ test.describe("installed app", () => {
     await expect(page.locator("#fsAsk")).toBeVisible();
   });
 });
+
+test("the screen is kept awake while a game runs and let go on the pause", async ({ page }) => {
+  await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+  await page.addInitScript(() => {
+    const w = window as unknown as { __wake: { requests: number; active: number } };
+    w.__wake = { requests: 0, active: 0 };
+    Object.defineProperty(navigator, "wakeLock", {
+      value: {
+        request: async () => {
+          w.__wake.requests++;
+          w.__wake.active++;
+          let released = false;
+          const s = {
+            get released() {
+              return released;
+            },
+            release: async () => {
+              if (!released) w.__wake.active--;
+              released = true;
+            },
+            addEventListener() {},
+          };
+          return s;
+        },
+      },
+    });
+  });
+  const wake = () => page.evaluate(() => (window as unknown as { __wake: { active: number } }).__wake.active);
+  await page.goto("/");
+  await page.waitForFunction(() => window.XT?.i18n);
+  expect(await wake()).toBe(0); // the menu is no game
+  await page.click("#mPlay");
+  await expect.poll(wake, { timeout: 4000 }).toBe(1);
+  await page.click("#pauseBtn");
+  await expect.poll(wake, { timeout: 4000 }).toBe(0);
+  await page.click("#pResume");
+  await expect.poll(wake, { timeout: 4000 }).toBe(1);
+});

@@ -1,5 +1,6 @@
 // Fullscreen and installing as an app: the two ways the game gets more of the screen.
-import { createInstaller } from "../pwa";
+import { createInstaller, createWakeLock } from "../pwa";
+import { speedOf } from "./state";
 import type { UiContext } from "./context";
 
 /** Running as an installed app: it already has the whole screen. */
@@ -100,5 +101,11 @@ export function installAppMode(ui: UiContext, onFullscreenChange: () => void) {
     else installer.prompt();
   });
 
-  return { drawFs, drawInstall, askFullscreen, asApp };
+  // the screen stays awake while a game runs: not on the pause, a menu or the end screen, not in a hidden tab
+  const wake = createWakeLock(navigator, () => !document.hidden);
+  const syncWake = () => void wake.sync(!ui.core.S.over && speedOf(ui.state) > 0);
+  setInterval(syncWake, 1000);
+  document.addEventListener("visibilitychange", syncWake);
+
+  return { drawFs, drawInstall, askFullscreen, asApp, wake };
 }
