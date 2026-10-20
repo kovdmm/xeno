@@ -28,7 +28,7 @@ test.describe("default language", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(page.locator("#mPlay")).toHaveText("Play");
     await expect(page.locator("h1.logo")).toHaveText("Xeno-Tactics");
-    expect(await page.title()).toBe("Xeno Tactics");
+    expect(await page.title()).toBe("Xeno-Tactics");
   });
 
   test("a language the game does not know falls back to English", async ({ browser }) => {

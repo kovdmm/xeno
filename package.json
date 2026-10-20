@@ -1,7 +1,7 @@
 {
-  "name": "xeno-tactic",
+  "name": "xeno",
   "version": "1.0.0",
-  "description": "Xeno-Tactic — browser tactics game",
+  "description": "PWA (browser) tower defence tactics game",
   "private": true,
   "scripts": {
     "start": "vite --port 3000",

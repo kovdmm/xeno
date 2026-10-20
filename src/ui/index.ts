@@ -1,4 +1,4 @@
-/* Xeno-Tactic — the interface: screens (title, pause, game over), HUD, tray, input, settings, the main loop.
+/* Xeno-Tactics — the interface: screens (title, pause, game over), HUD, tray, input, settings, the main loop.
    It talks to the game only through `core` (commands, queries, events), draws only through the renderer and
    plays sound only through `sound`; all of them are handed in. This file builds the shared context and wires
    the parts together; each part lives in its own module. */
