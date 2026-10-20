@@ -41,16 +41,29 @@ export function createHowlerOut(env: HowlerEnv): AudioOut {
         volume,
       });
       let id: number | null = null;
+      // What the player last asked for. While the browser still blocks audio (before the first tap) howler holds
+      // the play and queues every pause behind it; when the context resumes the sound starts and the queued pauses
+      // run right after, so the loop would end up paused although the last request was "play".
+      let wanted = false;
+      const play = () => {
+        if (howl.playing()) return;
+        id = id === null ? howl.play() : howl.play(id);
+      };
+      howl.on("pause", () => {
+        if (wanted) play();
+      });
       return {
         // one instance only: resume the same sound instead of stacking new copies
         play() {
-          if (howl.playing()) return;
-          id = id === null ? howl.play() : howl.play(id);
+          wanted = true;
+          play();
         },
         pause() {
+          wanted = false;
           howl.pause();
         },
         stop() {
+          wanted = false;
           if (id !== null) howl.stop(id);
           id = null;
         },

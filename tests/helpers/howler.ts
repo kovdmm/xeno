@@ -51,8 +51,24 @@ export class FakeHowl {
     this.calls.push(["stop", id]);
   }
   pause() {
+    // like Howler while the audio context is still blocked: the pause waits behind the pending play
+    if (this.locked) return void this.queued.push(() => this.pause());
     for (const s of this.map.values()) s._paused = true;
     this.calls.push(["pause"]);
+    for (const f of this.handlers.pause ?? []) f();
+  }
+  on(event: string, fn: () => void) {
+    (this.handlers[event] ??= []).push(fn);
+    return this;
+  }
+  /** a blocked audio context: pauses are queued until `unlock` */
+  locked = false;
+  private queued: (() => void)[] = [];
+  private handlers: Record<string, (() => void)[]> = {};
+  /** the first user gesture: the context runs, the queued pauses are executed after the start */
+  unlock() {
+    this.locked = false;
+    for (const f of this.queued.splice(0)) f();
   }
 }
 

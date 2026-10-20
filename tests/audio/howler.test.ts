@@ -47,6 +47,29 @@ describe("howler backend", () => {
       expect(howl.o).toMatchObject({ loop: true, volume: 0.2, format: ["wav"] });
     });
 
+    it("plays after the first tap even when pauses were queued behind the blocked start (volume swept through 0)", () => {
+      const { l, howl } = loop();
+      howl.locked = true; // the browser still blocks audio: howler queues every pause behind the pending play
+      l.play();
+      l.pause(); // the slider went to 0
+      l.play(); // and back up
+      l.pause();
+      l.play(); // the last request is "play"
+      howl.unlock(); // the first tap: the queued pauses run
+      expect(l.isPlaying()).toBe(true);
+      expect(l.copies()).toBe(1);
+      expect(howl._sounds).toHaveLength(1); // the same sound, not a second copy
+    });
+
+    it("a pause that is really the last request stays a pause, even when it was queued", () => {
+      const { l, howl } = loop();
+      howl.locked = true;
+      l.play();
+      l.pause();
+      howl.unlock();
+      expect(l.isPlaying()).toBe(false);
+    });
+
     it("play never stacks: while playing it does nothing, after a pause it resumes the same sound by id", () => {
       const { l, howl } = loop();
       l.play();
