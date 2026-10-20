@@ -184,7 +184,8 @@ export function createGame(opts: GameOptions = {}): GameApi {
     if (!t || S.over) return { ok: false, code: "over" };
     // a tower that is no longer on the board (sold, or left over from a previous game) takes no money
     if (!S.towers.includes(t)) return { ok: false, code: "gone" };
-    if (t.lvl === 3 && !B.towers[t.type].ults[u as string]) return { ok: false, code: "pickUlt" };
+    // the pick must be one of the tower's own ultimates, not a name every object has ("constructor", "__proto__")
+    if (t.lvl === 3 && !Object.hasOwn(B.towers[t.type].ults, u as string)) return { ok: false, code: "pickUlt" };
     const c = S.freeTowers ? 0 : upCost(B, t);
     if (S.credits < c) return { ok: false, code: "noCred" };
     S.credits -= c;

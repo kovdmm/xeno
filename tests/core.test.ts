@@ -188,6 +188,17 @@ describe("economy commands", () => {
     expect(t.inv).toBe(15 + 25 + 45 + 80 + 240 + 120);
   });
 
+  it("the ultimate must be one of the tower's own: names every object has are refused", () => {
+    const t = C.place("gun", 5, 5).tower;
+    for (let i = 0; i < 3; i++) C.upgrade(t);
+    const credits = C.S.credits;
+    for (const name of ["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf", "nope", "rail", ""])
+      expect(C.upgrade(t, name), name).toEqual({ ok: false, code: "pickUlt" });
+    expect(C.upgrade(t, undefined)).toEqual({ ok: false, code: "pickUlt" });
+    expect([t.lvl, t.ult, C.S.credits]).toEqual([3, undefined, credits]);
+    expect(C.upgrade(t, "sniper")).toEqual({ ok: true, ult: "sniper" });
+  });
+
   it("sell refunds 70% of everything invested", () => {
     const t = C.place("gun", 5, 5).tower;
     C.upgrade(t);
