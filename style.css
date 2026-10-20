@@ -1012,6 +1012,69 @@ kbd {
   flex-direction: column;
   gap: 8px;
 }
+/* phone layout: settings and help are full-screen pages with a back arrow in a fixed top bar, not windows
+   with a cross in the corner (the desktop layout keeps the windows) */
+body:not(.desk) :is(#settings, #help) {
+  padding: 0;
+  background: var(--metal-lo, #14110e);
+}
+body:not(.desk) :is(#settings, #help) .in {
+  max-width: none;
+  min-height: 100%;
+  margin: 0;
+  gap: 10px;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  animation: pageIn 0.2s ease-out;
+}
+body:not(.desk) :is(#settings, #help) .in::before,
+body:not(.desk) :is(#settings, #help) .in::after {
+  display: none;
+}
+body:not(.desk) :is(#settings, #help) .mhead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 -16px;
+  padding: max(8px, env(safe-area-inset-top, 0px)) 12px 8px 6px;
+  gap: 4px;
+  background: var(--metal-lo, #14110e);
+  border-bottom: 1px solid var(--edge);
+}
+body:not(.desk) :is(#settings, #help) .mhead .x {
+  order: -1;
+  width: 44px;
+  height: 44px;
+  font-size: 0; /* the cross is replaced by a back arrow; the button keeps its label for screen readers */
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+body:not(.desk) :is(#settings, #help) .mhead .x::before {
+  content: "‹";
+  font-size: 38px;
+  line-height: 1;
+  color: var(--acid);
+}
+body:not(.desk) :is(#settings, #help) h2 {
+  font-size: 20px;
+}
+@keyframes pageIn {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body:not(.desk) :is(#settings, #help) .in {
+    animation: none;
+  }
+}
+
 /* a sheet from the bottom edge instead of a window in the middle: what phones are used to */
 .sheet {
   align-items: flex-end;
