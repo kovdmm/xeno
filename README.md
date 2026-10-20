@@ -118,6 +118,7 @@ records are kept per map and difficulty (`xt-best-<map>-<difficulty>`; the first
 ```yaml
 switchback:
   finalWave: 100
+  hp: 1 # multiplies the HP of every enemy on this map
   map:
     width: 24
     height: 15
@@ -147,8 +148,8 @@ switchback:
   walls do not cover the gates; **every entrance cell can reach an exit** (the error names the cell).
 - **Texts** of a map are `game.levels.<id>.name` and `.desc` in every `texts.*.json` (without words like "left" or
   "top": the field rotates); a test reminds you if you forget. The id is lower-case letters, digits, `-` and `_`.
-- **Balance.** The numbers of enemies and towers depend only on the wave number, so the `finalWave` of a new map is best
-  found by playing: a short map with one road is harder (every wave comes along it). The balance simulator below helps.
+- **Balance.** The numbers of enemies and towers depend on the wave number and on the map's `hp` coefficient, so the
+  `finalWave` and the `hp` of a new map are best found by playing: a short map with one road is harder (every wave comes along it). The balance simulator below helps.
 
 #### Balance simulator (`sim/`)
 

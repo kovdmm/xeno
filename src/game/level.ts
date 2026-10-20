@@ -20,6 +20,7 @@ export function makeLevel(B: Balance, id: string): Level {
     width: d.map.width,
     height: d.map.height,
     finalWave: d.finalWave,
+    hp: d.hp,
     routes: d.map.routes,
     walls: cellsOf(d.map.walls ?? []),
   };

@@ -60,6 +60,7 @@ function validateLevel(
     bad(p, "the id must be lower case letters, digits, - or _ (it names texts and saved records)");
   if (!isObj(L) || !isObj(L.map)) return bad(p, "expected { finalWave, map }");
   num(`${p}.finalWave`, L.finalWave, 1, true);
+  num(`${p}.hp`, L.hp, 0.05);
   const M = L.map;
   num(`${p}.map.width`, M.width, 3, true);
   num(`${p}.map.height`, M.height, 3, true);

@@ -4,9 +4,13 @@
 
 board:
   enemyBlockRadius: 0.75
+# The maps. finalWave: the wave whose clearing wins. hp: multiplies the HP of every enemy on the map; the simulator
+# bot (a maze builder) reaches about 24 waves on normal everywhere but on fronts, where it stops at 16 with 1.0, so
+# fronts gets 0.85 (the maps stay different on purpose, fronts is still the hardest).
 levels:
   crossroads:
     finalWave: 200
+    hp: 1
     map:
       width: 22
       height: 15
@@ -21,6 +25,7 @@ levels:
           dir: [0, 1]
   switchback:
     finalWave: 100
+    hp: 1
     map:
       width: 24
       height: 15
@@ -40,6 +45,7 @@ levels:
           h: 1
   fronts:
     finalWave: 150
+    hp: 0.85
     map:
       width: 23
       height: 15
@@ -58,6 +64,7 @@ levels:
           dir: [0, 1]
   corner:
     finalWave: 80
+    hp: 1
     map:
       width: 20
       height: 14

@@ -75,6 +75,11 @@ describe("validation catches mistakes with a path to the culprit", () => {
     expect(problems((b) => delete b.waves.counts.runner)[0]).toMatch(/waves\.counts\.runner: no count formula/);
   });
 
+  it("a level without an hp coefficient or with a nonsensical one", () => {
+    expect(problems((b) => delete b.levels.crossroads.hp)[0]).toMatch(/levels.crossroads.hp: expected a number/);
+    expect(problems((b) => (b.levels.crossroads.hp = 0))[0]).toMatch(/levels.crossroads.hp: must be >=/);
+  });
+
   it("routes that leave the board or are not unit steps", () => {
     expect(problems((b) => (b.levels.crossroads.map.routes.h.exit[0] = [99, 0]))[0]).toMatch(/outside the board/);
     expect(problems((b) => (b.levels.crossroads.map.routes.v.dir = [1, 1]))[0]).toMatch(/unit step/);
@@ -150,6 +155,18 @@ describe("the numbers really drive the game (an injected balance changes behavio
     g.sendWave();
     run(g, 30);
     expect(g.S.creeps.length + g.S.lives).toBeGreaterThan(0);
+  });
+
+  it("a level's hp coefficient scales the HP of every enemy on it, and only on it", () => {
+    const [first, other] = Object.keys(BALANCE.levels);
+    const firstHp = (hp: number, level: string) => {
+      const g = game((b) => (b.levels[level].hp = hp));
+      g.sendWave();
+      run(g, 0.5);
+      return g.S.creeps[0].max;
+    };
+    expect(firstHp(0.5, first)).toBeCloseTo(firstHp(1, first) / 2);
+    expect(firstHp(0.5, other)).toBeCloseTo(firstHp(1, first)); // another map's coefficient does not touch this one
   });
 
   it("wave composition: counts, caps and the boss cycle", () => {

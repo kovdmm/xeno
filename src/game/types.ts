@@ -47,6 +47,8 @@ export interface LevelDef {
   map: MapDef;
   /** the last wave: clearing it wins the game */
   finalWave: number;
+  /** multiplies the HP of every enemy on this map (1 = as the tables say); sets how hard the map is next to the others */
+  hp: number;
 }
 
 /** The level being played, with its id and the walls always present. */
@@ -55,6 +57,7 @@ export interface Level {
   width: number;
   height: number;
   finalWave: number;
+  hp: number;
   routes: Record<RouteKey, Route>;
   walls: Vec[];
 }

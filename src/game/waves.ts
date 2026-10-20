@@ -86,7 +86,7 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
     Df = g.D(),
     dh = diffHP(B, Df, n),
     hs = T.fly ? Math.pow(hpScale(B, n), B.scaling.flyerHpExponent) : hpScale(B, n);
-  const m = hs * (T.boss ? Math.sqrt(dh) : dh) * (e.m || 1);
+  const m = hs * (T.boss ? Math.sqrt(dh) : dh) * (e.m || 1) * g.L.hp;
   const c: Creep = {
     id: g.newId(),
     type: e.type,
