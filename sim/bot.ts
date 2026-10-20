@@ -56,6 +56,9 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
+/** a player does not call waves back to back: at least this many seconds between two early calls */
+const MIN_CALL_GAP = 6;
+
 const DT = 0.05,
   THINK = 0.25,
   /** a game that lasts longer than this (game minutes) is stopped */
@@ -99,11 +102,20 @@ function walkLength(game: GameApi, blocked: Set<number>): number {
 }
 
 /** Cells to build on, best first: the ones that lengthen the enemies' walk the most (a maze) and still reach it. */
-function ranked(game: GameApi, reach: number): [number, number][] {
+function ranked(game: GameApi, reach: number, air = false): [number, number][] {
   const { width: W, height: H } = game.level;
   const path: [number, number][] = [];
-  for (const r of Object.keys(game.level.routes)) for (const [x, y] of game.routePath(r)) path.push([x, y]);
-  const base = walkLength(game, new Set());
+  if (air) {
+    // flyers cross in a straight line from the entrance to the exit, whatever the maze looks like
+    for (const R of Object.values(game.level.routes)) {
+      const mid = (c: [number, number][]) => c[(c.length / 2) | 0];
+      const [sx, sy] = mid(R.spawn),
+        [ex, ey] = mid(R.exit),
+        n = Math.ceil(Math.hypot(ex - sx, ey - sy) * 2);
+      for (let i = 0; i <= n; i++) path.push([sx + ((ex - sx) * i) / n, sy + ((ey - sy) * i) / n]);
+    }
+  } else for (const r of Object.keys(game.level.routes)) for (const [x, y] of game.routePath(r)) path.push([x, y]);
+  const base = air ? 0 : walkLength(game, new Set());
   const out: { x: number; y: number; s: number }[] = [];
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
@@ -111,7 +123,7 @@ function ranked(game: GameApi, reach: number): [number, number][] {
       let cov = 0;
       for (const [px, py] of path) if (Math.hypot(px - x, py - y) <= reach) cov++;
       if (cov < 3) continue;
-      const gain = walkLength(game, new Set([y * W + x])) - base;
+      const gain = air ? 0 : walkLength(game, new Set([y * W + x])) - base;
       out.push({ x, y, s: gain * MAZE_WEIGHT + cov * 0.5 });
     }
   out.sort((a, b) => b.s - a.s || a.y - b.y || a.x - b.x);
@@ -134,7 +146,6 @@ export function play(opts: {
   const game = createGame({ balance, rng: mulberry32(seed), difficulty: diff, level });
   const S = () => game.S;
   let built = 0,
-    calls = 0,
     early = 0,
     sinceThink = THINK;
 
@@ -156,7 +167,9 @@ export function play(opts: {
         const d = game.balance.towers[type];
         if (S().credits < d.cost[0]) return;
         const size = d.size || 1;
-        const spot = ranked(game, d.range[0] + 0.5).find(([x, y]) => game.placeCheck(x, y, size) === "");
+        const spot = ranked(game, d.range[0] + 0.5, type === "missile").find(
+          ([x, y]) => game.placeCheck(x, y, size) === "",
+        );
         if (!spot) {
           built++; // nowhere for this type: try the next one
           if (built > 200) return;
@@ -174,24 +187,34 @@ export function play(opts: {
     }
   }
 
+  let seen = 0,
+    lastCall = -Infinity;
+  const pending = () => S().spawners.reduce((a, s) => a + s.list.length, 0);
   while (!S().over && S().t < MAX_MINUTES * 60) {
     sinceThink += DT;
     if (sinceThink >= THINK) {
       sinceThink = 0;
       spend();
-      const busy = S().creeps.length;
-      if (S().wave === 0 && S().credits < 1) {
-        // nothing to do
-      }
-      if (S().wave === 0 && S().towers.length >= 3) (game.sendWave(true), calls++, early++);
-      else if (S().wave > 0 && strategy.callAt >= 0 && busy <= strategy.callAt)
-        if (S().wave < game.level.finalWave && S().timer > 0) (game.sendWave(true), calls++, early++);
-    }
-    const before = S().wave;
-    game.step(DT);
-    if (S().wave > before) {
-      if (sinceThink !== 0) calls++; // the timer called it
       const s = S();
+      const ready =
+        s.wave === 0
+          ? s.towers.length >= 4
+          : strategy.callAt >= 0 &&
+            s.creeps.length <= strategy.callAt &&
+            pending() <= 3 &&
+            s.t - lastCall >= MIN_CALL_GAP &&
+            s.wave < game.level.finalWave &&
+            s.timer > 0;
+      if (ready) {
+        game.sendWave(true);
+        early++;
+        lastCall = s.t;
+      }
+    }
+    game.step(DT);
+    const s = S();
+    if (s.wave > seen) {
+      seen = s.wave;
       trace?.(
         `w${s.wave} t=${(s.t / 60).toFixed(1)}m credits=${s.credits} lives=${s.lives} towers=${s.towers.map((x) => x.type[0] + x.lvl).join(" ")}`,
       );
@@ -207,6 +230,6 @@ export function play(opts: {
     lives: S().lives,
     minutes: Math.round(S().t / 6) / 10,
     towers: S().towers.length,
-    earlyShare: calls ? Math.round((early / calls) * 100) / 100 : 0,
+    earlyShare: S().wave ? Math.round((early / S().wave) * 100) / 100 : 0,
   };
 }

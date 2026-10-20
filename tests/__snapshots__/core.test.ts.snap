@@ -2,24 +2,24 @@
 
 exports[`determinism (golden run) > matches the recorded baseline (update deliberately if balance changes) 1`] = `
 {
-  "credits": 99425,
+  "credits": 99594,
   "creeps": 3,
   "kinds": {
     "built": 14,
-    "explode": 436,
-    "kill": 362,
-    "leak": 10,
-    "muzzle": 6,
-    "pulse": 176,
-    "rail": 120,
+    "explode": 428,
+    "kill": 364,
+    "leak": 8,
+    "muzzle": 5,
+    "pulse": 171,
+    "rail": 118,
     "reset": 1,
-    "shot": 1660,
+    "shot": 1651,
     "toast": 34,
     "upgraded": 12,
     "wave": 24,
   },
-  "lives": 2,
-  "score": 14771,
+  "lives": 4,
+  "score": 16507,
   "wave": 24,
 }
 `;

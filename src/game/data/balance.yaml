@@ -482,36 +482,36 @@ enemies:
 # waves and where healers and blinkers appear.
 difficulty:
   easy:
-    hp: 1
+    hp: 0.7
     armor: 0
     armorDiv: 8
     spd: 1
-    rw: 1
-    credits: 110
+    rw: 1.3
+    credits: 145
     lives: 20
     ab: 1
     gap: 22
     mixFrom: 999
     newFrom: 999
   normal:
-    hp: 1.9
+    hp: 1.6
     armor: 1
     armorDiv: 8
     spd: 1.05
-    rw: 0.9
-    credits: 100
+    rw: 1
+    credits: 120
     lives: 20
     ab: 1.2
     gap: 20
     mixFrom: 30
     newFrom: 30
   hard:
-    hp: 2.5
+    hp: 2.2
     armor: 2
     armorDiv: 7
     spd: 1.1
-    rw: 0.8
-    credits: 95
+    rw: 0.9
+    credits: 110
     lives: 20
     ab: 1.4
     gap: 18
