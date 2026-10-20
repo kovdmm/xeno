@@ -11,9 +11,10 @@ Several Claude Code sessions may work on this project at the same time. To avoid
    It is the folder `.claude/board/` of the main checkout and is gitignored, so it is not committed and exists once;
    a file in the repo would exist in many diverging copies, one per worktree. `README.md` there has its rules,
    `BOARD.md` the work streams, `sessions/` the status of each session.
-2. **Keep your own status file** `sessions/<your name>.md` there (task, branch and worktree, files you touch, state, last
-   update) and set it to `done` when you finish. Never edit another session's file or `BOARD.md` (only the orchestrator
-   does); ask the orchestrator. Do not edit files another session is working on without agreeing it first.
+2. **Report your status to the orchestrator** by message (task, branch and worktree, files you touch, state) when you
+   start, when the state changes and when you finish. A session in a worktree cannot write to the board (the tool blocks
+   writes outside the worktree, and you must not work around it): the orchestrator keeps `sessions/<your name>.md` and
+   `BOARD.md`. Never edit another session's file. Do not edit files another session is working on without agreeing it first.
 3. **Never use `git add -A` or `git commit -a`**: the shared working copy may contain other sessions' uncommitted
    changes. Stage only your own files by name (`git add <files>`) and check `git status` before committing.
 4. **Every session works in its own working copy**: `claude --worktree <name>` (folder `.claude/worktrees/<name>/`,
