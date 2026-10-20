@@ -555,7 +555,7 @@ test.describe("the first paint", () => {
     expect(await page.evaluate(() => document.documentElement.classList.contains("ready"))).toBe(false);
     await expect(page.locator("#boot")).toBeVisible(); // the loading screen covers the page
     await expect(page.locator("#boot b")).toHaveText("Xeno-Tactics");
-    await expect(page.locator("html")).toHaveClass(/ready/, { timeout: 6000 }); // the failsafe
+    await expect(page.locator("html")).toHaveClass(/ready/, { timeout: 7000 }); // the failsafe (5 s)
   });
 });
 

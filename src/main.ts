@@ -16,10 +16,16 @@ const ui = createUi({
 });
 (window as unknown as { XT: unknown }).XT = { ...hooks, ...app, ui };
 
-// Show the page once it is built: texts are in, the layout is measured, the fonts are there (or waited for
-// at most a moment: they may be blocked or slow).
+// Show the page once it is built: texts are in, the layout is measured, the fonts of the menu text are there.
+// `fonts.ready` alone is not enough: it settles at once while no font has started loading, and the faces are
+// loaded explicitly here. A slow network is waited for up to FONT_WAIT, a blocked one must not hold the game back.
+const FONT_WAIT = 3000;
+const FACES = ['1em "Russo One"', '400 1em "PT Sans Narrow"', '700 1em "PT Sans Narrow"'];
 const show = () => document.documentElement.classList.add("ready");
-Promise.race([document.fonts?.ready, new Promise((r) => setTimeout(r, 1500))]).then(show, show);
+const fontsIn = document.fonts
+  ? Promise.allSettled([...FACES.map((f) => document.fonts.load(f)), document.fonts.ready])
+  : Promise.resolve();
+Promise.race([fontsIn, new Promise((r) => setTimeout(r, FONT_WAIT))]).then(show, show);
 
 // Only in the built game (or with ?sw): a worker that serves cached files would show stale code while developing.
 if (import.meta.env.PROD || location.search.includes("sw")) registerWorker(new URL("sw.js", document.baseURI).href);
