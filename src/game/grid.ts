@@ -93,7 +93,7 @@ export function footprint(x: number, y: number, sz: number): Vec[] {
 }
 
 /* Returns '' when a tower of size sz fits at (x,y); otherwise a reason code:
-   out, busy (silent) · pcEdge, pc22, pcRes, pcEnemy, pcBlock, pcTrap (shown to the player). */
+   out, busy (silent) · pcEdge, pc22, pcWall, pcRes, pcEnemy, pcBlock, pcTrap (shown to the player). */
 export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
   const { width: W, height: H, routes: ROUTES } = g.L;
   const S = g.S;
@@ -101,6 +101,8 @@ export function placeCheck(g: Game, x: number, y: number, sz = 1): PlaceCode {
   for (const [cx, cy] of cells) if (cx < 0 || cy < 0 || cx >= W || cy >= H) return sz > 1 ? "pcEdge" : "out";
   const idx = cells.map(([cx, cy]) => cy * W + cx);
   for (const i of idx) if (S.grid[i]) return sz > 1 ? "pc22" : "busy";
+  const walls = wallSet(g.L);
+  for (const i of idx) if (walls.has(i)) return "pcWall";
   for (const i of idx) if (reservedCells(g.L).has(i)) return "pcRes";
   for (const c of S.creeps) {
     if (c.fly || c.dead) continue;

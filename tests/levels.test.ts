@@ -121,7 +121,9 @@ describe("walls", () => {
   it("cannot be built on and are never walked through", () => {
     const g = game("switchback");
     g.cheat("hesoyam");
-    expect(g.placeCheck(5, 4)).toBe("pcRes"); // a wall cell
+    expect(g.placeCheck(5, 4)).toBe("pcWall"); // a wall cell has its own message
+    const [gx, gy] = g.level.routes.main.spawn[0];
+    expect(g.placeCheck(gx, gy)).toBe("pcRes"); // a gate keeps the entrance text
     expect(g.placeCheck(5, 5)).toBe(""); // next to it
     const L = g.level,
       walls = wallSet(L);

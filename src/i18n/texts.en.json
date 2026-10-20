@@ -51,6 +51,7 @@
     "pcEdge": "Does not fit at the edge",
     "pc22": "Needs a free 2×2 space",
     "pcRes": "This is an entrance or an exit",
+    "pcWall": "You cannot build here",
     "pcEnemy": "An enemy is on this cell",
     "pcBlock": "You cannot block the path",
     "pcTrap": "You cannot trap enemies",

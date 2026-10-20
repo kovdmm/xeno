@@ -425,7 +425,7 @@ export type GameEvent =
 
 /* ---------- commands ---------- */
 
-export type PlaceCode = "" | "out" | "busy" | "pcEdge" | "pc22" | "pcRes" | "pcEnemy" | "pcBlock" | "pcTrap";
+export type PlaceCode = "" | "out" | "busy" | "pcEdge" | "pc22" | "pcRes" | "pcWall" | "pcEnemy" | "pcBlock" | "pcTrap";
 
 export type PlaceResult = { ok: true; tower: Tower } | { ok: false; code: string };
 export type UpgradeResult =

@@ -51,6 +51,7 @@
     "pcEdge": "Får inte plats vid kanten",
     "pc22": "Kräver en ledig yta på 2×2",
     "pcRes": "Här är en ingång eller utgång",
+    "pcWall": "Du kan inte bygga här",
     "pcEnemy": "En fiende står på rutan",
     "pcBlock": "Du får inte blockera vägen",
     "pcTrap": "Du får inte spärra in fienderna",

@@ -51,6 +51,7 @@
     "pcEdge": "Passt nicht an den Rand",
     "pc22": "Benötigt einen freien Platz von 2×2",
     "pcRes": "Hier ist ein Eingang oder Ausgang",
+    "pcWall": "Hier kann man nicht bauen",
     "pcEnemy": "Auf diesem Feld steht ein Gegner",
     "pcBlock": "Der Weg darf nicht versperrt werden",
     "pcTrap": "Gegner dürfen nicht eingesperrt werden",

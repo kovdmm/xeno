@@ -173,7 +173,7 @@ describe("the code only asks for strings that exist", () => {
     // the simulation lives in several modules under src/game
     const core = ["grid", "game", "abilities", "waves", "combat"].map((f) => read(`src/game/${f}.ts`)).join(" ");
     const codes = new Set([...core.matchAll(/"(pc[A-Z]\w*|pc22|noCred|pickUlt)"/g)].map((m) => m[1]));
-    expect([...codes].sort()).toEqual(["noCred", "pc22", "pcBlock", "pcEdge", "pcEnemy", "pcRes", "pcTrap", "pickUlt"]);
+    expect([...codes].sort()).toEqual(["noCred", "pc22", "pcBlock", "pcEdge", "pcEnemy", "pcRes", "pcTrap", "pcWall", "pickUlt"]);
     for (const c of [...codes, "early", "cleared", "finalToast", "waveCap"]) expect(en[c], c).toBeDefined();
   });
 
