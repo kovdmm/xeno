@@ -168,6 +168,29 @@ test.describe("layout in every language", () => {
   }
 });
 
+test.describe("the name of the game is never translated", () => {
+  for (const vp of [
+    { width: 1280, height: 800, name: "desktop" },
+    { width: 390, height: 844, name: "phone" },
+  ])
+    for (const l of LANGS)
+      test(`${vp.name} ${l.name}: the logo and the tab title read Xeno-Tactics and the logo fits`, async ({ page }) => {
+        await page.setViewportSize({ width: vp.width, height: vp.height });
+        await open(page);
+        await choose(page, l.code);
+        await page.click("#setClose");
+        await expect(page.locator("h1.logo")).toHaveText("Xeno-Tactics");
+        expect(await page.title()).toBe("Xeno-Tactics");
+        const fit = await page.locator("h1.logo").evaluate((e: HTMLElement) => ({
+          cut: e.scrollWidth > e.clientWidth + 1,
+          right: e.getBoundingClientRect().right,
+          width: document.documentElement.clientWidth,
+        }));
+        expect(fit.cut).toBe(false);
+        expect(fit.right).toBeLessThanOrEqual(fit.width);
+      });
+});
+
 test.describe("texts follow the board's orientation", () => {
   const TXT = (page) =>
     page.evaluate(() => ({

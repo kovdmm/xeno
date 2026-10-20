@@ -2,7 +2,7 @@
   "ui": {
     "crHint": "Klicka för att stänga",
     "credits": [
-      ["", "Xeno<span>-</span>Taktik"],
+      ["", "Xeno<span>-</span>Tactics"],
       ["Ursprunglig idé", "Dmitry Kovalev"],
       ["Speldesign", "Claude Code"],
       ["Programmering", "Claude Code"],
@@ -17,8 +17,8 @@
       ["Inspirerat av", "Xeno Tactic"],
       ["", "Tack för att du spelade!"]
     ],
-    "title": "Xeno-Taktik",
-    "brand": "Xeno<span>-</span>Taktik",
+    "title": "Xeno-Tactics",
+    "brand": "Xeno<span>-</span>Tactics",
     "sub": "Tower defense med labyrint, inspirerat av Xeno Tactic · {f} vågor",
     "cCred": "Krediter",
     "cLives": "Liv",

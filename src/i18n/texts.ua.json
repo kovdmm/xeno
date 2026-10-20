@@ -2,7 +2,7 @@
   "ui": {
     "crHint": "Натисніть, щоб закрити",
     "credits": [
-      ["", "Ксено<span>-</span>Тактика"],
+      ["", "Xeno<span>-</span>Tactics"],
       ["Автор ідеї", "Dmitry Kovalev"],
       ["Геймдизайн", "Claude Code"],
       ["Програмування", "Claude Code"],
@@ -17,8 +17,8 @@
       ["Натхнено грою", "Xeno Tactic"],
       ["", "Дякуємо за гру!"]
     ],
-    "title": "Ксено-Тактика",
-    "brand": "Ксено<span>-</span>Тактика",
+    "title": "Xeno-Tactics",
+    "brand": "Xeno<span>-</span>Tactics",
     "sub": "Tower defense з лабіринтом за мотивами Xeno Tactic · {f} хвиль",
     "cCred": "Кредити",
     "cLives": "Життя",

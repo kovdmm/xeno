@@ -98,8 +98,23 @@ describe("every language is complete", () => {
     });
   });
 
+  it.each(CODES)("%s: the name of the game is never translated", (c) => {
+    // the title, the logo and the credits heading are exactly the English name
+    expect(TEXTS[c].ui.title).toBe("Xeno-Tactics");
+    expect(TEXTS[c].ui.brand).toBe("Xeno<span>-</span>Tactics");
+    expect(TEXTS[c].ui.credits[0][1]).toBe("Xeno<span>-</span>Tactics");
+    // and no string spells it in a local form: Xeno next to a word for tactics that is not "Tactics"
+    const local = /(xeno|ксено|ксэно)\s*(<span>)?[-\s]*(<\/span>)?\s*(taktik|тактик|такти|tactique|táctic)/gi;
+    for (const [p, v] of everyString(TEXTS[c])) if (typeof v === "string") expect(v.match(local), p).toBeNull();
+    expect(JSON.stringify(TEXTS[c])).not.toMatch(/Ксено|Ксэно|Taktik/);
+  });
+
   it.each(OTHERS)("%s is really translated, not a copy of English", (c) => {
-    const same = base.filter(([p, en]) => typeof en === "string" && en.length > 12 && get(TEXTS[c], p) === en);
+    // the name of the game is the same in every language, so its strings are copies on purpose
+    const same = base.filter(
+      ([p, en]) =>
+        typeof en === "string" && en.length > 12 && !/^ui\.(brand|title)$/.test(p) && get(TEXTS[c], p) === en,
+    );
     expect(same.map(([p]) => p)).toEqual([]);
   });
 

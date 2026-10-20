@@ -2,7 +2,7 @@
   "ui": {
     "crHint": "Zum Schließen klicken",
     "credits": [
-      ["", "Xeno<span>-</span>Taktik"],
+      ["", "Xeno<span>-</span>Tactics"],
       ["Ursprüngliche Idee", "Dmitry Kovalev"],
       ["Spieldesign", "Claude Code"],
       ["Programmierung", "Claude Code"],
@@ -17,8 +17,8 @@
       ["Inspiriert von", "Xeno Tactic"],
       ["", "Danke fürs Spielen!"]
     ],
-    "title": "Xeno-Taktik",
-    "brand": "Xeno<span>-</span>Taktik",
+    "title": "Xeno-Tactics",
+    "brand": "Xeno<span>-</span>Tactics",
     "sub": "Labyrinth-Tower-Defense nach dem Vorbild von Xeno Tactic · {f} Wellen",
     "cCred": "Kredite",
     "cLives": "Leben",
