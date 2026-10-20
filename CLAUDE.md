@@ -29,8 +29,11 @@ Several Claude Code sessions may work on this project at the same time. To avoid
 
 ## Tests must pass
 
-- **Before you say that something is done, everything is green in your own copy**: `yarn typecheck`, `yarn test` and the
-  whole Playwright suite (`yarn test:visual`). Not "my part is green": all of it.
+- **Before you say that something is done, the tests your change touches are green in your own copy**: `yarn typecheck`,
+  `yarn test` (it is fast) and the Playwright specs that cover what you changed (`yarn test:visual <spec>`), and
+  every spec whose screenshots could move. The whole Playwright suite takes minutes, so the **orchestrator runs it**
+  on the merged `main` before a change counts as integrated. You do not run it, unless you changed something that
+  every scene uses (rendering, the game loop, the core, styles) or the orchestrator asks.
 - **"It fails on the base too" is not an excuse.** Find out which commit broke it. If it is not yours, tell the
   orchestrator with the evidence; the orchestrator gives the fix to someone. Do not hide a red test by editing it away.
 - **Screenshot baselines** are changed only when the picture is meant to change, and you have looked at every changed

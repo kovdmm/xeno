@@ -49,7 +49,7 @@ items are NOT here: read `C:\Users\kovdmm\Desktop\xeno\.claude\board\BOARD.md` a
 Task: <one sentence> (FEEDBACK #<n>, #<m>).
 Own: <files you own>. Do not touch: <files of others>.
 Worktree: .claude/worktrees/<topic>, branch <type>/<topic> (from main).
-Done = typecheck, vitest and the whole Playwright suite green in your copy, on your own port; baselines changed only on purpose.
+Done = typecheck, vitest and the Playwright specs your change touches green in your copy, on your own port; I run the whole suite on the merged main; baselines changed only on purpose.
 Commit as: git -c user.name="<name> (Claude Code)" -c user.email=noreply@anthropic.com commit (stage by file name).
 Status: message me (task, branch+worktree, files, state) when you start, change state and finish; I keep the board.
 Report: short; first line self-contained; say which server/port you tested on.
@@ -63,8 +63,9 @@ Report: short; first line self-contained; say which server/port you tested on.
 
 ## Tests (check before accepting "done")
 
-- Typecheck, `yarn test` and the whole Playwright suite are green in the session's own copy. "Fails on base too" is not
-  an excuse: find the breaking commit (`git bisect`, `git log`) and assign a fix.
+- Typecheck, `yarn test` and the relevant Playwright specs are green in the session's own copy; the whole Playwright suite
+  is run by you (the orchestrator) on the merged `main` after each cherry-pick, so sessions do not waste minutes on it.
+  "Fails on base too" is not an excuse: find the breaking commit (`git bisect`, `git log`) and assign a fix.
 - A flaky test is a bug. Baselines change only when intended and every changed image was looked at.
 - Playwright port is per worktree: `4200 + hash(path) % 700` (`playwright.config.ts`), `PW_PORT` overrides, no server
   reuse. Check the port before a run (`netstat -ano | findstr :<port>`).
