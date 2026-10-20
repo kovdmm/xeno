@@ -28,7 +28,7 @@ export interface World {
   readonly WALLS: Vec[];
   readonly ET: Record<string, EnemyDef & { fly?: number }>;
   /** the specialisations of each tower type, in order (their order picks the colour) */
-  readonly TT: Record<string, { ults: Record<string, unknown> }>;
+  readonly TT: Record<string, { ults: Record<string, { name?: string }> }>;
   readonly S: State;
   on(fn: (e: GameEvent) => void): () => void;
   stats(t: Tower): TowerStats;

@@ -1,7 +1,6 @@
 import type { Tower } from "../../game/types";
 import { TAU, THEME } from "../theme";
 import { leftMark, markText, rightMark } from "../marks";
-import { tierColor } from "../tiers";
 import { towerBase, towerTurret } from "../towers";
 import type { Ctx, FrameContext, Layer } from "../types";
 
@@ -9,7 +8,7 @@ import type { Ctx, FrameContext, Layer } from "../types";
 export const specOf = (f: FrameContext, tw: Pick<Tower, "type" | "lvl" | "ult">) =>
   tw.lvl >= 4 && tw.ult ? Object.keys(f.world.TT[tw.type].ults).indexOf(tw.ult) : -1;
 
-/** The static part of a tower, the plate with its diodes and the overclock label. It goes onto the floor. */
+/** The static part of a tower, the plate with its diodes. It goes onto the floor. */
 export function drawTowerBase(f: FrameContext, tw: Tower, c2: Ctx) {
   const { sprites } = f,
     ult = tw.lvl >= 4 ? tw.ult : "",
@@ -26,44 +25,40 @@ export function drawTowerBase(f: FrameContext, tw: Tower, c2: Ctx) {
     towerBase(c, tw.type, tw.lvl, spec);
   });
   sprites.blit(c2, base, cx, cy);
-  if (tw.oc) {
-    const lab = sprites.sprite("oc|" + tw.oc + "|" + z, 0.5 * z, (c) => {
-      c.font = `${0.24 * z}px "Russo One",sans-serif`;
-      c.textAlign = "center";
-      c.textBaseline = "middle";
-      c.lineWidth = 0.06 * z;
-      c.strokeStyle = "#000";
-      c.lineJoin = "round";
-      c.strokeText("+" + tw.oc, 0, 0);
-      c.fillStyle = THEME.accent;
-      c.fillText("+" + tw.oc, 0, 0);
-    });
-    sprites.blitUp(c2, lab, cx + 0.3 * z, cy + 0.32 * z, 0, 0);
-  }
 }
 
 /**
- * The letter marks, drawn over the turrets: the type or specialisation letter at the screen-left of the plate and
- * "+n" at the screen-right. They stay upright when the field is turned in portrait, so the offsets are screen ones.
+ * The marks, drawn over the turrets: the letter of the specialisation (from level 5, in the player's language) at the
+ * screen-left of the plate and the overclock count "+n" at the screen-right. They stay upright when the field is turned
+ * in portrait, so the offsets are screen ones.
  */
 export function drawTowerMarks(f: FrameContext) {
   const { ctx, sprites, proj } = f;
   for (const tw of f.world.S.towers) {
     const z = tw.size || 1,
       L = Math.min(tw.lvl, 4),
-      ult = L >= 4 ? tw.ult : "",
       cx = tw.x + 0.5,
       cy = tw.y + 0.5,
       dy = 0.33 * z;
+    // the specialisation names are live texts of the current language; the sprite key holds the mark itself, so a
+    // change of language paints new sprites and never shows a stale letter
+    const defs = f.world.TT[tw.type].ults,
+      ids = Object.keys(defs);
     const put = (text: string, fill: string, dx: number) => {
       const s = sprites.sprite("m|" + text + "|" + fill + "|" + z, 0.7 * z, (c) => markText(c, text, fill, z));
       // screen right is field +x in landscape and field -y in portrait; screen down is field +y or +x
       if (proj.rot) sprites.blitUp(ctx, s, cx + dy, cy - dx);
       else sprites.blit(ctx, s, cx + dx, cy + dy);
     };
-    put(leftMark(tw.type, ult, L), "#f2efe6", -0.3 * z);
-    const n = rightMark(L);
-    if (n) put(n, tierColor(L, tw.type, specOf(f, tw)), 0.3 * z);
+    const left = leftMark(
+      ids,
+      ids.map((id) => defs[id].name ?? id),
+      tw.ult,
+      L,
+    );
+    if (left) put(left, "#f2efe6", -0.3 * z);
+    const right = rightMark(tw.oc);
+    if (right) put(right, THEME.accent, 0.3 * z);
   }
 }
 
