@@ -55,12 +55,26 @@ function validateLevel(
   L: Obj,
   bad: (path: string, why: string) => void,
   num: (path: string, v: unknown, min?: number, int?: boolean) => void,
+  /** the last map of the list opens nothing after it, so it has no `nextMap` threshold */
+  last: boolean,
 ) {
   if (!/^[a-z][a-z0-9_-]*$/.test(id))
     bad(p, "the id must be lower case letters, digits, - or _ (it names texts and saved records)");
   if (!isObj(L) || !isObj(L.map)) return bad(p, "expected { finalWave, map }");
   num(`${p}.finalWave`, L.finalWave, 1, true);
   num(`${p}.hp`, L.hp, 0.05);
+  if (!isObj(L.unlock)) bad(`${p}.unlock`, "expected { difficulty, nextMap }");
+  else {
+    const need = (k: string, v: unknown) => {
+      num(`${p}.unlock.${k}`, v, 1, true);
+      if (isNum(v) && isNum(L.finalWave) && v > L.finalWave)
+        bad(`${p}.unlock.${k}`, "is above the final wave: it can never be reached");
+    };
+    need("difficulty", L.unlock.difficulty);
+    if (last) {
+      if (L.unlock.nextMap !== undefined) bad(`${p}.unlock.nextMap`, "the last map opens nothing after it");
+    } else need("nextMap", L.unlock.nextMap);
+  }
   const M = L.map;
   num(`${p}.map.width`, M.width, 3, true);
   num(`${p}.map.height`, M.height, 3, true);
@@ -185,7 +199,11 @@ export function validateBalance(b: unknown): string[] {
   // board and levels
   num("board.enemyBlockRadius", b.board.enemyBlockRadius, 0);
   if (!isObj(b.levels) || !Object.keys(b.levels).length) bad("levels", "expected at least one level");
-  else for (const [id, L] of Object.entries<Obj>(b.levels)) validateLevel(`levels.${id}`, id, L, bad, num);
+  else {
+    const ids = Object.keys(b.levels);
+    for (const [id, L] of Object.entries<Obj>(b.levels))
+      validateLevel(`levels.${id}`, id, L, bad, num, id === ids[ids.length - 1]);
+  }
 
   // plain number sections
   for (const s of ["economy", "scaling", "combat", "shooting", "projectiles"]) leaves(s, b[s]);

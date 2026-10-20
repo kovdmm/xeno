@@ -49,6 +49,15 @@ export interface LevelDef {
   finalWave: number;
   /** multiplies the HP of every enemy on this map (1 = as the tables say); sets how hard the map is next to the others */
   hp: number;
+  /** the campaign locks: the best wave that opens the next difficulty of this map and the next map in the list */
+  unlock: Unlock;
+}
+
+/** `difficulty`: the best wave on one difficulty of this map that opens the next difficulty on it. `nextMap`: the best
+ *  wave on the easy difficulty of this map that opens the next map of the list (the last map has none). */
+export interface Unlock {
+  difficulty: number;
+  nextMap?: number;
 }
 
 /** The level being played, with its id and the walls always present. */

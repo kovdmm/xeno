@@ -8,10 +8,16 @@ board:
 # clearing wins. hp: multiplies the HP of every enemy on the map; the simulator's maze bot reaches about 24 waves on
 # normal everywhere but on fronts, where it stops at 16 with 1.0, so fronts gets 0.85 (the maps stay different on
 # purpose, fronts is still the hardest).
+# unlock: the campaign locks. difficulty: the best wave on a difficulty of this map that opens the next difficulty on
+# it; nextMap: the best wave on easy that opens the next map of this list (none on the last). Both are about 80 % of
+# what the simulator's maze bot reaches on normal / easy, so a normal player gets there.
 levels:
   switchback:
     finalWave: 100
     hp: 1
+    unlock:
+      difficulty: 21
+      nextMap: 25
     map:
       width: 24
       height: 15
@@ -32,6 +38,9 @@ levels:
   corner:
     finalWave: 80
     hp: 1
+    unlock:
+      difficulty: 18
+      nextMap: 22
     map:
       width: 20
       height: 14
@@ -57,6 +66,9 @@ levels:
   crossroads:
     finalWave: 200
     hp: 1
+    unlock:
+      difficulty: 19
+      nextMap: 25
     map:
       width: 22
       height: 15
@@ -72,6 +84,8 @@ levels:
   fronts:
     finalWave: 150
     hp: 0.85
+    unlock:
+      difficulty: 18
     map:
       width: 23
       height: 15

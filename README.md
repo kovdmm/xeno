@@ -147,6 +147,10 @@ switchback:
   turn with the field, so nothing is written per map.
 - **Checks at startup:** the gates are on the field, on its edge and do not overlap; `dir`/`exitDir` are unit steps;
   walls do not cover the gates; **every entrance cell can reach an exit** (the error names the cell).
+- **Campaign locks** (`unlock`, rules in `src/game/campaign.ts`): `difficulty` is the best wave on one difficulty of the
+  map that opens the next difficulty on it, `nextMap` the best wave on easy that opens the next map of the list (the last
+  map has none). The thresholds are about 80 % of what the simulator's maze bot reaches; the first map and easy are
+  always open.
 - **Texts** of a map are `game.levels.<id>.name` and `.desc` in every `texts.*.json` (without words like "left" or
   "top": the field rotates); a test reminds you if you forget. The id is lower-case letters, digits, `-` and `_`.
 - **Balance.** The numbers of enemies and towers depend on the wave number and on the map's `hp` coefficient, so the

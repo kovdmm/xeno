@@ -200,7 +200,8 @@ describe("changing the level", () => {
 describe("what makes a level valid", () => {
   it("needs a level, a good id, a size and a length", () => {
     expect(problems((b) => (b.levels = {}))[0]).toMatch(/levels: expected at least one level/);
-    expect(problems((b) => (b.levels.Bad_Id = b.levels.crossroads))[0]).toMatch(/the id must be lower case/);
+    // the added map becomes the last of the list, which has other faults of its own: look for this one among them
+    expect(problems((b) => (b.levels.Bad_Id = b.levels.crossroads)).join("\n")).toMatch(/the id must be lower case/);
     expect(problems((b) => (L0(b).width = 2))[0]).toMatch(/map\.width: must be >= 3/);
     expect(problems((b) => (b.levels.crossroads.finalWave = 0))[0]).toMatch(/finalWave/);
   });
