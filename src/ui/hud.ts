@@ -50,7 +50,7 @@ export function createHud(ui: UiContext, palette: Palette) {
     palette.towerButtons().forEach((b) => {
       const n = b.dataset.t as keyof typeof C.TT;
       b.classList.toggle("on", st.build === n);
-      b.classList.toggle("poor", s.credits < C.TT[n].cost[0]);
+      b.classList.toggle("poor", !s.freeTowers && s.credits < C.TT[n].cost[0]);
     });
     palette.abilityButtons().forEach((b) => {
       const k = b.dataset.a as keyof typeof C.AB,

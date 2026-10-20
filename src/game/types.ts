@@ -373,6 +373,12 @@ export interface State {
   over: boolean;
   won: boolean;
   cheated?: boolean;
+  /** cheat "aspirine": the base loses no lives */
+  immortal?: boolean;
+  /** cheat "lxgiwyl": building and upgrading towers costs nothing */
+  freeTowers?: boolean;
+  /** cheat "crazytown": the enemies grumble (cosmetic, read by the renderer only) */
+  grumble?: boolean;
   t: number;
   grid: (Tower | null)[];
   towers: Tower[];

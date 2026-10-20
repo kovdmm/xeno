@@ -19,6 +19,7 @@ import { bombers } from "./layers/bombers";
 import { nukes } from "./layers/nukes";
 import { particles } from "./layers/particles";
 import { rewards } from "./layers/rewards";
+import { bubbles } from "./layers/bubbles";
 import { placementPreview } from "./layers/placementPreview";
 import { abilityAim } from "./layers/abilityAim";
 import { floorLayer } from "./layers/floor";
@@ -44,6 +45,7 @@ export const DEFAULT_LAYERS: readonly Layer[] = [
   nukes,
   particles,
   rewards,
+  bubbles,
   placementPreview,
   abilityAim,
   stasisTint,

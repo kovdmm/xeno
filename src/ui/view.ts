@@ -18,7 +18,7 @@ export function buildView(core: Core, st: UiState, clock: number): View {
         x,
         y,
         size: z,
-        ok: !why && s.credits >= d.cost[0],
+        ok: !why && (!!s.freeTowers || s.credits >= d.cost[0]),
         range: d.range[0],
         minR: d.minR || 0,
       };

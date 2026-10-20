@@ -1,6 +1,6 @@
 // Visual effects as data: particles, floating texts, screen flashes and shake. This is calculation only,
 // nothing here draws (the particle and text layers do) and nothing here touches the simulation.
-import type { Tower } from "../game/types";
+import type { Creep, Tower } from "../game/types";
 import { TAU, THEME } from "./theme";
 import type { QualityLevel } from "./quality";
 import type { World } from "./types";
@@ -73,7 +73,19 @@ export interface FloatText {
   max: number;
 }
 
+/** A speech bubble over a walking enemy (cheat "crazytown"). */
+export interface Bubble {
+  creep: Creep;
+  v: string;
+  life: number;
+  max: number;
+}
+
 export class Fx {
+  /** the phrases the enemies grumble (set by the interface, in the current language) */
+  phrases: string[] = [];
+  bubbles: Bubble[] = [];
+  private bubbleT = 0;
   particles: Particle[] = [];
   texts: FloatText[] = [];
   /** white screen flash, 0..1 */
@@ -94,6 +106,7 @@ export class Fx {
   reset() {
     this.particles = [];
     this.texts = [];
+    this.bubbles = [];
     this.flash = this.redFlash = this.shake = 0;
   }
 
@@ -146,6 +159,22 @@ export class Fx {
     this.add({ k: "blast", x, y, r, col, life, max: life });
     this.smoke(x, y, Math.min(6, (2 + r * 2) | 0), r);
     if (flashA) this.flash = Math.max(this.flash, flashA);
+  }
+
+  /** Cosmetic only: every so often one more enemy says something; a bubble stays for a moment and goes. */
+  private stepBubbles(dt: number, S: World["S"]) {
+    for (const b of this.bubbles) b.life -= dt;
+    this.bubbles = this.bubbles.filter((b) => b.life > 0 && !b.creep.dead);
+    if (!S.grumble || !this.phrases.length) return;
+    this.bubbleT -= dt;
+    if (this.bubbleT > 0) return;
+    this.bubbleT = 0.25 + this.rand() * 0.5;
+    if (this.bubbles.length >= 5) return;
+    const free = S.creeps.filter((c) => !c.dead && !this.bubbles.some((b) => b.creep === c));
+    if (!free.length) return;
+    const c = free[Math.floor(this.rand() * free.length)],
+      life = 1.6 + this.rand() * 0.8;
+    this.bubbles.push({ creep: c, v: this.phrases[Math.floor(this.rand() * this.phrases.length)], life, max: life });
   }
 
   /** One step of time: new ambient effects from what is happening in the world, then ageing of everything. */
@@ -212,6 +241,7 @@ export class Fx {
       else t.y -= dt * 0.9;
     }
     this.texts = this.texts.filter((t) => t.life > 0);
+    this.stepBubbles(dt, S);
     this.flash = Math.max(0, this.flash - dt * 1.4);
     this.redFlash = Math.max(0, this.redFlash - dt * 1.2);
     this.shake = Math.max(0, this.shake - dt * 1.6);

@@ -69,7 +69,7 @@ export function leak(g: Game, c: Creep): void {
   if (c.dead) return;
   const S = g.S;
   c.dead = true;
-  S.lives -= g.B.enemies[c.type].lives || 1;
+  if (!S.immortal) S.lives -= g.B.enemies[c.type].lives || 1;
   g.emit({ type: "leak", creep: c });
   if (S.lives <= 0) {
     S.lives = 0;

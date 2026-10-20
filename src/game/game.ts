@@ -70,6 +70,14 @@ export interface GameApi {
   readonly levelIds: string[];
 }
 
+/** Cheats that switch something on for the rest of the game (the numeric ones live in `economy.cheats`). */
+export const FLAG_CHEATS: Record<string, (S: State) => void> = {
+  bagowpw: () => {}, // all maps open: the interface remembers it (the game itself has nothing locked)
+  aspirine: (S) => (S.immortal = true),
+  lxgiwyl: (S) => (S.freeTowers = true),
+  crazytown: (S) => (S.grumble = true),
+};
+
 function initialState(g: Game): State {
   const D = g.D(),
     { width: W, height: H } = g.L;
@@ -135,7 +143,8 @@ export function createGame(opts: GameOptions = {}): GameApi {
       W = g.L.width,
       z = d.size || 1;
     if (S.over) return { ok: false, code: "over" };
-    if (S.credits < d.cost[0]) return { ok: false, code: "noCred" };
+    const price = S.freeTowers ? 0 : d.cost[0];
+    if (S.credits < price) return { ok: false, code: "noCred" };
     const why = placeCheck(g, x, y, z);
     if (why) return { ok: false, code: why };
     const t: Tower = {
@@ -150,12 +159,12 @@ export function createGame(opts: GameOptions = {}): GameApi {
       y: y + (z - 1) / 2,
       cd: 0,
       ang: -Math.PI / 2,
-      inv: d.cost[0],
+      inv: price,
       beam: null,
     };
     for (const [cx, cy] of footprint(x, y, z)) S.grid[cy * W + cx] = t;
     S.towers.push(t);
-    S.credits -= d.cost[0];
+    S.credits -= price;
     recompute(g);
     g.emit({ type: "built", tower: t });
     return { ok: true, tower: t };
@@ -165,7 +174,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
     const S = g.S;
     if (!t || S.over) return { ok: false, code: "over" };
     if (t.lvl === 3 && !B.towers[t.type].ults[u as string]) return { ok: false, code: "pickUlt" };
-    const c = upCost(B, t);
+    const c = S.freeTowers ? 0 : upCost(B, t);
     if (S.credits < c) return { ok: false, code: "noCred" };
     S.credits -= c;
     t.inv += c;
@@ -197,9 +206,15 @@ export function createGame(opts: GameOptions = {}): GameApi {
     code = String(code || "")
       .trim()
       .toLowerCase();
+    const S = g.S;
+    if (Object.hasOwn(FLAG_CHEATS, code)) {
+      FLAG_CHEATS[code](S);
+      S.cheated = true;
+      g.emit({ type: "cheat", code });
+      return { lives: S.lives, credits: 0 };
+    }
     const ch = Object.hasOwn(B.economy.cheats, code) ? B.economy.cheats[code] : null;
     if (!ch) return null;
-    const S = g.S;
     S.lives = Math.max(S.lives, ch.minLives);
     S.credits += ch.credits;
     S.cheated = true;

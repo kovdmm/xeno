@@ -12,6 +12,9 @@ export interface Progress {
   /** the best wave reached on a level at a difficulty (the old single record counts for the first level, easy) */
   bestOf(level: string, diff: DiffKey): number;
   saveBest(level: string, diff: DiffKey, wave: number): void;
+  /** the "bagowpw" cheat: every map is open (for the campaign's locks; cheated games stay out of the records) */
+  mapsOpen(): boolean;
+  openAllMaps(): void;
 }
 
 /** `levels` are the ids in order with their length; the first level keeps the keys older versions used. */
@@ -39,5 +42,7 @@ export function createProgress(
       return Math.min(cap, num(key(level, diff)) || (level === first && diff === "easy" ? num("xt-best") : 0));
     },
     saveBest: (level, diff, wave) => store.set(key(level, diff), String(wave)),
+    mapsOpen: () => store.get("xt-allmaps") === "1",
+    openAllMaps: () => store.set("xt-allmaps", "1"),
   };
 }

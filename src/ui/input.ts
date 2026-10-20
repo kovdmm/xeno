@@ -60,7 +60,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
   });
 
   /* ---------- the keyboard ---------- */
-  const cheats = new CheatTyper(["hesoyam"], (code) => {
+  const cheats = new CheatTyper(["hesoyam", "bagowpw", "aspirine", "lxgiwyl", "crazytown"], (code) => {
     if (!C.cheat(code)) ui.toast(t("cheatBad"));
   });
   const open = (): OpenScreens => ({

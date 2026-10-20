@@ -1,4 +1,5 @@
 // Applying a language to the page: static texts (marked with data-i), labels, and everything built from texts.
+import { grumbles } from "./cheats";
 import type { UiContext } from "./context";
 
 export interface LanguageDeps {
@@ -23,6 +24,7 @@ export function createApplyLang(ui: UiContext, d: LanguageDeps) {
       e.title = v;
     });
     $("field").setAttribute("aria-label", t("field"));
+    ui.renderer.setPhrases(grumbles(t));
     d.rebuildPalette();
     for (const f of d.redraw) f();
     d.renderOver();

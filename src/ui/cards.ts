@@ -41,7 +41,7 @@ export function towerCard(env: CardEnv, sel: Tower): string {
   rows += `<span class="ext">${t("targets")}</span><span class="ext">${cur.air && cur.ground ? t("tBoth") : cur.air ? t("tAir") : t("tGround")}${cur.prio === "strong" ? t("tough") : ""}</span>`;
   rows += `<span class="ext">${t("armor")}</span><span class="ext">${cur.pierce ? t("pierces") : t("reduces")}</span>`;
   const uc = C.upCost(sel),
-    poor = s.credits < uc ? "disabled" : "";
+    poor = !s.freeTowers && s.credits < uc ? "disabled" : "";
   let up: string, lv: string;
   if (Lv < 3) {
     lv = t("lvl", { l: Lv + 1 });

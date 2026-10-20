@@ -3,6 +3,7 @@
 import { skullIcon } from "./difficulty";
 import { mapThumb } from "./mapThumb";
 import type { UiContext } from "./context";
+import { CHEAT_TEXT, grumbles } from "./cheats";
 import type { Progress } from "./progress";
 import { clearPicks } from "./state";
 
@@ -71,7 +72,9 @@ export function createSession(
       if (e.won) creditsTimer = setTimeout(() => C.S.won && C.S.over && openCredits(), 1800); // over the win screen
     } else if (e.type === "sold" && st.sel === e.tower) st.sel = null;
     else if (e.type === "cheat") {
-      ui.toast(t("cheatOk", { l: C.S.lives }));
+      if (e.code === "bagowpw") progress.openAllMaps();
+      if (e.code === "crazytown") ui.renderer.setPhrases(grumbles(t));
+      ui.toast(e.code === "hesoyam" ? t("cheatOk", { l: C.S.lives }) : t(CHEAT_TEXT[e.code] ?? "cheatOk"));
       ui.sound.play("ult");
       ui.refresh();
     }

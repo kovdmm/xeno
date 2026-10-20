@@ -119,6 +119,10 @@ export function createRenderer(canvas: HTMLCanvasElement, deps: RendererDeps, op
     theme: THEME,
     tierColor: (l: number, type: TowerType, ult?: string) => tierColor(l, type, specOf(type, ult)),
     quality: () => governor.level,
+    /** what the enemies say when the "crazytown" cheat is on (in the current language) */
+    setPhrases(list: string[]) {
+      fx.phrases = list;
+    },
     /** the current layer composition, bottom to top */
     get layers(): readonly Layer[] {
       return layers;

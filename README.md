@@ -180,6 +180,26 @@ touch the DOM.
 | `appMode.ts`, `soundControls.ts` | full screen and installing the app; the sound button and sliders                       |
 | `progress.ts`, `loop.ts`         | saved difficulty and records; the game loop                                            |
 | `routes.ts`, `mapThumb.ts`       | route labels computed from the geometry; the map thumbnails in the settings            |
+| `cheats.ts`                      | the toast texts of the extra cheat codes and the grumbles of the enemies               |
+
+#### Cheat codes
+
+Cheat codes are typed on the keyboard during a game (physical letters, so any layout works; the letters of a code in
+progress do not trigger hotkeys). Typing a code flags the game as cheated (`State.cheated`): the best wave is not saved
+and the game stays out of any records. A code works until the next new game; typing it again does nothing more.
+The codes are the ones of GTA San Andreas. `hesoyam` is the only code with numbers (`economy.cheats` in the balance data); the others are switches in `State`.
+No code may start with a hotkey letter (`q w e r t u s n f m`), because a letter that begins a code is swallowed: so the free-guns code is `lxgiwyl`, not `fullclip`.
+
+| Code        | Effect                                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `hesoyam`   | lives up to 100 and +250,000 credits                                                                             |
+| `bagowpw`   | every map is open (remembered in the browser as `xt-allmaps`, `progress.mapsOpen()`; for the campaign locks)     |
+| `aspirine`  | an immortal base: enemies that get through take no lives (for testing)                                           |
+| `lxgiwyl`   | building and upgrading towers cost nothing (and sell for nothing)                                                |
+| `crazytown` | a joke: speech bubbles ("oo, it tickles", "warm", "ouch, unpleasant"...) appear over the enemies, in 5 languages |
+
+The bubbles are cosmetic and live in the renderer (`Fx.bubbles`, the `bubbles` layer, the fx random stream); the
+simulation does not know about them.
 
 ### Rendering (`src/render/`)
 
