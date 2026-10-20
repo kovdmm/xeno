@@ -11,3 +11,5 @@ coverage/
 
 # claude code: isolated working copies of parallel sessions
 .claude/worktrees/
+# the shared board of the Claude Code sessions (one physical copy in the main checkout, never committed)
+.claude/board/

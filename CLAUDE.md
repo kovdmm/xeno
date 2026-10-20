@@ -7,9 +7,10 @@ is a separate repository next to this one: `../tonegrid`.
 
 Several Claude Code sessions may work on this project at the same time. To avoid overwriting each other's work:
 
-1. **Before starting**, read the shared board, which lives **outside the repository**, because every session works in its
-   own worktree and a file in the repo would exist in many diverging copies: `C:\Users\kovdmm\Desktop\xeno-board\`
-   (`README.md` has its rules, `BOARD.md` the work streams, `sessions/` the status of each session).
+1. **Before starting**, read the shared board: `C:\Users\kovdmm\Desktop\xeno\.claude\board\` (always this absolute path, from any worktree).
+   It is the folder `.claude/board/` of the main checkout and is gitignored, so it is not committed and exists once;
+   a file in the repo would exist in many diverging copies, one per worktree. `README.md` there has its rules,
+   `BOARD.md` the work streams, `sessions/` the status of each session.
 2. **Keep your own status file** `sessions/<your name>.md` there (task, branch and worktree, files you touch, state, last
    update) and set it to `done` when you finish. Never edit another session's file or `BOARD.md` (only the orchestrator
    does); ask the orchestrator. Do not edit files another session is working on without agreeing it first.
