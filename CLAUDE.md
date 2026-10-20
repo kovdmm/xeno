@@ -17,8 +17,8 @@ Several Claude Code sessions may work on this project at the same time. To avoid
    `BOARD.md`. Never edit another session's file. Do not edit files another session is working on without agreeing it first.
 3. **Never use `git add -A` or `git commit -a`**: the shared working copy may contain other sessions' uncommitted
    changes. Stage only your own files by name (`git add <files>`) and check `git status` before committing.
-4. **Every session works in its own working copy**: `claude --worktree <name>` (folder `.claude/worktrees/<name>/`,
-   branch `worktree-<name>`). The shared checkout is for the orchestrator only. Bring the result back as clean commits
+4. **Every session works in its own working copy**: `claude --worktree <topic>` (folder `.claude/worktrees/<topic>/`,
+   branch `<type>/<topic>`, see "Names"). The shared checkout is for the orchestrator only. Bring the result back as clean commits
    on your branch; the orchestrator puts them on `main` one at a time (rebase or cherry-pick, so the history stays linear).
    Rebase your branch onto `main` before you report that you are done.
 5. **Messages between sessions**: name a session with `claude --name <name>` or `/rename <name>`; list them with
@@ -39,6 +39,16 @@ Several Claude Code sessions may work on this project at the same time. To avoid
   port, reuse it, so a server from another worktree is tested instead of your code. Check that the port is free (or is
   your own server) before every run, and say in your report which server was used.
 - A test that is flaky is a bug too: rerun it alone, find the cause, report it; do not just rerun until it is green.
+
+## Names
+
+- Worktree folder `.claude/worktrees/<topic>`, branch `<type>/<topic>`; type is one of `feature`, `fix`, `docs`,
+  `chore`, `balance`. Examples: `feature/cheats`, `feature/turret-marks`, `fix/playwright-port`,
+  `docs/orchestrator-skill`. The topic is a few lower-case kebab-case words of the task.
+- Name the session with `/rename` to the topic (`balance`, `mobile`). A subagent uses `agent-<topic>` for its status
+  file and as commit author.
+- Never hashes, ids or auto-generated names (`worktree-agent-ab12...`). The orchestrator checks and renames; it follows
+  `.claude/skills/orchestrator`.
 
 ## Commits and history
 
