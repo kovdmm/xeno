@@ -112,14 +112,19 @@ descriptions are not part of this file: they are in `src/i18n/texts.*.json`.
 #### Levels (`levels`)
 
 Each level is a separate map; the first in the file is the one a new player starts on, and the file lists the maps in
-the order of the campaign: `switchback`, `corner`, `crossroads`, `fronts`. Map and difficulty are chosen together in the settings, in a grid of the maps (rows) by the difficulties (columns): a cell shows the best wave and a star after a victory, a closed one a lock and the rule that opens it;
-records are kept per map and difficulty (`xt-best-<map>-<difficulty>`; records of older versions are not read). The
-tests and the screenshot scenes play `crossroads` (the unit-test helper and the e2e harness pin it).
+the order of the campaign: `switchback`, `corner`, `crossroads`, `fronts`. Map and difficulty are chosen together in the
+settings, in a grid of the maps (rows) by the difficulties (columns): a cell shows the best wave and, after a victory,
+a star; a closed cell shows a lock and, in words, the rule that opens it. Records are kept per map and difficulty
+(`xt-best-<map>-<difficulty>`, wins in `xt-won-<map>-<difficulty>`; records of older versions are not read). The tests
+and the screenshot scenes play `crossroads` (the unit-test helper and the e2e harness pin it and open every map).
 
 ```yaml
 switchback:
   finalWave: 100
   hp: 1 # multiplies the HP of every enemy on this map
+  unlock: # the campaign locks, see below
+    difficulty: 21
+    nextMap: 25
   map:
     width: 24
     height: 15
@@ -149,21 +154,42 @@ switchback:
   walls do not cover the gates; **every entrance cell can reach an exit** (the error names the cell).
 - **Campaign locks** (`unlock`, rules in `src/game/campaign.ts`): `difficulty` is the best wave on one difficulty of the
   map that opens the next difficulty on it, `nextMap` the best wave on easy that opens the next map of the list (the last
-  map has none). The thresholds are about 80 % of what the simulator's maze bot reaches; the first map and easy are
-  always open.
+  map has none). Now: `difficulty` 21 / 18 / 19 / 18 and `nextMap` 25 / 22 / 25 for switchback / corner / crossroads /
+  fronts, about 80 % of what the simulator's maze bot reaches; the first map and easy are always open. The interface
+  reads the rule through `core.lockOf`; the best wave of a cell is saved when a game ends, a victory is saved too (a
+  cheated game is neither), a saved choice that is still closed falls back to the first map on easy, and the
+  `bagowpw` cheat opens every cell.
 - **Texts** of a map are `game.levels.<id>.name` and `.desc` in every `texts.*.json` (without words like "left" or
   "top": the field rotates); a test reminds you if you forget. The id is lower-case letters, digits, `-` and `_`.
-- **Balance.** The numbers of enemies and towers depend on the wave number and on the map's `hp` coefficient, so the
-  `finalWave` and the `hp` of a new map are best found by playing: a short map with one road is harder (every wave comes along it). The balance simulator below helps.
+- **Balance.** The numbers of enemies and towers depend on the wave number and on the map's `hp` coefficient (fronts
+  0.85, the rest 1), so the `finalWave` and the `hp` of a new map are best found by playing: a short map with one road
+  is harder (every wave comes along it). The balance simulator below helps.
 
 #### Balance simulator (`sim/`)
 
-`yarn sim` has a bot play every map × difficulty and prints how far it got (`SIM_LEVELS`, `SIM_DIFFS`,
-`SIM_STRATEGIES` and `SIM_SEEDS` narrow the run; `yarn sim sim/trace.sim.ts` shows the course of one game and
-`yarn sim sim/towers.sim.ts` the efficiency of each tower). `yarn sim sim/bake.sim.ts` searches the longest maze of every map
-(simulated annealing over the turret cells, money ignored) and bakes it into `sim/mazes.json`, which the `maze-*`
-strategies of the bot build along; `yarn sim sim/mazecurve.sim.ts` prints how the walk grows with the towers built.
-Rebake after changing a map (a stale maze is refused). It is not part of `yarn test`.
+A bot plays the real game without an interface (`createGame`, seeded, 0.05 s steps) and shows how far a simple player
+gets. It is a floor, not an average player: it never uses the abilities (a last resort for the player too) and
+builds greedily next to the roads or along a baked maze. Use it to compare (before and after a change, one map with
+another), not to read absolute waves. It is not part of `yarn test`.
+
+- `yarn sim` plays every map × difficulty × strategy and prints the waves reached per seed, wins, minutes, lives,
+  the share of waves called early and the enemies' final walk. `SIM_LEVELS`, `SIM_DIFFS`, `SIM_STRATEGIES` and
+  `SIM_SEEDS` narrow the run.
+- `SIM_PATCH='{"towers.gun.dmg":[5,10,19,34]}'` applies dotted-path changes to a copy of the balance, so a change
+  can be tried without editing `balance.yaml`.
+- Strategies (`sim/bot.ts`): `patient` waits for the timer; `rush` and `greedy` call waves early (at most 4 / 12
+  enemies on the board); `gun-*` and `no-gun` compare tower compositions; `star-*` pump one gun to level 5 once there
+  are N guns (the intended play against armour); `maze-*` and `star-maze*` build along the baked maze, and
+  `star-maze10` is the reference bot for the campaign thresholds; `wavesPerTower` and `airEvery` vary the split between
+  new turrets and upgrades and the share of turrets on the flyers' straight lane.
+- `yarn sim sim/trace.sim.ts` shows one game wave by wave; `yarn sim sim/towers.sim.ts` the damage per credit of each
+  tower and ultimate.
+- The longest maze: `yarn sim sim/bake.sim.ts` searches it (simulated annealing over the turret cells, money ignored,
+  the enemies' walk summed over all roads) and bakes it into `sim/mazes.json` with a fingerprint of the map: rebake
+  after changing a map, a stale maze is refused. `yarn sim sim/mazecurve.sim.ts` prints how the walk grows with the
+  number of towers.
+- What it has shown so far: the armoured waves are the wall for a bot (armour is intended: one gun has to be pumped
+  to level 5), so the maps differ for it mostly through the maze.
 
 ### Interface (`src/ui/`)
 
@@ -181,11 +207,11 @@ touch the DOM.
 | `commands.ts`                    | build, upgrade, sell, use an ability, call a wave; error messages and sounds           |
 | `input.ts`                       | the pointer on the field, the keyboard, the buttons of the main screens                |
 | `hud.ts`, `palette.ts`           | numbers and panels that touch the DOM only on change; tower and ability buttons        |
-| `session.ts`, `settings.ts`      | a game, the win/loss screen, the intro; language, difficulty with confirmation         |
+| `session.ts`, `settings.ts`      | a game, the win/loss screen, the intro; language, the campaign grid with confirmation  |
 | `layout.ts`                      | fitting the field to the window, rotating on desktop                                   |
 | `appMode.ts`, `soundControls.ts` | full screen and installing the app; the sound button and sliders                       |
-| `progress.ts`, `loop.ts`         | saved difficulty and records; the game loop                                            |
-| `routes.ts`, `mapThumb.ts`       | route labels computed from the geometry; the map thumbnails in the settings            |
+| `progress.ts`, `loop.ts`         | saved choice, records, wins and what the campaign has opened; the game loop            |
+| `routes.ts`, `mapThumb.ts`       | route labels computed from the geometry; the map thumbnails in the campaign grid       |
 | `cheats.ts`                      | the toast texts of the extra cheat codes and the grumbles of the enemies               |
 
 #### Cheat codes
@@ -219,10 +245,17 @@ layers that can be changed one by one.
 | `layers/*.ts`                      | the **layers**: floor, gates, lanes, towers, enemies, beams, projectiles, particles, aim, vignettes… |
 | `fx.ts`, `director.ts`             | **effect calculation**: particles, texts, shake, flashes; game events → effects. They draw nothing   |
 | `towers.ts`, `aliens.ts`           | **sprite painters**: towers and aliens in a unit cell, stateless                                     |
+| `marks.ts`                         | the turret marks: the specialisation letter and the overclock count (see below)                      |
 | `theme.ts`, `color.ts`, `tiers.ts` | the palette, colour arithmetic, level and ultimate colours                                           |
 | `projection.ts`                    | field → screen, the 90° rotation in portrait: the only place that knows about it                     |
 | `sprites.ts`, `glow.ts`            | the sprite cache (drawn once), glows with a per-frame budget                                         |
 | `floor.ts`, `quality.ts`           | the floor and the marks on it; a quality governor driven by the real frame time                      |
+
+**Turret marks** (`marks.ts`, drawn over the turrets by the towers layer): a turret already differs by colour and shows
+its level by size and tint, so the marks say other things. On the left, from level 5, the specialisation: the first
+letter of its translated name (it follows the language); when the two specialisations of a tower would give the same
+letter in a language (Cluster/Concussion, Призма/Перегрев) both get as many letters as it takes (`Cl`/`Co`). On the
+right the number of overclocks, `+n`. The marks stay upright in portrait and are cached as sprites by their text.
 
 A layer is `{ id, draw(frame) }`. Before a layer the field matrix is set, and the canvas state is saved and restored
 around it, so a layer cannot "leak" a dash or a blend mode into its neighbour. To change the composition without
@@ -366,17 +399,18 @@ Modules are imported directly, without a browser (`tests/helpers/load.ts`):
 - `tests/hygiene.test.ts` makes sure `Math.random` stays only as the default in three modules;
 - `run(core, seconds)` runs the simulation in steps of 25 ms, like the game loop.
 
-| File                    | What it checks                                                                                                                                                                                                                      |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/core.test.ts`    | the data tables, stats, upgrade prices, pathfinding, `placeCheck`, the economy, 200 waves, abilities                                                                                                                                |
-| `tests/audio/*.test.ts` | music (composer, rendering with a sample fingerprint, sound modes, instruments' pitch, song validator, player), effects (recipes, mixer, events → sounds, laser, bank), the system on a fake output, the Howler adapter, the facade |
-| `tests/balance.test.ts` | the `balance.yaml` validator (errors with a path), replacing numbers changes the game                                                                                                                                               |
-| `tests/levels.test.ts`  | the maps: gates, walls, reachability, texts of every level                                                                                                                                                                          |
-| `tests/hygiene.test.ts` | `Math.random` only as the default of the streams, no IIFE leftovers and no `window.XT` outside `main.ts`, the composer knows no sound and the renderer no songs                                                                     |
-| `tests/i18n.test.ts`    | completeness of all five languages (keys, placeholders, HTML tags, credits, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                |
-| `tests/render/`         | the parts of rendering: projection, the quality governor, effects, the sprite cache, colours, the layer composition                                                                                                                 |
-| `tests/render.test.ts`  | 45 waves on a stub 2D context: it does not crash, leaves no mess in the ctx state; rendering does not influence the simulation                                                                                                      |
-| `tests/ui/`             | the pure logic of the interface: commands, keys, panels, routes, sessions                                                                                                                                                           |
+| File                     | What it checks                                                                                                                                                                                                                      |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/core.test.ts`     | the data tables, stats, upgrade prices, pathfinding, `placeCheck`, the economy, 200 waves, abilities                                                                                                                                |
+| `tests/audio/*.test.ts`  | music (composer, rendering with a sample fingerprint, sound modes, instruments' pitch, song validator, player), effects (recipes, mixer, events → sounds, laser, bank), the system on a fake output, the Howler adapter, the facade |
+| `tests/balance.test.ts`  | the `balance.yaml` validator (errors with a path), replacing numbers changes the game                                                                                                                                               |
+| `tests/campaign.test.ts` | the campaign data and rule: what is open from the best waves, validation of the thresholds                                                                                                                                          |
+| `tests/levels.test.ts`   | the maps: gates, walls, reachability, texts of every level                                                                                                                                                                          |
+| `tests/hygiene.test.ts`  | `Math.random` only as the default of the streams, no IIFE leftovers and no `window.XT` outside `main.ts`, the composer knows no sound and the renderer no songs                                                                     |
+| `tests/i18n.test.ts`     | completeness of all five languages (keys, placeholders, HTML tags, credits, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                |
+| `tests/render/`          | the parts of rendering: projection, the quality governor, effects, the sprite cache, colours, the layer composition                                                                                                                 |
+| `tests/render.test.ts`   | 45 waves on a stub 2D context: it does not crash, leaves no mess in the ctx state; rendering does not influence the simulation                                                                                                      |
+| `tests/ui/`              | the pure logic of the interface: commands, keys, panels, routes, sessions                                                                                                                                                           |
 
 The golden test of core is kept in `tests/__snapshots__/`. If you changed the balance **on purpose**, update it:
 `yarn vitest run -u`. If you did not and the snapshot differs, that is a regression.
