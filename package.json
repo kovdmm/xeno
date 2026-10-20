@@ -6,6 +6,7 @@
   "scripts": {
     "start": "vite --port 3000",
     "deploy": "yarn build && scp -r dist/. root@46.101.198.82:/var/www/xeno.kovalev.app/",
+    "maintenance": "scp maintenance/index.html root@46.101.198.82:/var/www/xeno.kovalev.app/index.html",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",
