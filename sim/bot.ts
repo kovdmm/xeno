@@ -13,6 +13,10 @@ export interface Strategy {
   towers: TowerType[];
   /** call the next wave early once at most this many enemies are on the board; negative = never call early */
   callAt: number;
+  /** the first turrets it builds; defaults to a general opening */
+  opening?: TowerType[];
+  /** put every upgrade into the most upgraded turret instead of the least upgraded one */
+  focus?: boolean;
 }
 
 const BASIC: TowerType[] = ["gun", "cannon", "frost", "missile"];
@@ -27,6 +31,23 @@ export const STRATEGIES: Record<string, Strategy> = {
   greedy: { name: "greedy", towers: BASIC, callAt: 12 },
   "rush-full": { name: "rush-full", towers: FULL, callAt: 4 },
   "greedy-full": { name: "greedy-full", towers: FULL, callAt: 12 },
+  // compositions (all call early like "rush"): which turrets carry a game, and does focusing upgrades pay
+  "gun-spread": { name: "gun-spread", towers: ["gun"], opening: [], callAt: 4 },
+  "gun-focus": { name: "gun-focus", towers: ["gun"], opening: [], callAt: 4, focus: true },
+  "gun-frost": { name: "gun-frost", towers: ["gun", "gun", "frost"], opening: [], callAt: 4, focus: true },
+  "gun-cannon": { name: "gun-cannon", towers: ["gun", "gun", "cannon"], opening: [], callAt: 4, focus: true },
+  "gun-rail": { name: "gun-rail", towers: ["gun", "gun", "rail"], opening: [], callAt: 4, focus: true },
+  "gun-laser": { name: "gun-laser", towers: ["gun", "gun", "laser"], opening: [], callAt: 4, focus: true },
+  "gun-plasma": { name: "gun-plasma", towers: ["gun", "gun", "plasma"], opening: [], callAt: 4, focus: true },
+  "gun-artillery": {
+    name: "gun-artillery",
+    towers: ["gun", "gun", "gun", "artillery"],
+    opening: [],
+    callAt: 4,
+    focus: true,
+  },
+  "no-gun": { name: "no-gun", towers: ["cannon", "rail", "plasma", "laser"], opening: [], callAt: 4, focus: true },
+  "mix-focus": { name: "mix-focus", towers: BASIC, callAt: 4, focus: true },
 };
 
 export interface Outcome {
@@ -153,21 +174,29 @@ export function play(opts: {
     let best: Tower | undefined,
       bestKey = Infinity;
     for (const t of S().towers) {
-      const key = t.lvl + t.oc * 0.5;
+      const key = (t.lvl + t.oc * 0.5) * (strategy.focus ? -1 : 1);
       if (key < bestKey) ((best = t), (bestKey = key));
     }
     return best;
+  };
+
+  /** the price of the next turret it would build */
+  const nextCost = () => {
+    const opening = strategy.opening ?? OPENING;
+    const type = built < opening.length ? opening[built] : strategy.towers[built % strategy.towers.length];
+    return game.balance.towers[type].cost[0];
   };
 
   function spend() {
     for (let guard = 0; guard < 20; guard++) {
       const wantTowers = Math.min(45, 5 + Math.floor(S().wave / 3));
       if (S().towers.length < wantTowers) {
-        const type = built < OPENING.length ? OPENING[built] : strategy.towers[built % strategy.towers.length];
+        const opening = strategy.opening ?? OPENING;
+        const type = built < opening.length ? opening[built] : strategy.towers[built % strategy.towers.length];
         const d = game.balance.towers[type];
         if (S().credits < d.cost[0]) return;
         const size = d.size || 1;
-        const spot = ranked(game, d.range[0] + 0.5, type === "missile").find(
+        const spot = ranked(game, d.range[0] + 0.5, type === "missile" || (!!d.air && built % 3 === 2)).find(
           ([x, y]) => game.placeCheck(x, y, size) === "",
         );
         if (!spot) {
@@ -198,7 +227,7 @@ export function play(opts: {
       const s = S();
       const ready =
         s.wave === 0
-          ? s.towers.length >= 4
+          ? s.towers.length >= 4 || s.credits < nextCost()
           : strategy.callAt >= 0 &&
             s.creeps.length <= strategy.callAt &&
             pending() <= 3 &&
