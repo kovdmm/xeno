@@ -21,6 +21,10 @@ export interface Strategy {
   focus?: boolean;
   /** build along the baked longest maze of the level (sim/mazes.json) instead of the greedy placement */
   maze?: boolean;
+  /** every n-th turret that can shoot flyers goes on the flyers' straight lane instead of along the maze (default 3) */
+  airEvery?: number;
+  /** waves per extra turret: a new one is built while there are fewer than 5 + wave / this (default 3); larger = fewer turrets, more upgrades */
+  wavesPerTower?: number;
 }
 
 const BASIC: TowerType[] = ["gun", "cannon", "frost", "missile"];
@@ -37,6 +41,12 @@ export const STRATEGIES: Record<string, Strategy> = {
   "greedy-full": { name: "greedy-full", towers: FULL, callAt: 12 },
   // compositions (all call early like "rush"): which turrets carry a game, and does focusing upgrades pay
   "gun-spread": { name: "gun-spread", towers: ["gun"], opening: [], callAt: 4 },
+  "gun-air2": { name: "gun-air2", towers: ["gun"], opening: [], callAt: 4, airEvery: 2 },
+  "gun-air5": { name: "gun-air5", towers: ["gun"], opening: [], callAt: 4, airEvery: 5 },
+  "gun-missile": { name: "gun-missile", towers: ["gun", "gun", "gun", "missile"], opening: [], callAt: 4 },
+  "gun-many": { name: "gun-many", towers: ["gun"], opening: [], callAt: 4, wavesPerTower: 1.5 },
+  "gun-few": { name: "gun-few", towers: ["gun"], opening: [], callAt: 4, wavesPerTower: 6 },
+  "gun-fewer": { name: "gun-fewer", towers: ["gun"], opening: [], callAt: 4, wavesPerTower: 12 },
   "gun-focus": { name: "gun-focus", towers: ["gun"], opening: [], callAt: 4, focus: true },
   "gun-frost": { name: "gun-frost", towers: ["gun", "gun", "frost"], opening: [], callAt: 4, focus: true },
   "gun-cannon": { name: "gun-cannon", towers: ["gun", "gun", "cannon"], opening: [], callAt: 4, focus: true },
@@ -207,14 +217,17 @@ export function play(opts: {
 
   function spend() {
     for (let guard = 0; guard < 20; guard++) {
-      const wantTowers = maze ? 6 + Math.floor(S().wave * 0.9) : Math.min(45, 5 + Math.floor(S().wave / 3));
+      const wantTowers = maze
+        ? 6 + Math.floor(S().wave * 0.9)
+        : Math.min(45, 5 + Math.floor(S().wave / (strategy.wavesPerTower ?? 3)));
       if (S().towers.length < wantTowers) {
         const opening = strategy.opening ?? OPENING;
         const type = built < opening.length ? opening[built] : strategy.towers[built % strategy.towers.length];
         const d = game.balance.towers[type];
         if (S().credits < d.cost[0]) return;
         const size = d.size || 1;
-        const air = type === "missile" || (!!d.air && built % 3 === 2);
+        const air =
+          type === "missile" || (!!d.air && built % (strategy.airEvery ?? 3) === (strategy.airEvery ?? 3) - 1);
         const fits = ([x, y]: [number, number]) => game.placeCheck(x, y, size) === "";
         const spot =
           (maze && size === 1 && !air ? maze.order.find(fits) : undefined) ??
