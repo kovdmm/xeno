@@ -838,7 +838,6 @@ canvas {
   flex-direction: column;
   gap: 14px;
   line-height: 1.55;
-  max-width: 64ch;
 }
 #helpText p {
   overflow-wrap: break-word;
@@ -1176,9 +1175,9 @@ body:not(.desk) :is(#settings, #help, #records) {
   background: var(--metal-lo, #14110e);
 }
 body:not(.desk) :is(#settings, #help, #records) .in {
-  max-width: none;
+  max-width: 44rem; /* one reading width for the header and the text together on a wide window */
   min-height: 100%;
-  margin: 0;
+  margin: 0 auto;
   gap: 10px;
   padding: 0 max(16px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px))
     max(16px, env(safe-area-inset-left, 0px));
