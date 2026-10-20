@@ -1,5 +1,5 @@
 // Fullscreen and installing as an app: the two ways the game gets more of the screen.
-import { createInstaller, createWakeLock } from "../pwa";
+import { createInstaller, createWakeLock, shouldOfferInstall } from "../pwa";
 import { speedOf } from "./state";
 import type { UiContext } from "./context";
 
@@ -67,8 +67,12 @@ export function installAppMode(ui: UiContext, onFullscreenChange: () => void) {
   $("fsYes").addEventListener("click", () => {
     ui.screens.hide("fsAsk");
     if (!fsEl()) toggleFs();
+    offerInstall();
   });
-  $("fsNo").addEventListener("click", () => ui.screens.hide("fsAsk"));
+  $("fsNo").addEventListener("click", () => {
+    ui.screens.hide("fsAsk");
+    offerInstall();
+  });
   for (const ev of ["fullscreenchange", "webkitfullscreenchange"])
     document.addEventListener(ev, () => {
       drawFs();
@@ -77,8 +81,10 @@ export function installAppMode(ui: UiContext, onFullscreenChange: () => void) {
 
   /** Offers fullscreen to a phone or tablet player at the start. */
   function askFullscreen() {
-    if (fsOK && !fsEl() && matchMedia("(pointer:coarse)").matches && !ui.isDesk()) ui.screens.show("fsAsk");
+    if (fsOK && !fsEl() && isPhone()) ui.screens.show("fsAsk");
+    else offerInstall();
   }
+  const isPhone = () => matchMedia("(pointer:coarse)").matches && !ui.isDesk();
 
   const installer = createInstaller(
     { standalone: asApp, userAgent: navigator.userAgent, maxTouchPoints: navigator.maxTouchPoints || 0 },
@@ -95,7 +101,39 @@ export function installAppMode(ui: UiContext, onFullscreenChange: () => void) {
     // no dialog to show: iPhone has its own way, elsewhere the browser menu may still offer installing
     note.hidden = st !== "ios" && st !== "unavailable";
     note.textContent = st === "ios" ? t("installIos") : st === "unavailable" ? t("installMenu") : "";
+    offerInstall(); // the browser's offer may arrive late
   }
+
+  // suggest installing once: a sheet over the menu on a phone, never again after "Not now" or an answer
+  const DISMISSED = "xt-install-dismissed";
+  const ask = $("installAsk");
+  let offered = false;
+  function offerInstall() {
+    const st = installer.state();
+    const quiet = ["fsAsk", "settings", "help", "pause", "over", "credits"].every(
+      (s) => !ui.screens.isOpen(s as never),
+    );
+    if (offered || !quiet || !ui.screens.isOpen("menu")) return;
+    if (!shouldOfferInstall(st, ui.store.get(DISMISSED) === "1", isPhone())) return;
+    offered = true;
+    const ios = st === "ios"; // no dialog to call: the sheet explains the Share menu and has one button
+    const yes = $("installYes");
+    yes.dataset.i = ios ? "installOk" : "installBtn";
+    yes.textContent = t(yes.dataset.i);
+    $("installAskTxt").dataset.i = ios ? "installIos" : "installAskTxt";
+    $("installAskTxt").textContent = t(ios ? "installIos" : "installAskTxt");
+    ask.hidden = false;
+  }
+  function closeAsk() {
+    ask.hidden = true;
+    ui.store.set(DISMISSED, "1");
+  }
+  $("installYes").addEventListener("click", () => {
+    const ios = installer.state() === "ios";
+    closeAsk();
+    if (!ios) void installer.prompt();
+  });
+  $("installNo").addEventListener("click", closeAsk);
   $("installBtn").addEventListener("click", () => {
     if (installer.state() === "ios") ui.toast(t("installIos"));
     else installer.prompt();

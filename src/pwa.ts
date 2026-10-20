@@ -63,6 +63,11 @@ export function createInstaller(
   };
 }
 
+/** Whether to suggest installing now: only where installing can work, only on a phone, and only until the player says no. */
+export function shouldOfferInstall(state: InstallState, dismissed: boolean, phone: boolean): boolean {
+  return phone && !dismissed && (state === "available" || state === "ios");
+}
+
 interface WakeLockSentinelLike {
   released: boolean;
   release(): Promise<void>;
