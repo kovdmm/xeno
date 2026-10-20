@@ -7,9 +7,9 @@ import { clearPicks, SPEEDS } from "./state";
 export function createCommands(ui: UiContext, drawSpeed: () => void) {
   const { core: C, state: st, t, L, toast } = ui;
 
-  /** A refusal of the game becomes a message and an error sound; the quiet ones (busy, out, over) do not. */
+  /** A refusal of the game becomes a message and an error sound; the quiet ones (busy, out, over, gone) do not. */
   function say(code: string) {
-    if (code && code !== "busy" && code !== "out" && code !== "over") {
+    if (code && code !== "busy" && code !== "out" && code !== "over" && code !== "gone") {
       toast(t(code));
       ui.sound.play("error");
     }

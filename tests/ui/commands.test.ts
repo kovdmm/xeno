@@ -53,7 +53,7 @@ describe("commands", () => {
     cmd.placeAt([1, 1]);
     expect(toasts).toEqual(["pcRes"]);
     expect(played).toEqual(["error"]);
-    for (const quiet of ["busy", "out", "over", ""]) cmd.say(quiet);
+    for (const quiet of ["busy", "out", "over", "gone", ""]) cmd.say(quiet);
     expect(toasts).toEqual(["pcRes"]);
   });
 

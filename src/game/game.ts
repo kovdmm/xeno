@@ -182,6 +182,8 @@ export function createGame(opts: GameOptions = {}): GameApi {
   function upgrade(t: Tower | null, u?: string): UpgradeResult {
     const S = g.S;
     if (!t || S.over) return { ok: false, code: "over" };
+    // a tower that is no longer on the board (sold, or left over from a previous game) takes no money
+    if (!S.towers.includes(t)) return { ok: false, code: "gone" };
     if (t.lvl === 3 && !B.towers[t.type].ults[u as string]) return { ok: false, code: "pickUlt" };
     const c = S.freeTowers ? 0 : upCost(B, t);
     if (S.credits < c) return { ok: false, code: "noCred" };
@@ -201,6 +203,7 @@ export function createGame(opts: GameOptions = {}): GameApi {
   function sell(t: Tower | null): number {
     if (!t) return 0;
     const S = g.S;
+    if (!S.towers.includes(t)) return 0; // already sold, or from a previous game: nothing to pay
     const v = Math.floor(t.inv * B.economy.sellRefund);
     S.credits += v;
     for (let i = 0; i < S.grid.length; i++) if (S.grid[i] === t) S.grid[i] = null;

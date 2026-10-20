@@ -197,6 +197,27 @@ describe("economy commands", () => {
     expect(count("sold")).toBe(1);
   });
 
+  it("a tower that is no longer on the board cannot be sold or upgraded: a stale object takes and pays nothing", () => {
+    const t = C.place("gun", 5, 5).tower;
+    const paid = C.sell(t);
+    expect(paid).toBeGreaterThan(0);
+    const credits = C.S.credits;
+    expect(C.sell(t)).toBe(0); // a second sale of the same tower pays nothing
+    expect(C.upgrade(t)).toEqual({ ok: false, code: "gone" });
+    expect(C.S.credits).toBe(credits);
+    expect(count("sold")).toBe(1);
+    expect(t.lvl).toBe(0);
+  });
+
+  it("a tower of the previous game is gone in the new one", () => {
+    const old = C.place("gun", 5, 5).tower;
+    C.newGame("easy");
+    const credits = C.S.credits;
+    expect(C.sell(old)).toBe(0);
+    expect(C.upgrade(old)).toEqual({ ok: false, code: "gone" });
+    expect(C.S.credits).toBe(credits);
+  });
+
   it("commands are rejected once the game is over", () => {
     C.S.over = true;
     expect(C.place("gun", 5, 5)).toEqual({ ok: false, code: "over" });
