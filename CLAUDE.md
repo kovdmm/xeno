@@ -54,6 +54,12 @@ The history is read by people, so keep it short and meaningful.
 - **Run the tests first** (`yarn test:all`, or the part that your change touches) and commit only what passes.
 - **Message**: an English imperative summary of up to about 70 characters ("Add …", "Fix …", "Move … to …"), then, for
   anything that is not obvious, a body that says what changed and why. End it with the `Co-Authored-By` line.
+- **Commit under your own name**, so that the history shows who did what. The author and committer are your session
+  name, in the form `<name> (Claude Code)`, with the address `noreply@anthropic.com`; the name is the one `/list-agents`
+  shows (an agent without a name uses its role, for example `agent-marks`). Do not change the git config (it is shared by
+  all worktrees); pass the identity to the command:
+  `git -c user.name="xeno-92 (Claude Code)" -c user.email=noreply@anthropic.com commit ...`. Never commit under the
+  user's name. The `Co-Authored-By` line stays at the end of the message.
 - **Do not commit generated or local files**: `dist/`, `coverage/`, `test-results/`, `playwright-report/`, caches.
 - **Rewriting history** (amend, squash, rebase) is allowed only on local commits that nobody else has built on and that
   are not pushed, and only to tidy your own work. To tidy other sessions' commits, ask the user first and tell the
