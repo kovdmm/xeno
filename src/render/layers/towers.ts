@@ -1,5 +1,7 @@
 import type { Tower } from "../../game/types";
 import { TAU, THEME } from "../theme";
+import { leftMark, markText, rightMark } from "../marks";
+import { tierColor } from "../tiers";
 import { towerBase, towerTurret } from "../towers";
 import type { Ctx, FrameContext, Layer } from "../types";
 
@@ -40,6 +42,31 @@ export function drawTowerBase(f: FrameContext, tw: Tower, c2: Ctx) {
   }
 }
 
+/**
+ * The letter marks, drawn over the turrets: the type or specialisation letter at the screen-left of the plate and
+ * "+n" at the screen-right. They stay upright when the field is turned in portrait, so the offsets are screen ones.
+ */
+export function drawTowerMarks(f: FrameContext) {
+  const { ctx, sprites, proj } = f;
+  for (const tw of f.world.S.towers) {
+    const z = tw.size || 1,
+      L = Math.min(tw.lvl, 4),
+      ult = L >= 4 ? tw.ult : "",
+      cx = tw.x + 0.5,
+      cy = tw.y + 0.5,
+      dy = 0.33 * z;
+    const put = (text: string, fill: string, dx: number) => {
+      const s = sprites.sprite("m|" + text + "|" + fill + "|" + z, 0.7 * z, (c) => markText(c, text, fill, z));
+      // screen right is field +x in landscape and field -y in portrait; screen down is field +y or +x
+      if (proj.rot) sprites.blitUp(ctx, s, cx + dy, cy - dx);
+      else sprites.blit(ctx, s, cx + dx, cy + dy);
+    };
+    put(leftMark(tw.type, ult, L), "#f2efe6", -0.3 * z);
+    const n = rightMark(L);
+    if (n) put(n, tierColor(L, tw.type, specOf(f, tw)), 0.3 * z);
+  }
+}
+
 /** The turrets: they turn and kick back when they fire. */
 export const towers: Layer = {
   id: "towers",
@@ -58,5 +85,6 @@ export const towers: Layer = {
       const k = (fx.kick.get(tw) || 0) * 0.08 * z;
       sprites.blit(ctx, tur, cx - Math.cos(a) * k, cy - Math.sin(a) * k);
     }
+    drawTowerMarks(f);
   },
 };
