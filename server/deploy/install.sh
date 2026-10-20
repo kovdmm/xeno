@@ -81,6 +81,19 @@ fi
 systemctl reload nginx
 
 say "through nginx"
-curl -fsS --resolve xeno.kovalev.app:443:127.0.0.1 https://xeno.kovalev.app/api/health
-echo
+# right after the reload the old workers may still answer (404 for /api/): look again for a few seconds. This is
+# information, not a gate: the install is done, and a failure here must not make the script look as if it was not.
+via=0
+for _ in $(seq 1 10); do
+  if out="$(curl -fsS --max-time 5 --resolve xeno.kovalev.app:443:127.0.0.1 https://xeno.kovalev.app/api/health 2>/dev/null)"; then
+    echo "$out"
+    via=1
+    break
+  fi
+  sleep 1
+done
+if [ "$via" != 1 ]; then
+  echo "NOTE: /api/health did not answer through nginx within 10 s; check by hand:"
+  echo "  curl -s https://xeno.kovalev.app/api/health   and   nginx -t   and   journalctl -u xeno-scores -n 30"
+fi
 say "done. nginx backup: /root/nginx-backup-$STAMP"

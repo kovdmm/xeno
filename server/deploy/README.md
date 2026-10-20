@@ -23,6 +23,11 @@ of memory, nginx with certbot, no user `xeno`, nothing on port 3002.
 Not touched: Arranger (its units, user, `/var/lib/arranger`, its vhosts), other vhosts, the firewall, packages, the
 site's files (that is the separate site deploy below).
 
+**Line endings.** The scripts and units in this folder must reach the server with Unix line endings (`.gitattributes`
+sets `eol=lf` for them). On Windows, check a checkout before uploading (`grep -c $'\r' server/deploy/install.sh` must
+print 0); a script that arrives with CRLF fails in bash (`\r: command not found`) and a unit file with CRLF is not read
+properly by systemd.
+
 ## Install (from the checkout that is on main, with ssh to `root@46.101.198.82`)
 
 ```bash

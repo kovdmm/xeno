@@ -17,18 +17,34 @@ export async function runSmoke(base: string, nick = "smoke test", say: (line: st
     say(`${ok ? "ok  " : "FAIL"} ${name}${ok || detail === undefined ? "" : "  -> " + JSON.stringify(detail)}`);
     if (!ok) failed++;
   };
-  const get = async (path: string) => {
-    const r = await fetch(base + path);
-    return { status: r.status, body: (await r.json().catch(() => null)) as Json | null };
+  type Answer = { status: number; body: Json | null };
+  /**
+   * nginx limits submissions to 10 a minute with a burst of 3 and answers 429 with a page, not JSON: wait and ask
+   * again. The service's own limit (five an hour) answers with JSON and is an answer like any other.
+   */
+  const paced = async (go: () => Promise<Answer>): Promise<Answer> => {
+    for (let i = 0; i < 6; i++) {
+      const r = await go();
+      if (r.status !== 429 || r.body !== null) return r;
+      say("     (nginx's rate limit: waiting 7 s)");
+      await new Promise((resolve) => setTimeout(resolve, 7000));
+    }
+    return go();
   };
-  const post = async (body: unknown) => {
-    const r = await fetch(base + "/api/run", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
+  const get = (path: string) =>
+    paced(async () => {
+      const r = await fetch(base + path);
+      return { status: r.status, body: (await r.json().catch(() => null)) as Json | null };
     });
-    return { status: r.status, body: (await r.json().catch(() => null)) as Json | null };
-  };
+  const post = (body: unknown) =>
+    paced(async () => {
+      const r = await fetch(base + "/api/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return { status: r.status, body: (await r.json().catch(() => null)) as Json | null };
+    });
   /** a seed and its token, and the game played from that seed */
   const fresh = async () => {
     const s = await get("/api/run?level=crossroads&diff=easy");
