@@ -392,8 +392,12 @@ npx playwright install chromium
 yarn test:visual
 ```
 
-The server (`vite dev` on `127.0.0.1:4173`) starts automatically, so the tests run on the sources in `src/`, not on the
-built `dist/`.
+The server (`vite dev` on `127.0.0.1`) starts automatically, so the tests run on the sources in `src/`, not on the
+built `dist/`. Every working copy has its own port, `4200 + (hash(absolute path of the repo folder) % 700)` (see
+`playwright.config.ts`); override it with the env var `PW_PORT`. An already running server is never reused: if the port
+is taken, the run fails, so a server from another worktree can never be tested by mistake. Playwright uses at most 2
+workers (`workers` in the config): the suites of several sessions run in parallel, and more workers overload the machine
+and cause timeouts.
 
 - Scenes (an arrangement of towers, waves) are in `e2e/scenes.ts`, the checks themselves in `e2e/visual.spec.ts`. A scene
   is a function of `XT.core`; it is serialised into the page, so it must not close over module variables.
