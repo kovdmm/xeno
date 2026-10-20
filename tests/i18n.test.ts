@@ -140,7 +140,8 @@ describe("the texts of the game data cover the balance", () => {
       expect(Object.keys(g.towers[t].ults).sort(), `${t} ultimates`).toEqual(
         Object.keys(BALANCE.towers[t].ults).sort(),
       );
-      for (const u of Object.values(g.towers[t].ults) as { name: string; desc: string }[]) expect(u.name && u.desc).toBeTruthy();
+      for (const u of Object.values(g.towers[t].ults) as { name: string; desc: string }[])
+        expect(u.name && u.desc).toBeTruthy();
     }
     for (const l of ids.levels) expect(g.levels[l].name && g.levels[l].desc, l).toBeTruthy();
     for (const e of ids.enemies) expect(g.enemies[e].name, e).toBeTruthy();
@@ -160,7 +161,9 @@ describe("the code only asks for strings that exist", () => {
   });
 
   it("every literal t('key') used by the interface (src/ui)", () => {
-    const ui = readdirSync(new URL("../src/ui/", import.meta.url)).map((f) => read("src/ui/" + f)).join(" ");
+    const ui = readdirSync(new URL("../src/ui/", import.meta.url))
+      .map((f) => read("src/ui/" + f))
+      .join(" ");
     const keys = new Set([...ui.matchAll(/\bt\(\s*"([A-Za-z0-9_]+)"/g)].map((m) => m[1]));
     expect(keys.size).toBeGreaterThan(30);
     for (const k of keys) expect(en[k], k).toBeDefined();
@@ -171,7 +174,7 @@ describe("the code only asks for strings that exist", () => {
     const core = ["grid", "game", "abilities", "waves", "combat"].map((f) => read(`src/game/${f}.ts`)).join(" ");
     const codes = new Set([...core.matchAll(/"(pc[A-Z]\w*|pc22|noCred|pickUlt)"/g)].map((m) => m[1]));
     expect([...codes].sort()).toEqual(["noCred", "pc22", "pcBlock", "pcEdge", "pcEnemy", "pcRes", "pcTrap", "pickUlt"]);
-    for (const c of [...codes, "early", "cleared", "finalToast"]) expect(en[c], c).toBeDefined();
+    for (const c of [...codes, "early", "cleared", "finalToast", "waveCap"]) expect(en[c], c).toBeDefined();
   });
 
   it("index.html is English by default and has a language selector instead of buttons", () => {
@@ -184,7 +187,11 @@ describe("the code only asks for strings that exist", () => {
 
 describe("translator", () => {
   const make = (saved: string | null = null, browser: string[] = [], texts?: Record<string, unknown>) =>
-    createTranslator({ storage: memoryStore(saved ? { "xt-lang": saved } : {}), browserLanguages: browser, texts: texts as never });
+    createTranslator({
+      storage: memoryStore(saved ? { "xt-lang": saved } : {}),
+      browserLanguages: browser,
+      texts: texts as never,
+    });
 
   it("starts in English when nothing is saved and the browser language is unknown", () => {
     expect(make().lang).toBe("en");
@@ -233,7 +240,11 @@ describe("translator", () => {
       en: { ui: { a: "English A", b: "English B" }, game: { towers: { gun: { name: "Gun" } } } },
       de: { ui: { a: "Deutsch A" }, game: { towers: {} } },
     };
-    const t = createTranslator({ storage: memoryStore({ "xt-lang": "de" }), browserLanguages: [], texts: texts as never });
+    const t = createTranslator({
+      storage: memoryStore({ "xt-lang": "de" }),
+      browserLanguages: [],
+      texts: texts as never,
+    });
     expect(t.t("a")).toBe("Deutsch A");
     expect(t.t("b")).toBe("English B");
     expect(t.t("nope")).toBe("nope");

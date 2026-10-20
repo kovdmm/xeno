@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { BALANCE } from "../src/game/balance";
 import { loadXT, run } from "./helpers/load";
 
 let C, events;
@@ -284,6 +285,17 @@ describe("waves", () => {
     C.sendWave(true);
     expect(C.S.credits).toBe(credits + timer);
     expect(events.find((e) => e.type === "toast" && e.key === "early").vars.b).toBe(timer);
+  });
+
+  it("no more waves than waves.maxActive are on the board: an early call is refused, the timer waits", () => {
+    const cap = BALANCE.waves.maxActive;
+    for (let i = 0; i < cap + 5; i++) C.sendWave(true);
+    expect(C.S.wave).toBe(cap);
+    expect(events.filter((e) => e.type === "toast" && e.key === "waveCap")).toHaveLength(5);
+    C.S.timer = 0.01;
+    run(C, 0.1);
+    expect(C.S.wave).toBe(cap); // the timer did not call another one either
+    expect(C.S.timer).toBeGreaterThan(0);
   });
 
   it("the timer sends waves automatically", () => {

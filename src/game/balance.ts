@@ -270,7 +270,8 @@ export function validateBalance(b: unknown): string[] {
 
   // waves (needs the enemy names above)
   const w = b.waves;
-  for (const f of ["alternateUntil", "bossEvery"]) num(`waves.${f}`, w[f], 1, true);
+  for (const f of ["maxActive", "alternateUntil", "bossEvery"]) num(`waves.${f}`, w[f], 1, true);
+  num("waves.capRetry", w.capRetry, 0.1);
   if (!Array.isArray(w.bothEvery) || !w.bothEvery.length) bad("waves.bothEvery", "expected a list of integers");
   else w.bothEvery.forEach((k: unknown, i: number) => num(`waves.bothEvery[${i}]`, k, 1, true));
   for (const f of ["cycle", "cycleNew"]) {

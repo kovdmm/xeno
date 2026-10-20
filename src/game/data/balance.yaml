@@ -193,6 +193,12 @@ projectiles:
   rail:
     halfWidth: 0.15
 waves:
+  # Most waves that may be on the board at once (a wave counts until its last enemy is killed or has leaked). A call
+  # beyond it is refused: early calls with a message, the timer waits a second and tries again. Keeps the number of
+  # enemies, and so the frame time, bounded when the player calls waves back to back.
+  maxActive: 15
+  # seconds the timer waits before it tries again
+  capRetry: 1
   alternateUntil: 6
   bothEvery: [4, 10]
   bossEvery: 10

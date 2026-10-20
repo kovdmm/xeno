@@ -523,6 +523,8 @@ export interface Balance {
     rail: { halfWidth: number };
   };
   waves: {
+    maxActive: number;
+    capRetry: number;
     alternateUntil: number;
     bothEvery: number[];
     bossEvery: number;

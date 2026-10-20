@@ -155,6 +155,12 @@ export function sendWave(g: Game, early?: boolean): void {
   const S = g.S,
     FINAL = g.L.finalWave;
   if (S.wave >= FINAL || S.over) return;
+  // too many waves on the board at once: an early call is refused, the timer waits a little
+  if (Object.values(S.left).filter((n) => n > 0).length >= g.B.waves.maxActive) {
+    if (early) g.emit({ type: "toast", key: "waveCap" });
+    else S.timer = g.B.waves.capRetry;
+    return;
+  }
   if (early && S.timer > 0) {
     const b = Math.floor(S.timer * g.B.economy.earlyBonusPerSecond);
     if (b > 0) {

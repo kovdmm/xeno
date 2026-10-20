@@ -55,6 +55,7 @@
     "pcBlock": "Du får inte blockera vägen",
     "pcTrap": "Du får inte spärra in fienderna",
     "early": "Tidigt anrop: +{b} kr.",
+    "waveCap": "För många vågor samtidigt",
     "finalToast": "Sista vågen: Svärmdrottningen!",
     "cleared": "Våg {n} avvärjd: +{b} kr.",
     "won": "Seger",

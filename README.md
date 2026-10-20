@@ -74,20 +74,20 @@ simulation code has no numeric parameters of its own (only mathematical constant
 0.5"). The game reads the file as `g.B` (`Balance` in `types.ts`). The YAML is turned into data by the plugin in
 `scripts/yamlPlugin.ts`, for the build, the dev server and the tests alike.
 
-| Section       | What is in it                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------- |
-| `board`       | the radius around a walking enemy where building is blocked (shared by all levels)                            |
-| `levels`      | the **levels**: the field, routes, walls and length of each map (see below)                                   |
-| `economy`     | sell refund, ultimate price, overclock, bonuses for a wave and for calling one early, score, cheat codes      |
-| `scaling`     | growth of enemy health and rewards over the waves (quadratic, faster after wave 100, a smoothed "rise")       |
-| `combat`      | armour, blast radius and fall-off, burning, stun, plague, healers, jumpers, spawn spread                      |
-| `shooting`    | most shots per tick, aiming speed, the cryo pulse, laser overheating                                          |
-| `projectiles` | speed, muzzle offset and hit radius of each kind of projectile, cluster-bomb and rocket parameters            |
-| `waves`       | route order, enemy cycles, formulas for counts and their limits, bosses, the final wave, mixed waves, the gap |
-| `towers`      | cost, damage, fire rate and range for 4 levels, and the **ultimates as data**                                 |
-| `enemies`     | health, speed, reward, armour, size, spawn interval                                                           |
-| `difficulty`  | multipliers and starting values of the four difficulties                                                      |
-| `abilities`   | price, cooldown, aiming and the parameters of every ability                                                   |
+| Section       | What is in it                                                                                                                                        |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `board`       | the radius around a walking enemy where building is blocked (shared by all levels)                                                                   |
+| `levels`      | the **levels**: the field, routes, walls and length of each map (see below)                                                                          |
+| `economy`     | sell refund, ultimate price, overclock, bonuses for a wave and for calling one early, score, cheat codes                                             |
+| `scaling`     | growth of enemy health and rewards over the waves (quadratic, faster after wave 100, a smoothed "rise")                                              |
+| `combat`      | armour, blast radius and fall-off, burning, stun, plague, healers, jumpers, spawn spread                                                             |
+| `shooting`    | most shots per tick, aiming speed, the cryo pulse, laser overheating                                                                                 |
+| `projectiles` | speed, muzzle offset and hit radius of each kind of projectile, cluster-bomb and rocket parameters                                                   |
+| `waves`       | route order, enemy cycles, formulas for counts and their limits, bosses, the final wave, mixed waves, the gap, the cap on waves on the board at once |
+| `towers`      | cost, damage, fire rate and range for 4 levels, and the **ultimates as data**                                                                        |
+| `enemies`     | health, speed, reward, armour, size, spawn interval                                                                                                  |
+| `difficulty`  | multipliers and starting values of the four difficulties                                                                                             |
+| `abilities`   | price, cooldown, aiming and the parameters of every ability                                                                                          |
 
 **Ultimates** are described as operations on the level-4 stats and applied in the order `set` → `mul` → `div`:
 

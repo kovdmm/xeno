@@ -55,6 +55,7 @@
     "pcBlock": "Der Weg darf nicht versperrt werden",
     "pcTrap": "Gegner dürfen nicht eingesperrt werden",
     "early": "Frühruf: +{b} Kr.",
+    "waveCap": "Zu viele Wellen gleichzeitig",
     "finalToast": "Letzte Welle: die Schwarmkönigin!",
     "cleared": "Welle {n} abgewehrt: +{b} Kr.",
     "won": "Sieg",

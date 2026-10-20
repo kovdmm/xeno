@@ -55,6 +55,7 @@
     "pcBlock": "You cannot block the path",
     "pcTrap": "You cannot trap enemies",
     "early": "Early call: +{b} cr.",
+    "waveCap": "Too many waves at once",
     "finalToast": "Final wave: the Swarm Queen!",
     "cleared": "Wave {n} cleared: +{b} cr.",
     "won": "Victory",
