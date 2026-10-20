@@ -95,18 +95,32 @@ export function createRecipes(rand: Rng): Record<string, Recipe> {
       (t, s) =>
         sq(ph(s, sweep(t, 320, 50, 0.9))) * Math.exp(-t * 3) * 0.25 + lp(s, 0.1, rnd()) * Math.exp(-t * 4) * 1.2,
     ],
+    // the base is hit: a dull crunch, a falling buzz and a wet low thud
     leak: [
-      0.4,
-      (t, s) => sq(t * TWO_PI * (t < 0.18 ? 880 : 660)) * (t < 0.16 || t > 0.2 ? 1 : 0) * Math.exp(-t * 2) * 0.22,
+      0.45,
+      (t, s) =>
+        lp(s, 0.35, rnd()) * Math.exp(-t * 28) * 0.9 +
+        sq(ph(s, sweep(t, 190, 55, 0.35), "q")) * Math.exp(-t * 7) * 0.3 +
+        Math.sin(ph(s, sweep(t, 110, 45, 0.2), "b")) * Math.exp(-t * 12) * 0.7,
     ],
+    // a wave arrives: a sub-bass blow and a short growl of two saws a tritone apart, sinking under a shrill wail
     wave: [
-      0.8,
+      1,
       (t, s) => {
-        const v = 1 + 0.01 * Math.sin(t * 35),
-          a = Math.min(1, t * 12) * Math.exp(-Math.max(0, t - 0.45) * 8);
-        return (
-          ((((t * 220 * v) % 1) * 2 - 1) * 0.35 + (((t * 330 * v) % 1) * 2 - 1) * 0.25) * lp(s, 0.3, 1, "e") * a * 0.6
-        );
+        const saw = (key: string, f: number) => ((ph(s, f, key) / TWO_PI) % 1) * 2 - 1;
+        const sink = sweep(t, 1, 0.8, 1);
+        const blow = Math.sin(ph(s, sweep(t, 90, 38, 0.3), "b")) * Math.exp(-t * 5) * 0.8;
+        const growl =
+          lp(s, 0.1, saw("g1", 49 * sink) * 0.5 + saw("g2", 49 * 1.4142 * sink) * 0.4 + rnd() * 0.12, "g") *
+          (0.6 + 0.4 * Math.sin(t * TWO_PI * 8)) *
+          Math.min(1, t * 20) *
+          Math.exp(-Math.max(0, t - 0.4) * 5) *
+          2.2;
+        const wail =
+          (Math.sin(ph(s, sweep(t, 620, 540, 1), "w1")) + Math.sin(ph(s, sweep(t, 655, 570, 1), "w2"))) *
+          Math.sin(Math.PI * Math.min(1, t)) ** 2 *
+          0.09;
+        return Math.tanh(blow + growl + wail) * 0.9;
       },
     ],
     cleared: [
