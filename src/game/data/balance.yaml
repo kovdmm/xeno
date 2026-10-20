@@ -87,6 +87,8 @@ economy:
   ultimateCostMultiplier: 3
   overclock:
     damageGrowth: 1.25
+    # each overclock also widens the range by this factor
+    rangeGrowth: 1.04
     costBase: 1.5
     costGrowth: 1.45
   waveClearBonus:

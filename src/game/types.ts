@@ -454,7 +454,7 @@ export interface Balance {
     sellRefund: number;
     /** the level-5 upgrade costs this many times the level-4 one */
     ultimateCostMultiplier: number;
-    overclock: { damageGrowth: number; costBase: number; costGrowth: number };
+    overclock: { damageGrowth: number; rangeGrowth: number; costBase: number; costGrowth: number };
     /** credits for clearing wave n: base + perWave * n */
     waveClearBonus: { base: number; perWave: number };
     earlyBonusPerSecond: number;

@@ -66,11 +66,12 @@ describe("tower stats and upgrade cost", () => {
     expect(C.st("artillery", 4, "nuke").splash).toBe(3.5);
   });
 
-  it("overclock multiplies damage and burn by 1.25^n", () => {
+  it("overclock multiplies damage and burn by 1.25^n and widens the range", () => {
     const base = C.st("plasma", 4, "plague");
     const oc = C.st("plasma", 4, "plague", 3);
     expect(oc.dmg).toBeCloseTo(base.dmg * 1.25 ** 3);
     expect(oc.burn).toBeCloseTo(base.burn * 1.25 ** 3);
+    expect(oc.range).toBeCloseTo(base.range * BALANCE.economy.overclock.rangeGrowth ** 3);
   });
 
   it("an unknown ultimate leaves level 4 as plain level 3", () => {

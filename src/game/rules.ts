@@ -37,6 +37,7 @@ export function towerStats(B: Balance, type: TowerType, lvl: number, ult?: strin
     const m = Math.pow(B.economy.overclock.damageGrowth, oc);
     s.dmg *= m;
     s.burn *= m;
+    s.range *= Math.pow(B.economy.overclock.rangeGrowth, oc);
   }
   return s;
 }
