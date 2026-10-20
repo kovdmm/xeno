@@ -518,8 +518,8 @@ difficulty:
     armor: 2
     armorDiv: 7
     spd: 1.1
-    rw: 0.9
-    credits: 110
+    rw: 1
+    credits: 120
     lives: 20
     ab: 1.4
     gap: 18
