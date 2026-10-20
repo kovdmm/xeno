@@ -1,7 +1,7 @@
 // The audio system: wires the parts together. Game events become cues, the mixer decides what plays, the
 // bank provides the sounds, the music player keeps the loop going, and the backend (AudioOut) makes noise.
 import type { GameEvent, Rng } from "../game/types";
-import { composeSong, type SongSpec } from "./music/composer";
+import { composeSong, renderSettings, type SongSpec } from "./music/composer";
 import { renderScore } from "./music/render";
 import { MusicPlayer } from "./music/player";
 import { SINISTER } from "./music/songs/sinister";
@@ -47,7 +47,6 @@ export interface AudioSystem {
   readonly stats: Record<string, number>;
 }
 
-const MUSIC_RATE = 16000;
 /** wait this long after start before composing the music, so the first frame is not delayed */
 const MUSIC_DELAY_MS = 400;
 
@@ -62,10 +61,12 @@ export function createAudioSystem(deps: AudioDeps): AudioSystem {
   let humLoop: LoopHandle | null = null;
   let clock = 0;
 
+  const song = deps.song ?? SINISTER;
+  const render = renderSettings(song);
   const music = new MusicPlayer(
     out,
-    () => renderScore(composeSong(deps.song ?? SINISTER), { sampleRate: MUSIC_RATE }),
-    MUSIC_RATE,
+    () => renderScore(composeSong(song), render),
+    render.sampleRate,
     () => settings.musicVolume,
   );
 

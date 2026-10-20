@@ -102,6 +102,6 @@ describe("source hygiene", () => {
   it("the music composer knows no sound and the renderer no tunes", () => {
     const get = (n) => code(files.find((f) => f.name === n));
     expect(get("audio/music/composer.ts")).not.toMatch(/Math\.(sin|exp|pow)|Float32Array/);
-    expect(get("audio/music/render.ts")).not.toMatch(/progression|chords/);
+    expect(get("audio/music/render.ts")).not.toMatch(/progression|chords|tracks\[/);
   });
 });

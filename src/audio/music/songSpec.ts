@@ -1,150 +1,88 @@
 // A song is data: a SongSpec written as JSON (see songs/). This module checks such a document and prints it in a
 // readable shape, so tools (the music editor next to this project) and the game agree on what a song is.
-// The composer turns a valid SongSpec into a score; nothing here knows about sound.
+// The composer turns a valid SongSpec into a score; nothing here knows about sound beyond the instruments' names.
 import type { SongSpec } from "./composer";
+import { INSTRUMENTS, instrumentsOf } from "./instruments";
+import { MODE_NAMES, isMode, modeOf } from "./modes";
 
 const isObj = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const isInt = (v: unknown): v is number => Number.isInteger(v);
 /** beats are compared with a little slack: 0.1 + 0.2 + 0.7 is a whole beat too */
 const EPS = 1e-6;
+/** the shortest note */
+export const MIN_BEATS = 0.0625;
 
 export interface ValidateOptions {
-  /** the instruments drum patterns may name (default: kick, snare, hat) */
-  drumInstruments?: readonly string[];
+  /** the instruments a track may use, and whether each is pitched or a hit (default: those of the song's sound mode) */
+  instruments?: Record<string, { kind: string }>;
 }
 
-/** Lists everything wrong with a song description; an empty list means the composer can use it. */
+const PITCHED = new Set(["tone", "pluck", "fm"]);
+
+/** Lists everything wrong with a song; an empty list means the composer can use it. */
 export function validateSongSpec(data: unknown, opts: ValidateOptions = {}): string[] {
   const errs: string[] = [];
   const bad = (path: string, why: string) => errs.push(`${path}: ${why}`);
-  const drumNames = opts.drumInstruments ?? ["kick", "snare", "hat"];
   const num = (path: string, v: unknown, min: number, max = Infinity, int = false) => {
     if (!isNum(v)) return bad(path, `expected a number, got ${JSON.stringify(v)}`);
     if (v < min || v > max) return bad(path, `must be between ${min} and ${max}, got ${v}`);
     if (int && !isInt(v)) bad(path, `must be a whole number, got ${v}`);
   };
-  const midi = (path: string, v: unknown) => num(path, v, 0, 127, true);
   const level = (path: string, v: unknown) => num(path, v, 0, 1);
 
   if (!isObj(data)) return ["song: expected an object"];
   const s = data;
+  if (s.sound !== undefined && !isMode(s.sound)) bad("sound", `unknown sound ${JSON.stringify(s.sound)} (have ${MODE_NAMES.join(", ")})`);
+  const mode = modeOf({ sound: isMode(s.sound) ? s.sound : undefined });
+  const instruments: Record<string, { kind: string }> =
+    opts.instruments ?? Object.fromEntries(instrumentsOf(mode, true).map((n) => [n, INSTRUMENTS[n]]));
   num("bpm", s.bpm, 20, 400);
   num("beatsPerBar", s.beatsPerBar, 1, 16, true);
+  num("bars", s.bars, 1, 128, true);
+  const total = (isNum(s.bars) ? s.bars : 1) * (isNum(s.beatsPerBar) ? s.beatsPerBar : 4);
 
-  // chords and the progression (the length of the song)
-  const chords = isObj(s.chords) ? s.chords : (bad("chords", "expected an object of chords"), {});
-  if (isObj(s.chords) && !Object.keys(chords).length) bad("chords", "needs at least one chord");
-  for (const [name, c] of Object.entries<any>(chords)) {
-    if (!isObj(c)) {
-      bad(`chords.${name}`, "expected { bass, arp, minor }");
-      continue;
-    }
-    midi(`chords.${name}.bass`, c.bass);
-    midi(`chords.${name}.arp`, c.arp);
-    if (typeof c.minor !== "boolean") bad(`chords.${name}.minor`, "expected true or false");
-  }
-  let bars = 0;
-  if (!Array.isArray(s.progression) || !s.progression.length) bad("progression", "needs at least one bar");
+  if (!Array.isArray(s.tracks)) bad("tracks", "expected a list of tracks");
   else {
-    bars = s.progression.length;
-    s.progression.forEach((name: unknown, i: number) => {
-      if (typeof name !== "string" || !(name in chords)) bad(`progression[${i}]`, `unknown chord ${JSON.stringify(name)}`);
+    if (!s.tracks.length) bad("tracks", "needs at least one track");
+    const names = new Set<string>();
+    s.tracks.forEach((t: any, i: number) => {
+      const p = `tracks[${i}]`;
+      if (!isObj(t)) return bad(p, "expected { name, instrument, vol, notes }");
+      if (typeof t.name !== "string" || !t.name.trim()) bad(`${p}.name`, "expected a name");
+      else if (names.has(t.name)) bad(`${p}.name`, `the name ${JSON.stringify(t.name)} is used twice`);
+      else names.add(t.name);
+      const inst = typeof t.instrument === "string" ? instruments[t.instrument] : undefined;
+      if (!inst) bad(`${p}.instrument`, `unknown instrument ${JSON.stringify(t.instrument)} (the ${mode} sound has ${Object.keys(instruments).join(", ")})`);
+      level(`${p}.vol`, t.vol);
+      if (t.gate !== undefined) level(`${p}.gate`, t.gate);
+      if (t.echo !== undefined) {
+        if (!isObj(t.echo)) bad(`${p}.echo`, "expected { instrument, delaySeconds, vol, gate }");
+        else {
+          if (typeof t.echo.instrument !== "string" || !instruments[t.echo.instrument]) bad(`${p}.echo.instrument`, `unknown instrument ${JSON.stringify(t.echo.instrument)}`);
+          num(`${p}.echo.delaySeconds`, t.echo.delaySeconds, 0, 5);
+          level(`${p}.echo.vol`, t.echo.vol);
+          level(`${p}.echo.gate`, t.echo.gate);
+        }
+      }
+      if (!Array.isArray(t.notes)) return bad(`${p}.notes`, "expected a list of notes");
+      const drum = !!inst && !PITCHED.has(inst.kind);
+      t.notes.forEach((n: unknown, k: number) => {
+        const q = `${p}.notes[${k}]`;
+        if (!Array.isArray(n) || n.length < 3 || n.length > 4) return bad(q, "expected [beat, pitch, beats] or [beat, pitch, beats, velocity]");
+        num(`${q}[0]`, n[0], 0, total - EPS);
+        if (drum) {
+          num(`${q}[1]`, n[1], 0, 127);
+          num(`${q}[2]`, n[2], 0);
+        } else {
+          num(`${q}[1]`, n[1], 0, 127, true);
+          num(`${q}[2]`, n[2], MIN_BEATS);
+          if (isNum(n[0]) && isNum(n[2]) && n[0] + n[2] > total + EPS) bad(q, `the note ends at beat ${n[0] + n[2]}, after the end of the song (${total})`);
+        }
+        if (n.length === 4) level(`${q}[3]`, n[3]);
+      });
     });
   }
-  const bpb = isNum(s.beatsPerBar) ? s.beatsPerBar : 4;
-
-  // bass
-  if (isObj(s.bass)) {
-    const b = s.bass;
-    if (!Array.isArray(b.steps) || !b.steps.length) bad("bass.steps", "needs at least one step");
-    else b.steps.forEach((x: unknown, i: number) => num(`bass.steps[${i}]`, x, -48, 48, true));
-    num("bass.stepBeats", b.stepBeats, 0.0625, 16);
-    if (Array.isArray(b.steps) && isNum(b.stepBeats) && b.steps.length * b.stepBeats > bpb + EPS)
-      bad("bass.steps", `${b.steps.length} steps of ${b.stepBeats} beats do not fit in a bar of ${bpb} beats`);
-    num("bass.octave", b.octave, -48, 48, true);
-    level("bass.vol", b.vol);
-    level("bass.gate", b.gate);
-  } else bad("bass", "expected an object");
-
-  // arpeggio
-  if (isObj(s.arp)) {
-    const a = s.arp;
-    num("arp.fromBar", a.fromBar, 0, undefined, true);
-    num("arp.stepBeats", a.stepBeats, 0.0625, 16);
-    if (isNum(a.stepBeats) && Math.abs(bpb / a.stepBeats - Math.round(bpb / a.stepBeats)) > EPS)
-      bad("arp.stepBeats", `must divide the bar (${bpb} beats) into whole steps`);
-    level("arp.gate", a.gate);
-    level("arp.vol", a.vol);
-    level("arp.louderVol", a.louderVol);
-    num("arp.louderFromBar", a.louderFromBar, 0, undefined, true);
-    num("arp.liftSemitones", a.liftSemitones, -48, 48, true);
-  } else bad("arp", "expected an object");
-
-  // drone
-  if (isObj(s.drone)) {
-    num("drone.octave", s.drone.octave, -48, 96, true);
-    level("drone.vol", s.drone.vol);
-    level("drone.gate", s.drone.gate);
-  } else bad("drone", "expected an object");
-
-  // drums and fills
-  const hit = (path: string, beat: unknown) => num(path, beat, 0, bpb - EPS);
-  if (!Array.isArray(s.drums)) bad("drums", "expected a list of patterns");
-  else
-    s.drums.forEach((d: any, i: number) => {
-      const p = `drums[${i}]`;
-      if (!isObj(d)) return bad(p, "expected { instrument, beats }");
-      if (!drumNames.includes(d.instrument)) bad(`${p}.instrument`, `unknown drum ${JSON.stringify(d.instrument)} (have ${drumNames.join(", ")})`);
-      if (!Array.isArray(d.beats)) bad(`${p}.beats`, "expected a list of beats");
-      else d.beats.forEach((b: unknown, k: number) => hit(`${p}.beats[${k}]`, b));
-      if (d.fromBar !== undefined) num(`${p}.fromBar`, d.fromBar, 0, undefined, true);
-    });
-  if (!Array.isArray(s.fills)) bad("fills", "expected a list of fills");
-  else
-    s.fills.forEach((f: any, i: number) => {
-      const p = `fills[${i}]`;
-      if (!isObj(f)) return bad(p, "expected { bar, hits }");
-      num(`${p}.bar`, f.bar, 0, Math.max(0, bars - 1), true);
-      if (!Array.isArray(f.hits)) bad(`${p}.hits`, "expected a list of [instrument, beat]");
-      else
-        f.hits.forEach((h: unknown, k: number) => {
-          if (!Array.isArray(h) || h.length !== 2) return bad(`${p}.hits[${k}]`, "expected [instrument, beat]");
-          if (!drumNames.includes(h[0])) bad(`${p}.hits[${k}][0]`, `unknown drum ${JSON.stringify(h[0])}`);
-          hit(`${p}.hits[${k}][1]`, h[1]);
-        });
-    });
-
-  // lead: one line of [pitch, beats] per bar from `fromBar`, filling the bar exactly
-  if (isObj(s.lead)) {
-    const l = s.lead;
-    num("lead.fromBar", l.fromBar, 0, bars, true);
-    level("lead.vol", l.vol);
-    level("lead.gate", l.gate);
-    if (isObj(l.echo)) {
-      num("lead.echo.delaySeconds", l.echo.delaySeconds, 0, 5);
-      level("lead.echo.vol", l.echo.vol);
-      level("lead.echo.gate", l.echo.gate);
-    } else bad("lead.echo", "expected { delaySeconds, vol, gate }");
-    if (!Array.isArray(l.lines)) bad("lead.lines", "expected a list of bars");
-    else {
-      const want = isInt(l.fromBar) ? Math.max(0, bars - l.fromBar) : l.lines.length;
-      if (l.lines.length !== want) bad("lead.lines", `needs one line per bar from bar ${l.fromBar} (${want}), has ${l.lines.length}`);
-      l.lines.forEach((line: unknown, b: number) => {
-        const p = `lead.lines[${b}]`;
-        if (!Array.isArray(line) || !line.length) return bad(p, "needs at least one note");
-        let sum = 0;
-        line.forEach((n: unknown, k: number) => {
-          if (!Array.isArray(n) || n.length !== 2) return bad(`${p}[${k}]`, "expected [pitch, beats]");
-          midi(`${p}[${k}][0]`, n[0]);
-          num(`${p}[${k}][1]`, n[1], 0.0625, bpb);
-          if (isNum(n[1])) sum += n[1];
-        });
-        if (Math.abs(sum - bpb) > EPS) bad(p, `the notes last ${sum} beats, the bar has ${bpb}`);
-      });
-    }
-  } else bad("lead", "expected an object");
-
   return errs;
 }
 
@@ -163,16 +101,36 @@ const inline = (v: unknown): string =>
       ? "{ " + Object.entries(v).map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(", ") + " }"
       : JSON.stringify(v);
 
-function layout(v: unknown, pad: string): string {
-  const one = inline(v);
-  if (pad.length + one.length <= LINE || typeof v !== "object" || v === null) return one;
-  const deeper = pad + "  ";
-  if (Array.isArray(v)) return "[\n" + v.map((x) => deeper + layout(x, deeper)).join(",\n") + "\n" + pad + "]";
-  const entries = Object.entries(v as Record<string, unknown>);
-  return "{\n" + entries.map(([k, x]) => `${deeper}${JSON.stringify(k)}: ${layout(x, deeper)}`).join(",\n") + "\n" + pad + "}";
+/** The notes of a track: a line per bar (more lines when a bar is too long for one). */
+function notesText(song: SongSpec, notes: SongSpec["tracks"][number]["notes"], pad: string): string {
+  if (!notes.length) return "[]";
+  const lines: string[] = [];
+  let line = "";
+  let bar = -1;
+  for (const n of notes) {
+    const b = Math.floor(n[0] / song.beatsPerBar);
+    const text = inline(n);
+    if (line && (b !== bar || pad.length + line.length + text.length + 2 > LINE)) (lines.push(line), (line = ""));
+    line += (line ? ", " : "") + text;
+    bar = b;
+  }
+  lines.push(line);
+  return "[\n" + lines.map((l) => pad + "  " + l).join(",\n") + "\n" + pad + "]";
 }
 
-/** The JSON text of a song: short pieces on one line (a chord, a bar of the lead), the rest indented. */
+/** The JSON text of a song: the numbers on their own lines, the notes a bar to a line. */
 export function formatSongSpec(song: SongSpec): string {
-  return layout(song, "") + "\n";
+  const out: string[] = ["{", ...(song.sound ? [`  "sound": ${JSON.stringify(song.sound)},`] : []), `  "bpm": ${song.bpm},`, `  "beatsPerBar": ${song.beatsPerBar},`, `  "bars": ${song.bars},`, '  "tracks": ['];
+  out.push(
+    song.tracks
+      .map((t) => {
+        const head = [`"name": ${JSON.stringify(t.name)}`, `"instrument": ${JSON.stringify(t.instrument)}`, `"vol": ${t.vol}`];
+        if (t.gate !== undefined) head.push(`"gate": ${t.gate}`);
+        if (t.echo) head.push(`"echo": ${inline(t.echo)}`);
+        return ["    {", ...head.map((h) => `      ${h},`), `      "notes": ${notesText(song, t.notes, "      ")}`, "    }"].join("\n");
+      })
+      .join(",\n"),
+  );
+  out.push("  ]", "}");
+  return out.join("\n") + "\n";
 }

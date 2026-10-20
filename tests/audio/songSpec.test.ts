@@ -25,64 +25,61 @@ describe("the song as JSON", () => {
     expect(readFileSync("src/audio/music/songs/sinister.json", "utf8")).toBe(text); // the file is kept in this shape
   });
 
-  it("short things stay on one line, long ones are indented", () => {
+  it("the notes are a bar to a line, the lines are short", () => {
     const text = formatSongSpec(SINISTER);
-    expect(text).toContain('"D": { "bass": 38, "arp": 62, "minor": true }');
-    expect(text).toContain("[[74, 2], [77, 1], [76, 1]],"); // one bar of the lead per line
+    expect(text).toContain("[0, 50, 0.5], [0.5, 50, 0.5], [1, 62, 0.5]");
+    expect(text).toContain('"echo": { "instrument": "leadEcho"');
     expect(Math.max(...text.split("\n").map((l) => l.length))).toBeLessThanOrEqual(110);
   });
 
-  it("a valid description composes", () => {
+  it("a valid song composes; an empty track is fine", () => {
     expect(composeSong(parseSongSpec(clone())).bars).toBe(16);
+    const empty = { bpm: 90, beatsPerBar: 4, bars: 2, tracks: [{ name: "x", instrument: "bass", vol: 0.3, notes: [] }] };
+    expect(validateSongSpec(empty)).toEqual([]);
+    expect(JSON.parse(formatSongSpec(empty))).toEqual(empty);
   });
 });
 
 describe("what makes a song valid", () => {
-  it("is an object with a tempo and a bar length", () => {
+  it("is an object with a tempo, a bar length and a number of bars", () => {
     expect(validateSongSpec(null)).toEqual(["song: expected an object"]);
     expect(problems((s) => (s.bpm = 0))[0]).toMatch(/bpm: must be between/);
     expect(problems((s) => (s.beatsPerBar = 3.5))[0]).toMatch(/beatsPerBar: must be a whole number/);
+    expect(problems((s) => (s.bars = 0))[0]).toMatch(/bars: must be between 1 and 128/);
+    expect(problems((s) => (s.tracks = []))[0]).toMatch(/tracks: needs at least one track/);
   });
 
-  it("chords are named, in MIDI range, and the progression only uses known ones", () => {
-    expect(problems((s) => (s.chords.D.bass = 200))[0]).toMatch(/chords\.D\.bass: must be between 0 and 127/);
-    expect(problems((s) => (s.chords.D.minor = "yes"))[0]).toMatch(/chords\.D\.minor: expected true or false/);
-    expect(problems((s) => (s.progression[3] = "H"))[0]).toMatch(/progression\[3\]: unknown chord "H"/);
-    expect(problems((s) => (s.progression = []))[0]).toMatch(/progression: needs at least one bar/);
-    expect(problems((s) => (s.chords = {}))[0]).toMatch(/chords: needs at least one chord/);
+  it("tracks have unique names, a known instrument and loudness in range", () => {
+    expect(problems((s) => (s.tracks[1].name = "bass"))[0]).toMatch(/tracks\[1\]\.name: the name "bass" is used twice/);
+    expect(problems((s) => (s.tracks[0].instrument = "kazoo"))[0]).toMatch(/tracks\[0\]\.instrument: unknown instrument "kazoo"/);
+    expect(problems((s) => (s.tracks[0].vol = 2))[0]).toMatch(/tracks\[0\]\.vol: must be between 0 and 1/);
+    expect(problems((s) => (s.tracks[6].echo.delaySeconds = 9))[0]).toMatch(/echo\.delaySeconds/);
+    expect(problems((s) => (s.tracks[6].echo.instrument = "x"))[0]).toMatch(/echo\.instrument: unknown instrument/);
   });
 
-  it("the bass has to fit its bar, the arpeggio has to divide it", () => {
-    expect(problems((s) => s.bass.steps.push(0, 0))[0]).toMatch(/bass\.steps: 10 steps of 0\.5 beats do not fit/);
-    expect(problems((s) => (s.arp.stepBeats = 0.3))[0]).toMatch(/arp\.stepBeats: must divide the bar/);
-    expect(problems((s) => (s.bass.vol = 2))[0]).toMatch(/bass\.vol: must be between 0 and 1/);
+  it("notes lie inside the song and have a sensible pitch, length and velocity", () => {
+    expect(problems((s) => (s.tracks[0].notes[0] = [64, 50, 1]))[0]).toMatch(/notes\[0\]\[0\]: must be between 0 and/);
+    expect(problems((s) => (s.tracks[0].notes[0] = [63.5, 50, 1]))[0]).toMatch(/the note ends at beat 64.5/);
+    expect(problems((s) => (s.tracks[0].notes[0] = [0, 130, 1]))[0]).toMatch(/notes\[0\]\[1\]: must be between 0 and 127/);
+    expect(problems((s) => (s.tracks[0].notes[0] = [0, 50.5, 1]))[0]).toMatch(/notes\[0\]\[1\]: must be a whole number/);
+    expect(problems((s) => (s.tracks[0].notes[0] = [0, 50, 0]))[0]).toMatch(/notes\[0\]\[2\]: must be between 0.0625/);
+    expect(problems((s) => (s.tracks[0].notes[0] = [0, 50, 1, 2]))[0]).toMatch(/notes\[0\]\[3\]: must be between 0 and 1/);
+    expect(problems((s) => (s.tracks[0].notes[0] = [0, 50]))[0]).toMatch(/notes\[0\]: expected \[beat, pitch, beats\]/);
   });
 
-  it("drums name known instruments and hit inside the bar", () => {
-    expect(problems((s) => (s.drums[0].instrument = "cowbell"))[0]).toMatch(/drums\[0\]\.instrument: unknown drum "cowbell"/);
-    expect(problems((s) => (s.drums[0].beats = [4]))[0]).toMatch(/drums\[0\]\.beats\[0\]: must be between/);
-    expect(problems((s) => (s.fills[0].bar = 16))[0]).toMatch(/fills\[0\]\.bar: must be between 0 and 15/);
-    expect(problems((s) => (s.fills[0].hits[0] = ["tom", 1]))[0]).toMatch(/unknown drum "tom"/);
-    expect(validateSongSpec(clone(), { drumInstruments: ["kick"] }).length).toBeGreaterThan(0); // the list is the caller's
+  it("drums ignore pitch and length but still sit inside the song", () => {
+    expect(problems((s) => (s.tracks[3].notes[0] = [0, 0, 0]))).toEqual([]);
+    expect(problems((s) => (s.tracks[3].notes[0] = [99, 0, 0]))[0]).toMatch(/tracks\[3\]\.notes\[0\]\[0\]/);
   });
 
-  it("the lead has one line per bar from fromBar, and each line fills its bar exactly", () => {
-    expect(problems((s) => s.lead.lines.pop())[0]).toMatch(/lead\.lines: needs one line per bar from bar 4 \(12\), has 11/);
-    expect(problems((s) => (s.lead.lines[0][0][1] = 1))[0]).toMatch(/lead\.lines\[0\]: the notes last 3 beats, the bar has 4/);
-    expect(problems((s) => (s.lead.lines[1] = []))[0]).toMatch(/lead\.lines\[1\]: needs at least one note/);
-    expect(problems((s) => (s.lead.lines[2][0][0] = 130))[0]).toMatch(/lead\.lines\[2\]\[0\]\[0\]/);
-    // a quarter and two eighths and a quarter and a half... any split that sums to the bar is fine
-    expect(problems((s) => (s.lead.lines[0] = [[74, 0.5], [75, 0.5], [76, 1], [77, 2]]))).toEqual([]);
-  });
-
-  it("a lead that starts later needs fewer lines", () => {
-    expect(problems((s) => ((s.lead.fromBar = 6), (s.lead.lines = s.lead.lines.slice(2))))).toEqual([]);
+  it("the instruments are the caller's choice", () => {
+    expect(validateSongSpec(clone(), { instruments: { bass: { kind: "tone" } } }).length).toBeGreaterThan(0);
   });
 
   it("parseSongSpec lists every problem with its path", () => {
     const s: any = clone();
     s.bpm = -1;
-    s.progression[0] = "Q";
-    expect(() => parseSongSpec(s)).toThrow(/bpm:[\s\S]*progression\[0\]/);
+    s.tracks[0].vol = 5;
+    expect(() => parseSongSpec(s)).toThrow(/bpm:[\s\S]*tracks\[0\]\.vol/);
   });
 });

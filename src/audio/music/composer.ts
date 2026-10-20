@@ -1,134 +1,89 @@
-// The composer: turns a song description (chords, melody, arrangement) into a score of notes. It knows how
-// bass lines, arpeggios and drum patterns are built, but nothing about any particular tune: those are data
-// (see songs/) and nothing about sound either (see instruments.ts and render.ts).
+// The composer: turns a song (tracks of notes placed on a time grid, like a piano roll) into a score. It knows
+// nothing about any particular tune (those are data, see songs/) and nothing about sound (see instruments.ts
+// and render.ts): it only puts each note of each track into the score with the track's loudness and gate.
+import { INSTRUMENTS, isPitchedVoice } from "./instruments";
+import { MODES, modeOf, type SoundMode } from "./modes";
 import type { Note, Score, Track } from "./score";
 
-export interface Chord {
-  /** MIDI root of the bass line */
-  bass: number;
-  /** MIDI root of the arpeggio */
-  arp: number;
-  minor: boolean;
+/** [start in beats from the beginning of the loop, MIDI pitch, length in beats, velocity 0..1 (default 1)]. Drums ignore the pitch and the length. */
+export type NoteSpec = [beat: number, pitch: number, beats: number, velocity?: number];
+
+export interface EchoSpec {
+  /** the instrument the repeats are played with */
+  instrument: string;
+  delaySeconds: number;
+  vol: number;
+  gate: number;
 }
 
-export interface DrumPattern {
+export interface TrackSpec {
+  /** what the track is called in an editor; unique within a song */
+  name: string;
+  /** a name from instruments.ts */
   instrument: string;
-  /** hits within a bar, in beats */
-  beats: number[];
-  /** first bar (0-based) the pattern plays in; default 0 */
-  fromBar?: number;
+  /** loudness of the whole track 0..1 */
+  vol: number;
+  /** share of a note's length the key is held 0..1 (default 1) */
+  gate?: number;
+  /** a faint repeat of every note, a little later */
+  echo?: EchoSpec;
+  notes: NoteSpec[];
 }
 
 export interface SongSpec {
+  /** how it sounds: the instruments it may use and how it is rendered (see modes.ts); songs that do not say are "lofi" */
+  sound?: SoundMode;
   bpm: number;
   beatsPerBar: number;
-  chords: Record<string, Chord>;
-  /** the chord of each bar: the length of the song */
-  progression: string[];
-  /** eighth-note bass: semitones above the root, one per step, played an octave up */
-  bass: { steps: number[]; stepBeats: number; octave: number; vol: number; gate: number };
-  /** sixteenth-note arpeggio through the triad (and the root an octave up) */
-  arp: {
-    fromBar: number;
-    stepBeats: number;
-    gate: number;
-    /** loudness before and from `louderFromBar` */
-    vol: number;
-    louderVol: number;
-    louderFromBar: number;
-    /** on odd bars the second half of the bar sounds this many semitones higher */
-    liftSemitones: number;
-  };
-  /** one long quiet note per bar on the bass root */
-  drone: { octave: number; vol: number; gate: number };
-  drums: DrumPattern[];
-  /** one-off hits that replace nothing: they are added to a given bar */
-  fills: { bar: number; hits: [instrument: string, beat: number][] }[];
-  lead: {
-    fromBar: number;
-    /** for each bar from `fromBar`: [MIDI note, length in beats] */
-    lines: [pitch: number, beats: number][][];
-    vol: number;
-    gate: number;
-    /** a faint repeat of every lead note */
-    echo: { delaySeconds: number; vol: number; gate: number };
-  };
+  /** the length of the loop */
+  bars: number;
+  tracks: TrackSpec[];
 }
 
-const TRIAD = { minor: [0, 3, 7, 12], major: [0, 4, 7, 12] };
+/**
+ * One channel of a chip plays one note at a time: of notes that start together the highest is kept, and a note
+ * stops where the next one starts.
+ */
+export function oneAtATime(notes: NoteSpec[]): NoteSpec[] {
+  const byBeat = new Map<number, NoteSpec>();
+  for (const n of notes) {
+    const have = byBeat.get(n[0]);
+    if (!have || n[1] > have[1]) byBeat.set(n[0], n);
+  }
+  const starts = [...byBeat.keys()].sort((a, b) => a - b);
+  return starts.map((beat, i) => {
+    const n = byBeat.get(beat)!;
+    const next = starts[i + 1];
+    return next !== undefined && beat + n[2] > next ? ([n[0], n[1], next - beat, ...n.slice(3)] as NoteSpec) : n;
+  });
+}
 
 export function composeSong(song: SongSpec): Score {
-  const bars = song.progression.length;
-  const bass: Track = { name: "bass", notes: [] };
-  const arp: Track = { name: "arpeggio", notes: [] };
-  const drone: Track = { name: "drone", notes: [] };
-  const drums: Track = { name: "drums", notes: [] };
-  const lead: Track = { name: "lead", notes: [] };
-  const N = (track: Track, n: Note) => void track.notes.push(n);
-
-  song.progression.forEach((name, b) => {
-    const chord = song.chords[name];
-    if (!chord) throw new Error(`song: bar ${b} uses unknown chord "${name}"`);
-    const t = b * song.beatsPerBar; // start of the bar, in beats
-
-    for (const [k, step] of song.bass.steps.entries())
-      N(bass, {
-        beat: t + k * song.bass.stepBeats,
-        dur: song.bass.stepBeats,
-        instrument: "bass",
-        pitch: chord.bass + step + song.bass.octave,
-        vol: song.bass.vol,
-        gate: song.bass.gate,
-      });
-
-    if (b >= song.arp.fromBar) {
-      const triad = chord.minor ? TRIAD.minor : TRIAD.major;
-      const perBar = Math.round(song.beatsPerBar / song.arp.stepBeats);
-      for (let k = 0; k < perBar; k++)
-        N(arp, {
-          beat: t + k * song.arp.stepBeats,
-          dur: song.arp.stepBeats,
-          instrument: "arp",
-          pitch: chord.arp + triad[k % 4] + (k >= perBar / 2 && b % 2 ? song.arp.liftSemitones : 0),
-          vol: b < song.arp.louderFromBar ? song.arp.vol : song.arp.louderVol,
-          gate: song.arp.gate,
-        });
-    }
-
-    N(drone, {
-      beat: t,
-      dur: song.beatsPerBar,
-      instrument: "drone",
-      pitch: chord.bass + song.drone.octave,
-      vol: song.drone.vol,
-      gate: song.drone.gate,
-    });
-
-    for (const d of song.drums) {
-      if (b < (d.fromBar ?? 0)) continue;
-      for (const beat of d.beats) N(drums, { beat: t + beat, dur: 0, instrument: d.instrument, vol: 1 });
-    }
-    for (const f of song.fills)
-      if (f.bar === b)
-        for (const [instrument, beat] of f.hits) N(drums, { beat: t + beat, dur: 0, instrument, vol: 1 });
-
-    if (b >= song.lead.fromBar) {
-      let o = 0;
-      for (const [pitch, beats] of song.lead.lines[b - song.lead.fromBar]) {
-        N(lead, { beat: t + o, dur: beats, instrument: "lead", pitch, vol: song.lead.vol, gate: song.lead.gate });
-        N(lead, {
-          beat: t + o,
-          dur: beats,
-          instrument: "leadEcho",
+  const mono = MODES[modeOf(song)].monophonic;
+  const tracks: Track[] = song.tracks.map((t) => {
+    const voice = INSTRUMENTS[t.instrument];
+    const played = mono && voice && isPitchedVoice(voice) ? oneAtATime(t.notes) : t.notes;
+    const notes: Note[] = [];
+    for (const [beat, pitch, dur, velocity = 1] of played)
+      notes.push({ beat, dur, instrument: t.instrument, pitch, vol: t.vol * velocity, gate: t.gate });
+    if (t.echo)
+      for (const [beat, pitch, dur, velocity = 1] of played)
+        notes.push({
+          beat,
+          dur,
+          instrument: t.echo.instrument,
           pitch,
-          vol: song.lead.echo.vol,
-          gate: song.lead.echo.gate,
-          delay: song.lead.echo.delaySeconds,
+          vol: t.echo.vol * velocity,
+          gate: t.echo.gate,
+          delay: t.echo.delaySeconds,
         });
-        o += beats;
-      }
-    }
+    return { name: t.name, notes };
   });
+  return { bpm: song.bpm, beatsPerBar: song.beatsPerBar, bars: song.bars, tracks };
+}
 
-  return { bpm: song.bpm, beatsPerBar: song.beatsPerBar, bars, tracks: [bass, arp, drone, drums, lead] };
+/** How the renderer should be set up for a song: its mode's sample rate, rounding and headroom. */
+export function renderSettings(song: SongSpec): { sampleRate: number; crushSteps: number; headroom: number } {
+  const { sampleRate, crushSteps, headroom } = MODES[modeOf(song)];
+  return { sampleRate, crushSteps, headroom };
 }

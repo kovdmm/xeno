@@ -17,36 +17,30 @@ const rms = (a, from, to) => {
 };
 const inBar = (n, bar) => Math.floor(n.beat / score.beatsPerBar) === bar;
 
-describe("composer: the song description becomes a score", () => {
+describe("composer: the song becomes a score", () => {
   it("has the song's length, tempo and tracks", () => {
     expect(score).toMatchObject({ bpm: 96, beatsPerBar: 4, bars: 16 });
-    expect(score.tracks.map((t) => t.name)).toEqual(["bass", "arpeggio", "drone", "drums", "lead"]);
+    expect(score.tracks.map((t) => t.name)).toEqual(["bass", "arpeggio", "drone", "kick", "snare", "hat", "lead"]);
   });
 
   it("builds up as arranged: bass and drone first, arpeggio, then drums and lead, hi-hats, a fill", () => {
-    const firstBar = (name: string, instrument?: string) =>
-      Math.min(
-        ...notes(name)
-          .filter((n) => !instrument || n.instrument === instrument)
-          .map((n) => Math.floor(n.beat / 4)),
-      );
+    const firstBar = (name: string) => Math.min(...notes(name).map((n) => Math.floor(n.beat / 4)));
     expect(firstBar("bass")).toBe(0);
     expect(firstBar("drone")).toBe(0);
     expect(firstBar("arpeggio")).toBe(2);
-    expect(firstBar("drums", "kick")).toBe(0);
-    expect(firstBar("drums", "snare")).toBe(4);
+    expect(firstBar("kick")).toBe(0);
+    expect(firstBar("snare")).toBe(4);
     expect(firstBar("lead")).toBe(4);
-    expect(firstBar("drums", "hat")).toBe(8);
-    // the fill: extra snares and a kick in the last bar
-    const last = notes("drums").filter((n) => inBar(n, 15));
-    expect(last.filter((n) => n.instrument === "snare").map((n) => n.beat - 60)).toEqual([1, 3, 3.5, 3.75]);
+    expect(firstBar("hat")).toBe(8);
+    // the fill: extra snares in the last bar
+    expect(notes("snare").filter((n) => inBar(n, 15)).map((n) => n.beat - 60)).toEqual([1, 3, 3.5, 3.75]);
   });
 
   it("note counts per bar", () => {
     expect(notes("bass").filter((n) => inBar(n, 0))).toHaveLength(8);
     expect(notes("arpeggio").filter((n) => inBar(n, 5))).toHaveLength(16);
     expect(notes("drone")).toHaveLength(16);
-    expect(notes("drums").filter((n) => n.instrument === "hat")).toHaveLength(8 * 8);
+    expect(notes("hat")).toHaveLength(8 * 8);
     // every lead note has an echo
     expect(notes("lead").filter((n) => n.instrument === "leadEcho")).toHaveLength(
       notes("lead").filter((n) => n.instrument === "lead").length,
@@ -70,9 +64,7 @@ describe("composer: the song description becomes a score", () => {
           .filter((n) => inBar(n, 0))
           .map((n) => pitchClass(n.pitch)),
       ),
-    ).toEqual(
-      new Set([2, 9]), // the root D and its fifth A
-    );
+    ).toEqual(new Set([2, 9])); // the root D and its fifth A
   });
 
   it("the lead stays in the key (D minor with Eb and C# turns)", () => {
@@ -91,29 +83,55 @@ describe("composer: the song description becomes a score", () => {
       }
   });
 
-  it("is a pure function of the description", () => {
+  it("is a pure function of the song", () => {
     expect(composeSong(SINISTER)).toEqual(score);
   });
 
-  it("rejects an unknown chord with the bar number", () => {
-    const bad = { ...SINISTER, progression: ["D", "X"] };
-    expect(() => composeSong(bad)).toThrow(/bar 1 uses unknown chord "X"/);
+  it("a note's loudness is the track's times its velocity; the gate and the echo come from the track", () => {
+    const song: SongSpec = {
+      bpm: 120,
+      beatsPerBar: 4,
+      bars: 1,
+      tracks: [
+        {
+          name: "a",
+          instrument: "lead",
+          vol: 0.5,
+          gate: 0.8,
+          echo: { instrument: "leadEcho", delaySeconds: 0.2, vol: 0.1, gate: 0.5 },
+          notes: [[0, 60, 1], [2, 62, 2, 0.5]],
+        },
+      ],
+    };
+    const [t] = composeSong(song).tracks;
+    expect(t.notes.filter((n) => n.instrument === "lead").map((n) => [n.vol, n.gate, n.pitch])).toEqual([[0.5, 0.8, 60], [0.25, 0.8, 62]]);
+    expect(t.notes.filter((n) => n.instrument === "leadEcho").map((n) => [n.vol, n.delay, n.gate])).toEqual([[0.1, 0.2, 0.5], [0.05, 0.2, 0.5]]);
   });
 
-  it("another song is just another description (a tiny one-bar tune renders)", () => {
+  it("another song is just other notes (a tiny one-bar tune renders)", () => {
     const tiny: SongSpec = {
-      ...SINISTER,
-      progression: ["D"],
-      arp: { ...SINISTER.arp, fromBar: 0 },
-      lead: { ...SINISTER.lead, fromBar: 0, lines: [[[74, 4]]] },
-      drums: [{ instrument: "kick", beats: [0] }],
-      fills: [],
+      bpm: 100,
+      beatsPerBar: 4,
+      bars: 1,
+      tracks: [
+        { name: "lead", instrument: "lead", vol: 0.3, notes: [[0, 74, 4]] },
+        { name: "kick", instrument: "kick", vol: 1, notes: [[0, 0, 0.25]] },
+      ],
     };
     const s = composeSong(tiny);
     expect(s.bars).toBe(1);
     const out = renderScore(s);
     expect(out.length).toBe(loopLength(s));
     expect(peak(out)).toBeGreaterThan(0.1);
+  });
+
+  it("a drum hit is as loud as its velocity says", () => {
+    const hit = (velocity: number) =>
+      renderScore(
+        composeSong({ bpm: 100, beatsPerBar: 4, bars: 1, tracks: [{ name: "k", instrument: "kick", vol: 1, notes: [[0, 0, 0.25, velocity]] }] }),
+        { headroom: 10, crushSteps: 1e6 },
+      );
+    expect(peak(hit(0.5))).toBeCloseTo(peak(hit(1)) / 2, 3);
   });
 });
 

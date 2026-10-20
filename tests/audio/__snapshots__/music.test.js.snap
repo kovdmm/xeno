@@ -1,3 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`renderer: the score becomes one seamless loop > is deterministic and matches the recorded fingerprint (same samples as the original composition) 1`] = `"d877a92"`;
