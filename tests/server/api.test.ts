@@ -6,6 +6,7 @@ import { replay, SIM_BUILD, type Run } from "../../src/game/run";
 import { recordedGame } from "../../src/game/selfCheck";
 import { createApi, createLimiter, type ApiOptions } from "../../server/api";
 import { openDb } from "../../server/db";
+import { SEASON } from "../../server/limits";
 import { queuedVerifier, type Verifier } from "../../server/verifier";
 
 const SECRET = "test-secret-0123456789-abcdefghij";
@@ -112,6 +113,20 @@ describe("a finished run", () => {
     });
     expect(t.body.rows[0].score).not.toBe(999999);
     expect(t.body.rows[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("tells the page the season of the table, in the table and in the health answer", async () => {
+    const s = await start();
+    expect((await s.get("/api/scores")).body.season).toBe(SEASON);
+    expect((await s.get("/api/health")).body.season).toBe(SEASON);
+  });
+
+  it("refuses a run of another build, so a game of an older release cannot enter this season", async () => {
+    const s = await start();
+    const g = await s.fresh();
+    const r = await s.post({ run: { ...g.run, build: "an-older-release" }, nick: "Ann", token: g.token });
+    expect(r.status).toBe(409);
+    expect(r.body.error).toBe("build");
   });
 
   it("keeps a name's best: a second, different game of the same name enters only if it is better", async () => {

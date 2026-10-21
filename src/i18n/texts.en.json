@@ -206,6 +206,7 @@
     "recRank": "#",
     "recName": "Name",
     "recWaves": "Waves cleared",
+    "recSeason": "Season {n}",
     "recScore": "Score",
     "recTime": "Time",
     "recNote": "Every game is checked on the server by playing it again, so only real results are listed. A star marks a victory.",

@@ -206,6 +206,7 @@
     "recRank": "Nr.",
     "recName": "Name",
     "recWaves": "Wellen geschafft",
+    "recSeason": "Saison {n}",
     "recScore": "Punkte",
     "recTime": "Zeit",
     "recNote": "Jedes Spiel wird auf dem Server noch einmal abgespielt und geprüft, deshalb stehen nur echte Ergebnisse in der Liste. Ein Stern steht für einen Sieg.",

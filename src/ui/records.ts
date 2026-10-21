@@ -249,7 +249,8 @@ export function createRecords(
     }
     const lv = fLevel ? L(C.LEVELS[fLevel]) : t("recAllMaps");
     const df = fDiff ? L(C.DIFF[fDiff as keyof typeof C.DIFF]) : t("recAllDiffs");
-    $("recWhat").textContent = `${lv} · ${df}`;
+    const season = client.season?.();
+    $("recWhat").textContent = `${lv} · ${df}` + (season ? ` · ${t("recSeason", { n: season })}` : "");
     $("recWhere").hidden = !anyOpen();
   }
 
@@ -280,6 +281,7 @@ export function createRecords(
     body.replaceChildren();
     const rows = await client.table(fLevel, fDiff, 20);
     if (id !== loadId) return; // another filter was chosen meanwhile
+    markFilters(); // the table's season is known now
     if (!rows) {
       status.textContent = t("recFail");
       return;

@@ -206,6 +206,7 @@
     "recRank": "Nr",
     "recName": "Namn",
     "recWaves": "Vågor klarade",
+    "recSeason": "Säsong {n}",
     "recScore": "Poäng",
     "recTime": "Tid",
     "recNote": "Varje spel kontrolleras på servern genom att spelas upp igen, så bara riktiga resultat visas. En stjärna betyder seger.",

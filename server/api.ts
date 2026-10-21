@@ -287,7 +287,7 @@ export function createApi(o: ApiOptions) {
       date: new Date(r.created * 1000).toISOString().slice(0, 10),
     }));
     // never cached: a player who has just been entered must see their place at once
-    send(res, 200, { level, diff, rows });
+    send(res, 200, { level, diff, season: o.db.season, rows });
   }
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -312,7 +312,7 @@ export function createApi(o: ApiOptions) {
       }
       if (path === "/api/health") {
         allow("GET");
-        return send(res, 200, { ok: true, build: o.build, load: o.verifier.load() });
+        return send(res, 200, { ok: true, build: o.build, season: o.db.season, load: o.verifier.load() });
       }
       throw new HttpError(404, "not found");
     } catch (e) {

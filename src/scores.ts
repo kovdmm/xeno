@@ -47,6 +47,8 @@ export interface ScoresClient {
   /** The table of one map and/or difficulty; null for "all" (the table of everything, ranked as the service ranks). */
   table(level: string | null, diff: string | null, limit?: number): Promise<ScoreRow[] | null>;
   submit(run: Run, nick: string, token: string): Promise<SubmitResult>;
+  /** The season of the table, as the service last said it; null until it has answered. */
+  season?(): number | null;
 }
 
 /** how long a call may take before it counts as failed (ms) */
@@ -62,6 +64,7 @@ export function createScoresClient(
   const f: Fetch = opts.fetch ?? ((u, i) => fetch(u, i));
   const base = opts.base ?? "api/";
   const sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
+  let season: number | null = null;
 
   /** a request with a time limit; null when it failed or took too long */
   async function call(path: string, init: RequestInit = {}, limit = QUICK): Promise<Response | null> {
@@ -111,8 +114,11 @@ export function createScoresClient(
       const r = await call(`scores?${q.filter(Boolean).join("&")}`, { cache: "no-store" });
       if (!r || r.status !== 200) return null;
       const b = await json(r);
+      if (Number.isInteger(b?.season)) season = b.season as number;
       return Array.isArray(b?.rows) ? (b.rows as ScoreRow[]) : null;
     },
+
+    season: () => season,
 
     async submit(run, nick, token) {
       // the replay can take seconds on a small server: the request may wait up to 15 s for the answer
