@@ -19,6 +19,7 @@ import { createScoresClient } from "../scores";
 import { createScreens } from "./screens";
 import { createSession } from "./session";
 import { installCampaign } from "./campaign";
+import { installResetNotice } from "./notice";
 import { installXenopedia } from "./xenopedia";
 import { installCoach } from "./tutorialCoach";
 import { SCRIPT } from "../tutorial/script";
@@ -184,6 +185,7 @@ export function createUi(deps: UiDeps) {
   session.newGame();
   applyLang();
   session.openMenu();
+  installResetNotice(ui).showIfDue();
   appMode.askFullscreen();
   layout.fit();
   renderer.resize();

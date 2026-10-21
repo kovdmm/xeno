@@ -3,7 +3,11 @@
 // nothing in the app reads it.
 import { createApp, type Hooks } from "./app";
 import { registerWorker } from "./pwa";
+import { applySaveVersion, browserStorage } from "./saveMigration";
 import { createUi } from "./ui";
+
+// what the browser kept from older releases is reset (or not) by this release's policy before anything reads it
+applySaveVersion(browserStorage());
 
 const hooks = ((window as unknown as { XT?: Hooks }).XT ?? {}) as Hooks;
 const app = createApp(hooks);

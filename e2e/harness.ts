@@ -2,6 +2,7 @@
 // no network (fonts and howler are blocked, so the game is silent and looks the same everywhere).
 import type { Locator, Page } from "@playwright/test";
 import type { GameCore } from "../src/core";
+import { SAVE } from "../src/saveVersion";
 
 /**
  * Opens the game on the title screen and presses play. The scenes and the tests play crossroads with every map open;
@@ -14,11 +15,12 @@ export async function openGame(
     seed = 1,
     newPlayer = false,
     storage = {},
-  }: { seed?: number; newPlayer?: boolean; storage?: Record<string, string> } = {},
+    schema = SAVE.version,
+  }: { seed?: number; newPlayer?: boolean; storage?: Record<string, string>; schema?: number | null } = {},
 ) {
   await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
   await page.addInitScript(
-    ({ seed, newPlayer, storage }) => {
+    ({ seed, newPlayer, storage, schema }) => {
       const mulberry32 = (seed: number) => {
         let a = seed >>> 0;
         return () => {
@@ -31,6 +33,10 @@ export async function openGame(
       };
       // the scenes and the tests were made on this map; a new player starts on the first map of the data (switchback)
       try {
+        // the saves are of the current version, so that the release's reset does not wipe what the tests set up
+        // (`schema: null` leaves them as an old release's browser would have them)
+        if (schema !== null && localStorage.getItem("xt-schema") === null)
+          localStorage.setItem("xt-schema", String(schema));
         if (!newPlayer && !localStorage.getItem("xt-level")) localStorage.setItem("xt-level", "crossroads");
         if (!newPlayer && !localStorage.getItem("xt-tutorial")) localStorage.setItem("xt-tutorial", "done"); // the tutorial is for new players
         if (!newPlayer && localStorage.getItem("xt-tips-off") === null) localStorage.setItem("xt-tips-off", "1"); // the tips would stand over the field
@@ -57,7 +63,7 @@ export async function openGame(
         }
       };
     },
-    { seed, newPlayer, storage },
+    { seed, newPlayer, storage, schema },
   );
   await page.goto("/");
   await page.waitForSelector("#boot", { state: "hidden" }); // the loading screen
