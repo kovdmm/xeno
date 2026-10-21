@@ -13,6 +13,8 @@ export interface InputDeps {
   closeScreen(id: "settings" | "help" | "records" | "campaignPage" | "pedia" | "saveAsk"): void;
   /** open the Xenopedia, on the page of a tower */
   pedia(tower?: string): void;
+  /** the tutorial: Escape skips it when nothing else is there to close */
+  coach: { active(): boolean; skip(): void };
 }
 
 export function installInput(ui: UiContext, d: InputDeps) {
@@ -65,6 +67,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
     if (!C.cheat(code)) ui.toast(t("cheatBad"));
   });
   const open = (): OpenScreens => ({
+    coach: d.coach.active(),
     saveAsk: screens.isOpen("saveAsk"),
     campaign: screens.isOpen("campaignPage"),
     pedia: screens.isOpen("pedia"),
@@ -114,6 +117,9 @@ export function installInput(ui: UiContext, d: InputDeps) {
           break;
         case "resume":
           screens.hide("pause");
+          break;
+        case "skip-tutorial":
+          d.coach.skip();
           break;
         case "clear-picks":
           clearPicks(st);

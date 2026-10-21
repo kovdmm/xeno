@@ -367,6 +367,11 @@
         <h3 class="mh" data-i="installH"></h3>
         <div class="langs"><button class="lcard" id="installBtn"></button></div>
         <p class="note" id="installNote" hidden></p>
+        <h3 class="mh" data-i="tutorialH"></h3>
+        <div class="langs">
+          <button class="lcard" id="tutReplay" data-i="tutReplay"></button>
+          <button class="lcard" id="tipsBtn"></button>
+        </div>
         <h3 class="mh" data-i="nickH"></h3>
         <label class="nickSet"
           ><input
@@ -407,6 +412,26 @@
             <button class="go" id="confirmYes" data-i="startOver"></button
             ><button id="confirmNo" data-i="cancel"></button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- the tutorial: a text box, rings and an arrow on the marked thing, tips; it never takes a click from the game -->
+    <div class="coach" id="coach" hidden>
+      <div class="coachRings" id="coachRings"></div>
+      <div class="coachArrow" id="coachArrow" hidden aria-hidden="true"></div>
+      <div class="coachCol" id="coachCol">
+        <div class="coachBox plate" id="coachBox" role="status" aria-live="polite">
+          <div class="coachTop">
+            <span id="coachStep"></span>
+            <button type="button" class="coachSkip" id="coachSkip"></button>
+          </div>
+          <p id="coachTxt"></p>
+          <button type="button" class="big go" id="coachNext" hidden></button>
+        </div>
+        <div class="coachBox coachHint plate" id="coachHint" hidden role="status">
+          <p id="coachHintTxt"></p>
+          <button type="button" class="icon x" id="coachHintX" data-i-label="close">✕</button>
         </div>
       </div>
     </div>

@@ -59,6 +59,7 @@ export interface Core extends Pick<
   | "buildOrigin"
   | "towerAt"
   | "difficulty"
+  | "routePath"
 > {
   /** starts a game; a level id changes the board */
   newGame(difficulty?: string, level?: string, seed?: number): State;

@@ -23,6 +23,7 @@ export function startLoop(ui: UiContext) {
     const rdt = Math.min(MAX_FRAME, (now - last) / 1000);
     last = now;
     const sp = speedOf(st);
+    ui.onFrame?.(rdt);
     // the game only ever advances in whole ticks (TICK), so a run is a number of ticks and can be replayed
     if (!C.S.over && sp > 0) {
       owed += rdt * sp;

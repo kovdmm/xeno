@@ -3,6 +3,7 @@
    plays sound only through `sound`; all of them are handed in. This file builds the shared context and wires
    the parts together; each part lives in its own module. */
 import { installAppMode } from "./appMode";
+import type { DiffKey } from "../game/types";
 import type { CardEnv } from "./cards";
 import type { UiContext } from "./context";
 import { createCommands } from "./commands";
@@ -19,6 +20,8 @@ import { createScreens } from "./screens";
 import { createSession } from "./session";
 import { installCampaign } from "./campaign";
 import { installXenopedia } from "./xenopedia";
+import { installCoach } from "./tutorialCoach";
+import { SCRIPT } from "../tutorial/script";
 import { installSettings } from "./settings";
 import { installSoundControls } from "./soundControls";
 import { createState } from "./state";
@@ -116,6 +119,28 @@ export function createUi(deps: UiDeps) {
   const appMode = installAppMode(ui, () => layout.refit());
   installCampaign(ui, progress, session);
   const xenopedia = installXenopedia(ui);
+  const coach = installCoach(ui);
+  /** the tutorial again: the map and difficulty it is written for, a new game, the steps from the start */
+  function replayTutorial() {
+    const s = core.S;
+    if (
+      s.started &&
+      !s.over &&
+      s.wave > 0 &&
+      !confirm(t("confirm", { w: s.wave, d: ui.where(SCRIPT.level, SCRIPT.difficulty) }))
+    )
+      return;
+    coach.rewind();
+    state.level = SCRIPT.level;
+    state.diff = SCRIPT.difficulty as DiffKey;
+    progress.saveLevel(SCRIPT.level);
+    progress.saveDiff(SCRIPT.difficulty as DiffKey);
+    session.leave(() => {
+      for (const id of ["settings", "menu", "pause", "over"] as const) ui.screens.hide(id);
+      session.newGame();
+      ui.refresh();
+    });
+  }
   const settings = installSettings(ui, {
     applyLang: () => applyLang(),
     redrawOnOpen() {
@@ -123,6 +148,7 @@ export function createUi(deps: UiDeps) {
       appMode.drawInstall();
       soundControls.draw();
     },
+    tutorial: { replay: replayTutorial, tips: coach.tips, setTips: coach.setTips },
   });
   const applyLang = createApplyLang(ui, {
     redraw: [soundControls.draw, appMode.drawFs, appMode.drawInstall, hud.drawSpeed],
@@ -149,6 +175,7 @@ export function createUi(deps: UiDeps) {
     },
     toggleSound: soundControls.toggleSound,
     pedia: xenopedia.open,
+    coach,
     closeScreen: (id) => ui.screens.hide(id),
   });
   new ResizeObserver(() => renderer.resize()).observe($("field"));

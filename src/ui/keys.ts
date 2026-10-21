@@ -61,6 +61,7 @@ export class CheatTyper {
 
 export interface OpenScreens {
   saveAsk?: boolean;
+  coach?: boolean;
   records?: boolean;
   campaign?: boolean;
   pedia?: boolean;
@@ -81,6 +82,7 @@ export type EscapeAction =
   | "resume"
   | "nothing"
   | "clear-picks"
+  | "skip-tutorial"
   | "pause";
 
 /** What Escape does: it closes the topmost thing, and only pauses when there is nothing to close. */
@@ -94,6 +96,7 @@ export function escapeAction(open: OpenScreens, hasPicks: boolean): EscapeAction
   if (open.pause) return "resume";
   if (open.menu || open.over) return "nothing";
   if (hasPicks) return "clear-picks";
+  if (open.coach) return "skip-tutorial";
   return "pause";
 }
 

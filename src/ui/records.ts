@@ -113,6 +113,11 @@ export function createRecords(
     saved = false;
     declined = false;
     offer = null;
+    // the tutorial's game is a lesson, not a record: the box does not appear and nothing is asked on leaving
+    if (ui.inTutorial?.()) {
+      $("saveBox").hidden = true;
+      return;
+    }
     $("saveBox").hidden = !ok;
     if (!ok) return;
     const result = C.outcome();

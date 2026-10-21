@@ -31,4 +31,8 @@ export interface UiContext {
   refresh(): void;
   /** the panels were built for another language or layout: rebuild them on the next refresh */
   invalidate(): void;
+  /** the loop calls this once a frame before the game steps, with the frame's seconds (the coach sets it) */
+  onFrame?(dt: number): void;
+  /** the game in hand is the tutorial's (it ran the steps, finished or skipped): it is never offered for the records table */
+  inTutorial?(): boolean;
 }
