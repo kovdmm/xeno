@@ -587,10 +587,10 @@ test.describe("levels (maps)", () => {
     await expect(rows).toHaveCount(4);
     // the order of the campaign; the harness plays crossroads on easy, so that cell is marked
     await expect(rows.first().locator(".cMap")).toContainText("Switchback");
-    await expect(rows.first().locator(".cMap")).toContainText("130 waves");
+    await expect(rows.first().locator(".cMap")).toContainText("100–130 waves");
     await expect(rows.first().locator(".cMap svg.map")).toHaveCount(1);
     await expect(rows.nth(2).locator(".cMap")).toContainText("Crossroads");
-    await expect(rows.nth(2).locator(".cMap")).toContainText("220 waves");
+    await expect(rows.nth(2).locator(".cMap")).toContainText("160–220 waves");
     await expect(page.locator("#campaign .cc.on")).toHaveCount(1);
     await expect(page.locator(cell("crossroads", "easy"))).toHaveClass(/\bon\b/);
   });

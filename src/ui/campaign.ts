@@ -46,10 +46,10 @@ export function installCampaign(ui: UiContext, progress: Progress, session: Sess
         const best = progress.bestOf(id, k),
           won = progress.wonOf(id, k),
           on = id === st.level && k === st.diff;
-        const label = t("cellOpen", { m: map, d: diff, b: best, f: d.finalWave }) + (won ? ". " + t("cellWon") : "");
-        return `<button class="cc${on ? " on" : ""}${won ? " won" : ""}" ${at} aria-label="${label}"${on ? ' aria-current="true"' : ""}><b>${best || "–"}</b><small>/${d.finalWave}</small>${won ? `<span class="cWin" title="${t("cellWon")}">${WIN}</span>` : ""}</button>`;
+        const label = t("cellOpen", { m: map, d: diff, b: best, f: d.finalWaves[k] }) + (won ? ". " + t("cellWon") : "");
+        return `<button class="cc${on ? " on" : ""}${won ? " won" : ""}" ${at} aria-label="${label}"${on ? ' aria-current="true"' : ""}><b>${best || "–"}</b><small>/${d.finalWaves[k]}</small>${won ? `<span class="cWin" title="${t("cellWon")}">${WIN}</span>` : ""}</button>`;
       }).join("");
-      return `<div class="cRow"><div class="cMap">${mapThumb(d)}<b>${map}</b><small>${t("wavesN", { n: d.finalWave })}</small></div>${cells}</div>`;
+      return `<div class="cRow"><div class="cMap">${mapThumb(d)}<b>${map}</b><small>${t("wavesRange", { a: d.finalWaves[C.DKEYS[0]], b: d.finalWaves[C.DKEYS[C.DKEYS.length - 1]] })}</small></div>${cells}</div>`;
     }).join("");
     $("campaign").innerHTML = `<div class="cHead"><span></span>${head}</div>${rows}`;
   }

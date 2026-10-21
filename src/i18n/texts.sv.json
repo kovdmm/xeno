@@ -227,7 +227,7 @@
     "dirLeft": "höger → vänster",
     "dirUp": "nedifrån → upp",
     "levelIs": "Karta: {l}",
-    "wavesN": "{n} vågor",
+    "wavesRange": "{a}–{b} vågor",
     "installMenu": "Erbjuds inte här just nu. Du kan ändå installera via webbläsarmenyn (⋮ → Installera app)."
   },
   "game": {

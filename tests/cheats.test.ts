@@ -109,7 +109,7 @@ describe("lxgiwyl", () => {
 
 describe("bagowpw", () => {
   it("is remembered by the interface, and not before the code", () => {
-    const progress = createProgress(memoryStore(), ["easy"], [{ id: "a", finalWave: 10 }], () => null);
+    const progress = createProgress(memoryStore(), ["easy"], [{ id: "a", finalWaves: { easy: 10 } }], () => null);
     expect(progress.mapsOpen()).toBe(false);
     let onEvent: (e: unknown) => void = () => {};
     const C2: any = { S: { cheated: false, lives: 5 }, FINAL: 10, on: (fn) => (onEvent = fn) };

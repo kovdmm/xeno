@@ -227,7 +227,7 @@
     "dirLeft": "rechts → links",
     "dirUp": "unten → oben",
     "levelIs": "Karte: {l}",
-    "wavesN": "{n} Wellen",
+    "wavesRange": "{a}–{b} Wellen",
     "installMenu": "Hier wird es gerade nicht angeboten. Du kannst trotzdem über das Browsermenü installieren (⋮ → App installieren)."
   },
   "game": {

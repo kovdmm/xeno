@@ -29,13 +29,13 @@ export type LockRule = (level: string, diff: string, best: (level: string, diff:
 export function createProgress(
   store: KeyValueStore,
   diffs: readonly string[],
-  levels: readonly { id: string; finalWave: number }[],
+  levels: readonly { id: string; finalWaves: Record<string, number> }[],
   lock: LockRule,
 ): Progress {
   const key = (kind: string, level: string, diff: string) => `xt-${kind}-${level}-${diff}`;
   const num = (k: string) => +(store.get(k) ?? 0) || 0;
   const bestOf = (level: string, diff: string) => {
-    const cap = levels.find((l) => l.id === level)?.finalWave ?? 0;
+    const cap = levels.find((l) => l.id === level)?.finalWaves[diff] ?? 0;
     return Math.min(cap, num(key("best", level, diff)));
   };
   const progress: Progress = {

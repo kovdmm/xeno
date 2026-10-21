@@ -43,7 +43,7 @@ export function createUi(deps: UiDeps) {
   const progress = createProgress(
     store,
     core.DKEYS,
-    core.LKEYS.map((id) => ({ id, finalWave: core.LEVELS[id].finalWave })),
+    core.LKEYS.map((id) => ({ id, finalWaves: core.LEVELS[id].finalWaves })),
     core.lockOf,
   );
   const { diff, level } = progress.readChoice();

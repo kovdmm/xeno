@@ -136,9 +136,10 @@ describe("UiState", () => {
 
 describe("saved progress", () => {
   const DIFFS = ["easy", "normal", "hard", "insane"];
+  const all = (n: number) => Object.fromEntries(DIFFS.map((d) => [d, n]));
   const LEVELS = [
-    { id: "crossroads", finalWave: 200, unlock: { difficulty: 20, nextMap: 25 } },
-    { id: "corner", finalWave: 80, unlock: { difficulty: 18 } },
+    { id: "crossroads", finalWaves: all(200), unlock: { difficulty: 20, nextMap: 25 } },
+    { id: "corner", finalWaves: all(80), unlock: { difficulty: 18 } },
   ];
   const make = (init = {}) => {
     const store = memoryStore(init);
