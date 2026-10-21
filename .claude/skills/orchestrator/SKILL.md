@@ -124,3 +124,18 @@ files into commits; an old session started before `git init` sees no repo.
   session is a planning failure. Decide fast and recommend, do not survey.
 - Economy: few big tasks instead of many small ones; no subagent or message for trivia (bundle it into a session's next
   task); the whole Playwright suite once per batch of merges, one deploy per batch.
+
+## Spending tokens (orchestrator's share; the rules for everybody are in `CLAUDE.md`)
+
+- Plan the whole batch before sending: one message per session with goal, files, definition of done, limits, defaults for
+  the open questions; the reply is one report. Forward a contract to a second session in the same message as the review.
+- After a cherry-pick run only `yarn typecheck` and `yarn test` (seconds); run the whole Playwright suite once per batch,
+  and the specs of a change only when a session did not run them. Trust a session's report of its relevant specs.
+- Read a report's first lines and the diff stat; read code only where the risk is (replay, saves, server, security).
+- Keep the board short: one line per event; no copies of reports (a pointer to the commit is enough).
+- Decide, do not survey: a recommendation with one reason; ask the owner only what is his to decide (taste, hosting,
+  money, risk), never what the code or the data can answer.
+- Choose the model for a subagent by the job (cheaper for mechanical work, strongest for review and design) and ask for a
+  report of at most ~8 lines; do not start a subagent for something smaller than its own startup.
+- Ask for a session's context to be compacted after its big merge (not mid-task).
+

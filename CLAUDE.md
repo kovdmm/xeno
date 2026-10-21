@@ -82,6 +82,30 @@ The history is read by people, so keep it short and meaningful.
   other session. Do it in a temporary `git worktree` and check that the final tree is identical to the old one.
 - **Do not commit, amend or deploy unless the user asks.**
 
+## Spending tokens (rules for every session)
+
+Tokens are the budget of this project. Work so that none are spent on the same thing twice.
+
+- **Read little.** Search with Grep/Glob, read a part of a file (offset and limit) instead of the whole; do not read a file
+  you have just edited or that is already in your context; ask a tool for counts and tails (`grep -c`, `| tail -5`), never
+  paste a long log: send it to a file and grep it.
+- **Run little.** Only the relevant tests (see "Tests must pass"); the orchestrator runs the whole suite once per batch of
+  merges. Do not rerun a green run to "be sure". Look at a screenshot only when a baseline changes or a layout is the
+  question; one image per question.
+- **Write little.** A message to another session has a self-contained first line and at most ~10 lines; refer to a file
+  (`path:line`) or a commit hash instead of quoting code or a diff. No "working on it" or "are you done" messages: use the
+  status message when the state changes, and `notify_when_idle` instead of polling.
+- **Plan once.** A task comes with its goal, its files, its definition of done and its limits in one message; answer the
+  open questions yourself with a sensible default and say which one you took, rather than starting a round trip.
+- **Bundle.** One finished change per commit, one batch of merges per full test run, one deploy per batch; small items go
+  into the next task of whoever works in that area, not into a new session.
+- **Keep the context small.** Do a long task in a session that already knows the area; compact the session at a natural
+  boundary (right after a merge); keep decisions on the board and in the memory notes, not in a long chat; start a fresh
+  session for an unrelated big area.
+- **Right model for the job.** Mechanical work (renames, texts, docs, translations, simple fixes) goes to a cheaper
+  model; design, review of risky code and security go to the strongest. A subagent is for a big isolated job with a short
+  report (at most ~8 lines), never for a trivial one.
+
 ## The project in short
 
 - All code is TypeScript; run `yarn test:all` before committing; format with Prettier.
