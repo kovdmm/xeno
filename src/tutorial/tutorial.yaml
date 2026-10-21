@@ -1,0 +1,78 @@
+# The tutorial: the steps of the first game and the tips that appear by themselves. Nothing here is text for the
+# player (that lives in src/i18n: a step `build-gun` has the text `tutBuildGun`, a tip `armored` has `tutHintArmored`);
+# the file is checked by src/tutorial/script.ts and its tests. It is not part of the simulation (src/game), so
+# changing it does not change the build id of the game.
+#
+# What the tutorial teaches, in this order: where the enemies come from and go to; building; the maze (towers are
+# walls, a longer road is more time under fire); calling waves early (the key skill: it pays, and the game needs it);
+# upgrades; level 5 and overclocking; the abilities as a last resort. The tips teach the rest at the moment it matters.
+level: switchback
+difficulty: easy
+# a wave called with more than this many seconds left on the timer counts as called early
+earlyTimer: 5
+
+# until: the step is over when every number is reached; `next` waits for the player's "Next" button.
+# fresh: counters that start from 0 when the step begins. target: what is highlighted (selector, cells or gates).
+steps:
+  - id: goal
+    target: { gates: true }
+    until: next
+  - id: build-gun
+    target: { selector: '.tb[data-t="gun"]' }
+    until: { towers: 1 }
+  - id: maze
+    until: { towers: 4 }
+  - id: call-early
+    target: { selector: "#go" }
+    until: { earlyCalls: 1 }
+    fresh: [earlyCalls]
+  - id: call-early-again
+    target: { selector: "#go" }
+    until: { earlyCalls: 2 }
+    fresh: [earlyCalls]
+  - id: upgrade
+    target: { selector: '#info [data-act="up"]' }
+    until: { upgrades: 2 }
+    fresh: [upgrades]
+  - id: level-five
+    until: next
+  - id: abilities
+    target: { selector: "#abil" }
+    until: next
+  - id: finish
+    until: next
+
+# when: `enemy` is the first time that enemy appears; `idle` is "the field is almost clear and you could call the next
+# wave": a wave was sent, at most `creeps` enemies are left, more than `timer` seconds remain and fewer than
+# `earlyCalls` waves were called early so far. seconds: how long it stays. times: how often in all (default 1).
+# always: also in a normal game, not only in the tutorial.
+hints:
+  - id: early-call
+    when: { idle: { creeps: 2, timer: 6, earlyCalls: 4 } }
+    seconds: 7
+    times: 4
+    always: true
+  - id: armored
+    when: { enemy: armored }
+    seconds: 10
+    always: true
+  - id: flyer
+    when: { enemy: flyer }
+    seconds: 10
+    always: true
+  - id: swarm
+    when: { enemy: swarm }
+    seconds: 8
+    always: true
+  - id: healer
+    when: { enemy: healer }
+    seconds: 8
+    always: true
+  - id: blinker
+    when: { enemy: blinker }
+    seconds: 8
+    always: true
+  - id: boss
+    when: { enemy: boss }
+    seconds: 8
+    always: true

@@ -21,22 +21,14 @@ export type TutorialEvent =
   /** about twice a second while a game runs: lets conditions about the field and the clock be checked */
   | { type: "tick"; facts: Facts };
 
-/** The numbers a condition may ask for. All are "at least" thresholds in the script. */
+/** What the interface reads off the game. */
 export interface Facts {
   /** towers on the board now */
   towers: number;
-  /** levels bought since the tutorial began (each upgrade 1-4 counts one) */
-  upgrades: number;
-  /** ultimates picked (the level-5 choice) */
-  ultimates: number;
-  /** overclocks bought */
-  overclocks: number;
   /** the highest wave sent */
   wave: number;
-  /** waves the player sent with the timer still above `earlyTimer` (see Script.earlyTimer) */
-  earlyCalls: number;
-  /** cells the shortest road is longer than at the start of the current step (0 or more) */
-  pathGain: number;
+  /** the length of the shortest road from the entrance to the exit, in cells (the longest of the routes) */
+  pathLength: number;
   /** enemies on the field now */
   creeps: number;
   /** seconds until the next wave comes by itself */
@@ -44,7 +36,22 @@ export interface Facts {
   credits: number;
 }
 
-export type Need = Partial<Record<keyof Facts, number>>;
+/** What the engine counts itself from the events (the interface does not send these). */
+export interface Progress {
+  /** levels bought since the tutorial began (each upgrade 1-4 counts one) */
+  upgrades: number;
+  /** ultimates picked (the level-5 choice) */
+  ultimates: number;
+  /** overclocks bought */
+  overclocks: number;
+  /** waves the player sent with the timer above `Script.earlyTimer` */
+  earlyCalls: number;
+  /** cells the shortest road is longer than when the current step began (0 or more) */
+  pathGain: number;
+}
+
+/** The numbers a condition may ask for. All are "at least" thresholds in the script. */
+export type Need = Partial<Record<keyof Facts | keyof Progress, number>>;
 
 /** What a step points at. The interface finds it on screen; a missing target is just not highlighted. */
 export type Target =
@@ -56,27 +63,30 @@ export type Target =
   | { gates: true };
 
 export interface Step {
-  /** unique, lower-case kebab-case; also the text key: `tutorial.<id>` in texts.*.json */
+  /** unique, lower-case kebab-case; its text is `stepKey(id)` (`tutBuildGun` for `build-gun`) in texts.*.json (ui) */
   id: string;
   /** where to look; omitted: only the box is shown */
   target?: Target;
   /** the step is over when every number in `until` has been reached (facts are compared with `>=`);
    *  `until: next` waits for the player to press "Next" (the text-only steps) */
   until: Need | "next";
-  /** facts measured from the moment the step begins (pathGain, earlyCalls) restart at 0 for it */
-  fresh?: (keyof Facts)[];
+  /** counters that start from 0 when this step begins instead of counting from the game's start
+   *  (upgrades, ultimates, overclocks, earlyCalls); pathGain always does */
+  fresh?: (keyof Progress)[];
 }
 
 /** A one-off tip, shown when its condition first holds. */
 export interface Hint {
-  /** unique; the text key is `tutorial.hint.<id>` */
+  /** unique; its text is `hintKey(id)` (`tutHintArmored`) */
   id: string;
   /** `enemy`: the first time that enemy type appears (any game, not only the tutorial);
    *  `idle`: in a game, a wave was sent, the field has at most `creeps` enemies and the timer is above `timer` and the
    *  player has called fewer than `earlyCalls` waves early, i.e. "you could call the next wave now" */
   when: { enemy: string } | { idle: { creeps: number; timer: number; earlyCalls: number } };
-  /** shown for this many seconds unless the player closes it */
+  /** shown for this many seconds unless the player closes it (the interface keeps the clock) */
   seconds: number;
+  /** how many times it may be shown in all (saved by the interface); default 1 */
+  times?: number;
   /** also outside the tutorial (a normal game); the player can switch hints off in the settings */
   always?: boolean;
 }
