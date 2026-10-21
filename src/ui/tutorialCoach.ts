@@ -188,7 +188,8 @@ export function installCoach(ui: UiContext) {
       stepShown = "";
     }
     // the texts stand on the side of the screen that the marked thing is not on (the tip stands under the step)
-    col.classList.toggle("bottom", boxSide(marked, innerHeight) === "bottom");
+    // on a phone the bottom is the dock (Start, speed, pause) and the palette: the texts never stand over them
+    col.classList.toggle("bottom", ui.isDesk() && boxSide(marked, innerHeight) === "bottom");
 
     // the tip: next to the step, on the other side of the screen from it when both are there
     const hv = v.hint;

@@ -1462,13 +1462,14 @@ body:not(.desk) :is(#settings, #help, #records, #campaignPage, #pedia) h2 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  pointer-events: none; /* the column is only a place for the boxes: it must not swallow a click meant for the game */
 }
 .coachCol.bottom {
   top: auto;
   bottom: calc(10px + env(safe-area-inset-bottom, 0px));
 }
 .coachBox {
-  pointer-events: auto;
+  pointer-events: none; /* the field under the box stays playable: taps pass through, only the buttons catch them */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1476,6 +1477,9 @@ body:not(.desk) :is(#settings, #help, #records, #campaignPage, #pedia) h2 {
   color: #d4c9b2;
   font-size: 15px;
   line-height: 1.4;
+}
+.coachBox button {
+  pointer-events: auto;
 }
 .coachBox[hidden] {
   display: none;
