@@ -122,8 +122,15 @@ for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
         if (v) throw new Error(`invariant broken after step ${i}: ${v}\nlast steps: ${log.slice(-12).join(" | ")}`);
       }
       if (i % 10 === 5) {
-        await tick(page, 3);
-        const lp = await layoutProblems(page);
+        // The game fits itself to the window from a ResizeObserver and media-query events, which the browser delivers
+        // on its own time (the test owns requestAnimationFrame, not these). On a loaded machine they arrive some
+        // milliseconds after setViewportSize returns, so give the layout a moment to settle; one that never does fails.
+        let lp = await layoutProblems(page);
+        for (let n = 0; n < 40 && lp.length; n++) {
+          await page.waitForTimeout(50);
+          await tick(page, 3);
+          lp = await layoutProblems(page);
+        }
         if (lp.length) throw new Error(`layout broken after step ${i}: ${lp.join("; ")}
 last steps: ${log.slice(-8).join(" | ")}`);
       }
