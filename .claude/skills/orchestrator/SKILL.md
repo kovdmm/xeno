@@ -122,3 +122,5 @@ files into commits; an old session started before `git init` sees no repo.
 - Give a task to the session that already worked on that area (its context is reused), and keep the work parallel: queue
   the next task together with the acknowledgement of a report, and look at the session list after every merge; an idle
   session is a planning failure. Decide fast and recommend, do not survey.
+- Economy: few big tasks instead of many small ones; no subagent or message for trivia (bundle it into a session's next
+  task); the whole Playwright suite once per batch of merges, one deploy per batch.
