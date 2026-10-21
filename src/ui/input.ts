@@ -10,7 +10,7 @@ export interface InputDeps {
   /** the screens' own actions */
   menu: { open(): void; newGame(): void; openSettings(): void; openHelp(): void };
   toggleSound(): void;
-  closeScreen(id: "settings" | "help" | "records" | "campaignPage"): void;
+  closeScreen(id: "settings" | "help" | "records" | "campaignPage" | "saveAsk"): void;
 }
 
 export function installInput(ui: UiContext, d: InputDeps) {
@@ -63,6 +63,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
     if (!C.cheat(code)) ui.toast(t("cheatBad"));
   });
   const open = (): OpenScreens => ({
+    saveAsk: screens.isOpen("saveAsk"),
     campaign: screens.isOpen("campaignPage"),
     records: screens.isOpen("records"),
     settings: screens.isOpen("settings"),
@@ -74,7 +75,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
 
   document.addEventListener("keydown", (e) => {
     const target = e.target as Element | null;
-    if (target?.closest && target.closest("input,textarea,select")) return;
+    if (target?.closest && target.closest("input,textarea,select") && e.key !== "Escape") return; // typing is not for the game; Escape still closes the screen
     // browser shortcuts (Ctrl+S, Ctrl+R, Alt+F ...) are not for the game; a held key does not repeat its action
     if (!e.key || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
     // cheat codes use the physical keys, so any layout works
@@ -90,6 +91,9 @@ export function installInput(ui: UiContext, d: InputDeps) {
     }
     if (k === "escape") {
       switch (escapeAction(open(), !!(st.build || st.sel || st.aim))) {
+        case "close-ask":
+          d.closeScreen("saveAsk");
+          break;
         case "close-campaign":
           d.closeScreen("campaignPage");
           break;
@@ -188,8 +192,6 @@ export function installInput(ui: UiContext, d: InputDeps) {
   $("pHelp").addEventListener("click", d.menu.openHelp);
   $("pMenu").addEventListener("click", d.menu.open);
   $("restart").addEventListener("click", go(d.menu.newGame));
-  $("overMenu").addEventListener("click", () => {
-    screens.hide("over");
-    d.menu.open();
-  });
+  // the end screen stays until the menu is really opened: the question "save to the table?" may come first (and be cancelled)
+  $("overMenu").addEventListener("click", () => d.menu.open());
 }

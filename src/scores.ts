@@ -15,6 +15,8 @@ export interface SeedGrant {
 
 export interface ScoreRow {
   rank: number;
+  level: string;
+  diff: string;
   nick: string;
   won: boolean;
   /** the last wave called */
@@ -42,7 +44,8 @@ type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface ScoresClient {
   seed(level: string, diff: string): Promise<SeedGrant | null>;
-  table(level: string, diff: string, limit?: number): Promise<ScoreRow[] | null>;
+  /** The table of one map and/or difficulty; null for "all" (the table of everything, ranked as the service ranks). */
+  table(level: string | null, diff: string | null, limit?: number): Promise<ScoreRow[] | null>;
   submit(run: Run, nick: string, token: string): Promise<SubmitResult>;
 }
 
@@ -98,7 +101,13 @@ export function createScoresClient(
     },
 
     async table(level, diff, limit = 20) {
-      const r = await call(`scores?level=${encodeURIComponent(level)}&diff=${encodeURIComponent(diff)}&limit=${limit}`);
+      const q = [
+        level && `level=${encodeURIComponent(level)}`,
+        diff && `diff=${encodeURIComponent(diff)}`,
+        `limit=${limit}`,
+      ];
+      // always from the service: a player who has just been entered must see their place, not an earlier copy
+      const r = await call(`scores?${q.filter(Boolean).join("&")}`, { cache: "no-store" });
       if (!r || r.status !== 200) return null;
       const b = await json(r);
       return Array.isArray(b?.rows) ? (b.rows as ScoreRow[]) : null;

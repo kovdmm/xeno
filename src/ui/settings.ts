@@ -1,6 +1,7 @@
 // The settings and help screens. The settings are the language, the screen, the install button and the sound; the
 // maps and difficulties are on their own screen (campaign.ts).
 import type { UiContext } from "./context";
+import { NICK_MAX, readNick, writeNick } from "./nickStore";
 
 export interface SettingsDeps {
   /** redraws everything that has texts, after the language changed */
@@ -10,7 +11,7 @@ export interface SettingsDeps {
 }
 
 export function installSettings(ui: UiContext, deps: SettingsDeps) {
-  const { core: C, state: st, i18n: I, t, L, $, screens } = ui;
+  const { core: C, state: st, i18n: I, t, L, $, screens, store } = ui;
 
   // the language selector lists every language by its own name, so it is readable whatever language is on
   function renderLangs() {
@@ -22,8 +23,19 @@ export function installSettings(ui: UiContext, deps: SettingsDeps) {
   function openSettings() {
     deps.redrawOnOpen();
     renderLangs();
+    ($("setNick") as HTMLInputElement).value = readNick(store);
     screens.show("settings");
   }
+
+  // the name for the records table: asked once after the first finished game, changed here
+  const nick = $("setNick") as HTMLInputElement;
+  nick.maxLength = NICK_MAX;
+  const keepNick = () => (nick.value = writeNick(store, nick.value));
+  nick.addEventListener("change", keepNick);
+  nick.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") keepNick();
+    if (e.key !== "Escape") e.stopPropagation(); // typing a name must not trigger the game's keys (Escape still closes the screen)
+  });
 
   function openHelp() {
     $("bestLine").innerHTML = t("bestLine", {

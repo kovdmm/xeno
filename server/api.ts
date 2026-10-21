@@ -2,7 +2,7 @@
 //   GET  /api/run?level=&diff=   a seed for a new game, with a signed single-use token
 //   POST /api/run                a finished run: replayed, and entered into the table if it holds
 //   GET  /api/run/<id>           the result of a run that took longer than the request waited
-//   GET  /api/scores?level=&diff=&limit=
+//   GET  /api/scores?level=&diff=&limit=   the table; without level and/or diff, the table of all maps/difficulties
 //   GET  /api/health
 // A score is never taken from the client: the server replays the run from its seed and the commands, and takes the
 // result from its own game (src/game/run.ts).
@@ -266,13 +266,17 @@ export function createApi(o: ApiOptions) {
   }
 
   function scores(url: URL, res: ServerResponse) {
+    // a filter that is not given is "all"; one that is given must be a real map or difficulty
     const level = url.searchParams.get("level"),
       diff = url.searchParams.get("diff");
-    if (!validLevel(level) || !validDiff(diff)) throw new HttpError(400, "level or difficulty");
+    if ((level !== null && !validLevel(level)) || (diff !== null && !validDiff(diff)))
+      throw new HttpError(400, "level or difficulty");
     const raw = Number(url.searchParams.get("limit") ?? 20);
     const limit = Number.isFinite(raw) ? Math.min(50, Math.max(1, Math.floor(raw))) : 20;
     const rows = o.db.top(level, diff, limit).map((r) => ({
       rank: r.rank,
+      level: r.level,
+      diff: r.diff,
       nick: r.nick,
       won: r.won,
       wave: r.wave,
@@ -281,7 +285,8 @@ export function createApi(o: ApiOptions) {
       seconds: Math.round(r.seconds),
       date: new Date(r.created * 1000).toISOString().slice(0, 10),
     }));
-    send(res, 200, { level, diff, rows }, { "cache-control": "public, max-age=10" });
+    // never cached: a player who has just been entered must see their place at once
+    send(res, 200, { level, diff, rows });
   }
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {

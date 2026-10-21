@@ -62,6 +62,24 @@ test("an install offer that arrived while the game was loading is not lost", asy
   await expect(page.locator("#installNote")).toBeHidden();
 });
 
+test("the service worker never caches the highscore service: the table must be fresh", async ({ page }) => {
+  await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
+  await page.goto("/?sw");
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await page.waitForFunction(() => navigator.serviceWorker.controller);
+  await page.evaluate(() => fetch("api/scores?limit=5").catch(() => null));
+  await page.evaluate(() => fetch("api/run?level=crossroads&diff=easy").catch(() => null));
+  const urls = await page.evaluate(async () =>
+    (
+      await Promise.all((await caches.keys()).map(async (k) => (await (await caches.open(k)).keys()).map((r) => r.url)))
+    ).flat(),
+  );
+  expect(urls.length).toBeGreaterThan(0); // the game itself is cached
+  expect(urls.filter((u) => u.includes("/api/"))).toEqual([]);
+  expect(await page.evaluate(() => caches.keys())).toEqual(["xeno-v3"]);
+});
+
 test("the service worker caches the game, which then opens offline", async ({ page, context }) => {
   await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
   await page.goto("/?sw");

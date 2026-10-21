@@ -5,11 +5,12 @@
 //    falls back to the cache when offline;
 //  - hashed files under assets/ never change, so they come from the cache; after each page load the ones the
 //    new page no longer uses are dropped, so the cache does not grow with every release;
+//  - the highscore service (/api/) is never cached and never touched: the table, a seed and a verdict must be fresh;
 //  - everything else is served from the cache while a fresh copy is fetched in the background.
 // It is built to sw.js by the service-worker plugin in vite.config.ts (it is not part of the app bundle).
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-const CACHE = "xeno-v2";
+const CACHE = "xeno-v3"; // v3: the highscore service's answers (/api/) were cached by v2 and are dropped with it
 const SHELL = ["./", "manifest.json", "icon.svg"];
 
 sw.addEventListener("install", (e) => {
@@ -33,6 +34,7 @@ sw.addEventListener("activate", (e) => {
 const cacheable = (url: URL) =>
   url.origin === sw.location.origin || /cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com/.test(url.host);
 const isHashedAsset = (url: URL) => url.origin === sw.location.origin && /\/assets\//.test(url.pathname);
+const isApi = (url: URL) => url.origin === sw.location.origin && /\/api\//.test(url.pathname);
 const keep = (res: Response | undefined): res is Response => !!res && (res.ok || res.type === "opaque");
 
 /** Drops cached hashed files that the given page no longer mentions. */
@@ -85,7 +87,7 @@ sw.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (!cacheable(url)) return;
+  if (!cacheable(url) || isApi(url)) return;
   e.respondWith(
     caches.open(CACHE).then((cache) => {
       if (req.mode === "navigate" || url.pathname.endsWith("/manifest.json")) return networkFirst(req, cache);

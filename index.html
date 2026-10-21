@@ -250,7 +250,7 @@
         <div class="overTxt" id="overTxt"></div>
         <!-- the finished game can be entered into the table (only when it started from the server's seed) -->
         <div class="saveBox" id="saveBox" hidden>
-          <label class="saveLbl"
+          <label class="saveLbl" id="saveNickLbl"
             ><span data-i="saveNick"></span
             ><input
               id="saveNick"
@@ -278,16 +278,18 @@
           <h2 data-i="recordsBtn"></h2>
           <button class="icon x" id="recClose" data-i-label="close">✕</button>
         </div>
-        <div class="recPick">
-          <select id="recLevel" data-i-label="recMap"></select>
-          <select id="recDiff" data-i-label="recDiff"></select>
+        <div class="recFilters" id="recFilters">
+          <div class="rchips" id="recLevels" role="group" data-i-label="recMap"></div>
+          <div class="rchips" id="recDiffs" role="group" data-i-label="recDiff"></div>
         </div>
+        <p class="recWhat" id="recWhat"></p>
         <p class="note" id="recStatus" role="status" aria-live="polite"></p>
         <table class="recTable">
           <thead>
             <tr>
               <th data-i="recRank"></th>
               <th data-i="recName"></th>
+              <th id="recWhere" class="wh" data-i="recWhere"></th>
               <th data-i="recWaves"></th>
               <th data-i="recScore"></th>
               <th data-i="recTime"></th>
@@ -296,6 +298,28 @@
           <tbody id="recBody"></tbody>
         </table>
         <p class="note" data-i="recNote"></p>
+      </div>
+    </div>
+
+    <!-- leaving a finished game that was not entered: once per game -->
+    <div class="modal fsask" id="saveAsk" hidden role="dialog" aria-labelledby="askT">
+      <div class="in plate">
+        <h2 id="askT" data-i="saveAskT"></h2>
+        <label class="saveLbl" id="askNickLbl"
+          ><span data-i="saveNick"></span
+          ><input
+            id="askNick"
+            type="text"
+            maxlength="16"
+            autocomplete="nickname"
+            spellcheck="false"
+            enterkeyhint="done"
+        /></label>
+        <p class="note" id="askMsg" role="status" aria-live="polite"></p>
+        <div class="btnrow">
+          <button class="big go" id="askYes" data-i="saveYes"></button
+          ><button class="big" id="askNo" data-i="saveNo"></button>
+        </div>
       </div>
     </div>
 
@@ -330,6 +354,17 @@
         <h3 class="mh" data-i="installH"></h3>
         <div class="langs"><button class="lcard" id="installBtn"></button></div>
         <p class="note" id="installNote" hidden></p>
+        <h3 class="mh" data-i="nickH"></h3>
+        <label class="nickSet"
+          ><input
+            id="setNick"
+            type="text"
+            maxlength="16"
+            autocomplete="nickname"
+            spellcheck="false"
+            enterkeyhint="done"
+            data-i-label="nickH"
+        /></label>
         <h3 class="mh" data-i="soundH"></h3>
         <div class="sound">
           <button class="lcard" id="sndToggle"></button>
@@ -362,7 +397,6 @@
         </div>
       </div>
     </div>
-
 
     <div class="modal fsask" id="fsAsk" hidden>
       <div class="in plate">

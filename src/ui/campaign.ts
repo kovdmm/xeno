@@ -26,7 +26,7 @@ export function installCampaign(ui: UiContext, progress: Progress, session: Sess
   function render() {
     const head = C.DKEYS.map(
       (k) =>
-        `<b class="cDiff" style="color:${diffColor(k)}"><span class="sk">${skullIcon(k)}</span><span>${L(C.DIFF[k])}</span></b>`,
+        `<b class="cDiff" style="color:${diffColor(k)}"><span class="sk">${skullIcon(k, 22)}</span><span>${L(C.DIFF[k])}</span></b>`,
     ).join("");
     const rows = C.LKEYS.map((id) => {
       const d = C.LEVELS[id],
@@ -78,7 +78,7 @@ export function installCampaign(ui: UiContext, progress: Progress, session: Sess
       pending = c;
       $("confirmTxt").textContent = t("confirm", { w: s.wave, d: ui.where(c.level ?? st.level, c.diff ?? st.diff) });
       $("confirm").hidden = false;
-    } else applyChoice(c);
+    } else session.leave(() => applyChoice(c));
   }
 
   function open() {
@@ -97,8 +97,9 @@ export function installCampaign(ui: UiContext, progress: Progress, session: Sess
     if (b && !b.disabled) choose({ level: b.dataset.l, diff: b.dataset.d as DiffKey });
   });
   $("confirmYes").addEventListener("click", () => {
-    if (pending) applyChoice(pending);
+    const c = pending;
     pending = null;
+    if (c) session.leave(() => applyChoice(c));
   });
   $("confirmNo").addEventListener("click", () => {
     $("confirm").hidden = true;

@@ -718,10 +718,6 @@ canvas {
   width: 18px;
   height: 18px;
 }
-.big svg.bigsk {
-  width: 26px;
-  height: 26px;
-}
 .mbest {
   margin: 0;
   color: var(--muted);
@@ -1041,18 +1037,14 @@ kbd {
 }
 .cDiff .sk {
   display: flex;
+  align-items: flex-end;
   justify-content: center;
-  gap: 1px;
+  height: 29px; /* room for the biggest skull (Insane), the others stand on the same line */
 }
-.cDiff svg {
-  width: 16px;
-  height: 16px;
-}
-.cDiff svg.big {
+.cDiff svg.skull {
   display: block;
-  width: 28px;
-  height: 28px;
-  padding: 0; /* the generic .big (a button size) would eat the picture */
+  flex: none;
+  padding: 0;
 }
 .cMap {
   display: flex;
@@ -1266,21 +1258,6 @@ body:not(.desk) :is(#settings, #help, #records, #campaignPage) h2 {
   margin: 0;
   text-align: center;
 }
-.recPick {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.recPick select {
-  flex: 1 1 140px;
-  min-height: 44px;
-  padding: 6px 10px;
-  font: inherit;
-  color: var(--text);
-  background: rgba(0, 0, 0, 0.45);
-  border: 2px solid var(--edge);
-  border-radius: 6px;
-}
 .recTable {
   width: 100%;
   border-collapse: collapse;
@@ -1320,6 +1297,114 @@ body:not(.desk) :is(#settings, #help, #records, #campaignPage) h2 {
 }
 .recTable tr.me td {
   color: var(--acid);
+}
+
+.recFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.rchips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.rchip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.rchip[aria-pressed="true"] {
+  border-color: var(--acid);
+  background: rgba(190, 255, 60, 0.12);
+}
+.rchip svg.map {
+  display: block;
+  width: 40px;
+  height: auto;
+  max-height: 28px;
+  border: 1px solid #000;
+  border-radius: 2px;
+}
+.rchip svg.skull {
+  display: block;
+}
+.recWhat {
+  margin: 0;
+  font-family: var(--f-display);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hazard);
+}
+.recTable td.wh {
+  white-space: nowrap;
+}
+.recTable td.wh svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+.recTable td.wh svg.map {
+  width: 34px;
+  height: auto;
+  max-height: 22px;
+  margin-right: 6px;
+  border: 1px solid #000;
+  border-radius: 2px;
+}
+@media (max-width: 560px) {
+  /* the table must fit a phone: the pictures say where, so the header's word is not drawn */
+  .recTable th,
+  .recTable td {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  .recTable th.wh {
+    font-size: 0;
+  }
+  .recTable td.nm {
+    max-width: 6.5em;
+  }
+  .recTable td.wh svg.map {
+    width: 26px;
+    margin-right: 3px;
+  }
+}
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.nickSet input {
+  width: min(100%, 260px);
+  min-height: 40px;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--edge);
+  border-radius: 6px;
+}
+.nickSet input:focus {
+  outline: none;
+  border-color: var(--acid);
+}
+#saveAsk .saveLbl {
+  width: 100%;
 }
 
 /* a sheet from the bottom edge instead of a window in the middle: what phones are used to */
@@ -1763,4 +1848,3 @@ body.desk .dlogo span {
     animation: none;
   }
 }
-

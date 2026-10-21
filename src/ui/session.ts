@@ -13,9 +13,15 @@ export function createSession(
   /** the length of the game changed with the level: texts that state it must be written again */
   onLengthChange: () => void,
   /** the highscore table's part: the server's seed for a new game, and what to do when a game has ended */
-  scores: { takeSeed(level: string, diff: string): number | undefined; onEnd(): void } = {
+  scores: {
+    takeSeed(level: string, diff: string): number | undefined;
+    onEnd(): void;
+    /** asks whether to save the finished game; true when it has, and `next` runs after the answer */
+    ask(next: () => void): boolean;
+  } = {
     takeSeed: () => undefined,
     onEnd: () => {},
+    ask: () => false,
   },
 ) {
   const { core: C, state: st, t, L, $, screens } = ui;
@@ -48,6 +54,15 @@ export function createSession(
     clearPicks(st);
   }
 
+  /**
+   * Runs `next` (a new game, the menu, another map), after asking "save to the records table?" when a finished game that
+   * could be entered is being left.
+   */
+  function leave(next: () => void) {
+    if (C.S.over && scores.ask(next)) return;
+    next();
+  }
+
   function renderOver() {
     const s = C.S;
     if (!s.over) return;
@@ -63,7 +78,7 @@ export function createSession(
     $("mPlay").textContent = inGame ? t("contWave", { w: s.wave }) : t("play");
     $("mNew").hidden = !inGame;
     $("mLevel").innerHTML = mapThumb(C.LEVELS[st.level]) + `<span>${t("levelIs", { l: L(C.LEVELS[st.level]) })}</span>`;
-    $("mDiff").innerHTML = skullIcon(st.diff, "bigsk") + `<span>${t("diffIs", { d: L(C.DIFF[st.diff]) })}</span>`;
+    $("mDiff").innerHTML = skullIcon(st.diff, 24) + `<span>${t("diffIs", { d: L(C.DIFF[st.diff]) })}</span>`;
     const b = Math.max(st.best, 0);
     $("mBest").textContent = b ? t("menuBest", { d: ui.where(), b, f: C.FINAL }) : "";
     screens.hide("pause");
@@ -95,7 +110,7 @@ export function createSession(
     }
   });
 
-  return { newGame, renderOver, openMenu, reseed };
+  return { newGame, renderOver, openMenu, reseed, leave };
 }
 
 export type Session = ReturnType<typeof createSession>;

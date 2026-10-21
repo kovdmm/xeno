@@ -521,7 +521,11 @@ its own game. Nothing the client says about its score is used, so a score cannot
    (`src/ui/loop.ts`), so speed ×2/×3/×5 is just more ticks per frame. A cheat, or a step that is not a whole tick, makes the
    game unrecordable (`core.run()` is `null`). A run is `{v, build, level, diff, seed, ticks, actions}` (`src/game/run.ts`);
    a 100-wave game of a bot had about 300 commands, so a run is a few kilobytes.
-3. **Saving.** The end screen of an enterable game has a name field and "Save to the table": `POST /api/run {run, nick, token}`.
+3. **Saving.** The end screen of an enterable game has "Save to the table": `POST /api/run {run, nick, token}`. The name is
+   asked **once** (a field on the end screen the first time, then kept in `xt-nick` and used silently; it is changed in the
+   settings). Only a player's **best** result is entered: the page remembers what it has had entered (`xt-saved-best`) and
+   does not offer a game that cannot beat it, and the service keeps the better one anyway. Leaving a finished, unsaved game
+   (new game, menu, another map) asks "Save to the records table?" once per game.
 4. **Replay.** The service checks the token (ours, not expired, not used, made for this very seed, map and difficulty), the
    build (see below), that the same game was not entered before (a hash of the canonical text of the run), then replays the
    run in a worker thread, one at a time, with a hard time limit. A run is refused when a command does not fit the game, the
@@ -535,6 +539,10 @@ its own game. Nothing the client says about its score is used, so a score cannot
 - **Ranking** (per map and difficulty): a win first, then the waves **cleared** (all of waves 1..n fully killed or through),
   then the score, then the shorter game. It is not the wave _called_: calling waves early stacks them, and "wave 40" with only
   5 cleared must not beat a game that cleared 8. A name keeps its best result per map and difficulty.
+- **The table** is `GET /api/scores?level=&diff=&limit=`; without `level` and/or `diff` it is the table of all maps and/or
+  difficulties, ranked the same way (a row says its map and difficulty). It is never cached: the service answers
+  `cache-control: no-store`, the page asks with `cache: "no-store"`, the service worker (`src/sw.ts`) does not touch `/api/`
+  at all, and the records screen reads it again every time it opens, so a player sees their place at once.
 - **Names** (`src/nick.ts`, used by the server and the page): letters of any script, digits, space and `_ . ' -`, at most 16
   characters, accents composed, stacks of combining marks and everything else removed (markup, controls, bidi marks, emoji);
   nothing left, or a name from a short block list, becomes "Anonymous". Names are shown with `textContent` only.

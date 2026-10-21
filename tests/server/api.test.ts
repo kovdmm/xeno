@@ -343,7 +343,53 @@ describe("the table and the rest of the interface", () => {
     expect((await s.get("/api/scores?level=crossroads&diff=easy&limit=99999")).body.rows).toHaveLength(3);
     expect((await s.get("/api/scores?level=crossroads&diff=hard")).body.rows).toHaveLength(0);
     expect((await s.get("/api/scores?level=nowhere&diff=easy")).status).toBe(400);
-    expect((await s.get("/api/scores")).status).toBe(400);
+    expect((await s.get("/api/scores?level=crossroads&diff=godlike")).status).toBe(400);
+    expect((await s.get("/api/scores?diff=__proto__")).status).toBe(400);
+  });
+
+  it("is never cached, so that a player who was just entered sees their place at once", async () => {
+    const s = await start();
+    expect((await s.get("/api/scores?level=crossroads&diff=easy")).headers.get("cache-control")).toBe("no-store");
+    expect((await s.get("/api/scores")).headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("is the table of everything without a map or a difficulty, ranked as the service ranks, and filters by either", async () => {
+    const s = await start();
+    const put = (level: string, diff: string, nick: string, cleared: number, won = false) =>
+      s.db.saveScore({
+        level,
+        diff,
+        nick,
+        won,
+        wave: cleared,
+        cleared,
+        score: cleared * 10,
+        seconds: 100,
+        build: "x",
+        created: 1_800_000_000,
+        ipHash: "h",
+        run: {},
+        runHash: [level, diff, nick].join("/"),
+      });
+    put("crossroads", "easy", "Ann", 10);
+    put("crossroads", "hard", "Ann", 30);
+    put("switchback", "easy", "Bob", 20);
+    put("switchback", "hard", "Cy", 5, true);
+    const all = (await s.get("/api/scores")).body.rows as { rank: number; nick: string; level: string; diff: string }[];
+    expect(all.map((r) => [r.rank, r.nick, r.level, r.diff])).toEqual([
+      [1, "Cy", "switchback", "hard"], // a win beats everything
+      [2, "Ann", "crossroads", "hard"],
+      [3, "Bob", "switchback", "easy"],
+      [4, "Ann", "crossroads", "easy"],
+    ]);
+    const byMap = (await s.get("/api/scores?level=crossroads")).body.rows;
+    expect(byMap.map((r: { nick: string; diff: string }) => r.nick + r.diff)).toEqual(["Annhard", "Anneasy"]);
+    const byDiff = (await s.get("/api/scores?diff=easy")).body.rows;
+    expect(byDiff.map((r: { nick: string; level: string }) => r.nick + r.level)).toEqual([
+      "Bobswitchback",
+      "Anncrossroads",
+    ]);
+    expect((await s.get("/api/scores?limit=2")).body.rows).toHaveLength(2);
   });
 
   it("answers health, and 404 or 405 for the rest", async () => {

@@ -165,7 +165,7 @@ test.describe("the records screen", () => {
     await expect(page.locator("#recStatus")).toHaveText("The table is not available right now.");
   });
 
-  test("asks for the map and difficulty that were chosen", async ({ page }) => {
+  test("opens on the table of everything, and the icon buttons filter it by map and difficulty", async ({ page }) => {
     const asked: string[] = [];
     await fakeServer(page);
     await page.route(/\/api\/scores\?/, (route) => {
@@ -175,8 +175,203 @@ test.describe("the records screen", () => {
     await openGame(page);
     await page.evaluate(() => window.XT.ui.openMenu());
     await page.click("#mRecords");
+    await expect.poll(() => asked.length).toBe(1);
+    expect(asked[0]).toBe("?limit=20"); // no map, no difficulty: all of them
+    await expect(page.locator("#recWhat")).toHaveText("All maps · All difficulties");
+    await page.click('#recDiffs [data-v="hard"]');
+    await expect.poll(() => asked.at(-1)).toBe("?diff=hard&limit=20");
+    await expect(page.locator('#recDiffs [data-v="hard"]')).toHaveAttribute("aria-pressed", "true");
+    await page.click('#recLevels [data-v="crossroads"]');
+    await expect.poll(() => asked.at(-1)).toBe("?level=crossroads&diff=hard&limit=20");
+    await expect(page.locator("#recWhat")).toHaveText("Crossroads · Hard");
+    await page.click('#recDiffs [data-v="hard"]'); // the chosen one again: back to all
+    await expect.poll(() => asked.at(-1)).toBe("?level=crossroads&limit=20");
+    await page.click("#recLevels .all");
+    await expect.poll(() => asked.at(-1)).toBe("?limit=20");
+  });
+
+  test("the overall table shows the map and difficulty of every row as pictures", async ({ page }) => {
+    const row = (rank: number, nick: string, level: string, diff: string) => ({
+      rank,
+      nick,
+      level,
+      diff,
+      won: false,
+      wave: 9,
+      cleared: 7,
+      score: 1,
+      seconds: 2,
+      date: "2026-10-21",
+    });
+    await fakeServer(page, { rows: [row(1, "Ann", "crossroads", "hard"), row(2, "Bob", "switchback", "insane")] });
+    await openGame(page);
+    await page.evaluate(() => window.XT.ui.openMenu());
+    await page.click("#mRecords");
+    const first = page.locator("#recBody tr").nth(0).locator("td.wh");
+    await expect(first.locator("svg.map")).toHaveCount(1);
+    await expect(first.locator("svg.skull")).toHaveCount(1);
+    await expect(first).toHaveAttribute("title", "Crossroads · Hard");
+    await page.click('#recDiffs [data-v="hard"]'); // the difficulty is chosen: its picture is not repeated in the rows
+    await expect(page.locator("#recBody tr").nth(0).locator("td.wh svg.skull")).toHaveCount(0);
+  });
+
+  test("the table is read again every time the screen opens", async ({ page }) => {
+    let n = 0;
+    await fakeServer(page);
+    await page.route(/\/api\/scores\?/, (route) => {
+      n++;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ rows: [] }) });
+    });
+    await openGame(page);
+    await page.evaluate(() => window.XT.ui.openMenu());
+    await page.click("#mRecords");
+    await expect.poll(() => n).toBe(1);
+    await page.click("#recClose");
+    await page.click("#mRecords");
+    await expect.poll(() => n).toBe(2);
+  });
+
+  test("from the end screen it opens on that game's map and difficulty", async ({ page }) => {
+    const asked: string[] = [];
+    await fakeServer(page);
+    await page.route(/\/api\/scores\?/, (route) => {
+      asked.push(new URL(route.request().url()).search);
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ rows: [] }) });
+    });
+    await openSeeded(page);
+    await loseTheGame(page);
+    await page.click("#overRecords");
     await expect.poll(() => asked.length).toBeGreaterThan(0);
-    await page.selectOption("#recDiff", "hard");
-    await expect.poll(() => asked.at(-1)).toContain("diff=hard");
+    expect(asked[0]).toMatch(/^\?level=\w+&diff=\w+&limit=20$/);
+  });
+});
+
+test.describe("the name and the best result", () => {
+  /** the second game of a session: its result is the same as the first's, unless the saved bests are forgotten */
+  const playAgain = async (page: Page) => {
+    await page.click("#restart");
+    await page.evaluate(() => 0);
+    await loseTheGame(page);
+    await expect(page.locator("#over")).toBeVisible();
+  };
+
+  test("the name is asked once; the next game uses it without asking", async ({ page }) => {
+    const posts = await fakeServer(page);
+    await openSeeded(page);
+    await loseTheGame(page);
+    await expect(page.locator("#saveNickLbl")).toBeVisible();
+    await page.fill("#saveNick", "Ann");
+    await page.click("#saveBtn");
+    await expect(page.locator("#saveMsg")).toContainText("Saved!");
+    await page.evaluate(() => localStorage.removeItem("xt-saved-best")); // so that the next game is offered again
+    await playAgain(page);
+    await expect(page.locator("#saveNickLbl")).toBeHidden();
+    await expect(page.locator("#saveMsg")).toHaveText("Saving as Ann.");
+    await page.click("#saveBtn");
+    await expect(page.locator("#saveMsg")).toContainText("Saved!");
+    expect(posts.map((p) => p.nick)).toEqual(["Ann", "Ann"]);
+  });
+
+  test("a game that cannot beat the player's best is not offered", async ({ page }) => {
+    const posts = await fakeServer(page);
+    await openSeeded(page);
+    await loseTheGame(page);
+    await page.fill("#saveNick", "Ann");
+    await page.click("#saveBtn");
+    await expect(page.locator("#saveMsg")).toContainText("Saved!");
+    // what was entered is remembered per name, map and difficulty; make it a result that nothing here can beat
+    const kept = await page.evaluate(() => JSON.parse(localStorage.getItem("xt-saved-best")!));
+    expect(Object.keys(kept)).toHaveLength(1);
+    expect(Object.keys(kept)[0]).toMatch(/^ann|w+|w+$/);
+    await page.evaluate(
+      (key) =>
+        localStorage.setItem(
+          "xt-saved-best",
+          JSON.stringify({ [key]: { won: true, cleared: 99, score: 9, seconds: 1 } }),
+        ),
+      Object.keys(kept)[0],
+    );
+    await playAgain(page);
+    await expect(page.locator("#saveBtn")).toBeHidden();
+    await expect(page.locator("#saveMsg")).toContainText("Not better than your best");
+    await page.click("#overMenu"); // and nothing is asked on leaving
+    await expect(page.locator("#saveAsk")).toBeHidden();
+    await expect(page.locator("#menu")).toBeVisible();
+    expect(posts).toHaveLength(1);
+  });
+
+  test("the name is changed in the settings; Escape still closes them", async ({ page }) => {
+    await fakeServer(page);
+    await openGame(page);
+    await page.evaluate(() => window.XT.ui.openMenu());
+    await page.click("#mSettings");
+    await page.fill("#setNick", "  Bob <b> ");
+    await page.press("#setNick", "Enter");
+    expect(await page.evaluate(() => localStorage.getItem("xt-nick"))).toBe("Bob b");
+    await expect(page.locator("#setNick")).toHaveValue("Bob b");
+    await page.press("#setNick", "Escape");
+    await expect(page.locator("#settings")).toBeHidden();
+  });
+
+  test('leaving a finished game that was not saved asks; "don\'t save" goes on', async ({ page }) => {
+    const posts = await fakeServer(page);
+    await openSeeded(page);
+    await loseTheGame(page);
+    await page.click("#restart");
+    await expect(page.locator("#saveAsk")).toBeVisible();
+    await expect(page.locator("#saveAsk h2")).toHaveText("Save to the records table?");
+    await page.click("#askNo");
+    await expect(page.locator("#saveAsk")).toBeHidden();
+    await expect(page.locator("#over")).toBeHidden(); // the new game started
+    expect(await core(page, (C) => C.S.over)).toBe(false);
+    expect(posts).toHaveLength(0);
+  });
+
+  test('Escape on the question stays on the end screen; after "don\'t save" it is not asked again', async ({
+    page,
+  }) => {
+    await fakeServer(page);
+    await openSeeded(page);
+    await loseTheGame(page);
+    await page.click("#overMenu");
+    await expect(page.locator("#saveAsk")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#saveAsk")).toBeHidden();
+    await expect(page.locator("#over")).toBeVisible(); // nothing was left
+    await page.click("#overMenu");
+    await page.click("#askNo");
+    await expect(page.locator("#menu")).toBeVisible();
+    await page.click("#mPlay"); // the same finished game is left again: not asked a second time
+    await expect(page.locator("#saveAsk")).toBeHidden();
+  });
+
+  test('"save" on the question sends the game under the typed name (the first time), then goes on', async ({
+    page,
+  }) => {
+    const posts = await fakeServer(page);
+    await openSeeded(page);
+    await loseTheGame(page);
+    await page.click("#restart");
+    await expect(page.locator("#askNickLbl")).toBeVisible();
+    await page.fill("#askNick", "Cy");
+    await page.click("#askYes");
+    await expect(page.locator("#saveAsk")).toBeHidden();
+    await expect(page.locator("#over")).toBeHidden();
+    expect(posts.map((p) => p.nick)).toEqual(["Cy"]);
+    expect(await page.evaluate(() => localStorage.getItem("xt-nick"))).toBe("Cy");
+  });
+
+  test('a failed save on the question keeps it open, and the game can still be left with "don\'t save"', async ({
+    page,
+  }) => {
+    await fakeServer(page, { post: () => ({ status: 503, body: { error: "busy" } }) });
+    await openSeeded(page);
+    await loseTheGame(page);
+    await page.click("#restart");
+    await page.click("#askYes");
+    await expect(page.locator("#askMsg")).toContainText("busy");
+    await expect(page.locator("#askYes")).toBeEnabled();
+    await page.click("#askNo");
+    await expect(page.locator("#over")).toBeHidden();
   });
 });

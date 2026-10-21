@@ -107,6 +107,7 @@ export function createUi(deps: UiDeps) {
   const session = createSession(ui, progress, () => applyLang(), {
     takeSeed: (l, d) => records.takeSeed(l, d),
     onEnd: () => records.onEnd(),
+    ask: (next) => records.ask(next),
   });
   records = createRecords(ui, scoresClient, { onSeed: () => session.reseed() });
   const soundControls = installSoundControls(ui);
@@ -139,8 +140,8 @@ export function createUi(deps: UiDeps) {
   installInput(ui, {
     commands,
     menu: {
-      open: session.openMenu,
-      newGame: session.newGame,
+      open: () => session.leave(session.openMenu),
+      newGame: () => session.leave(session.newGame),
       openSettings: settings.openSettings,
       openHelp: settings.openHelp,
     },

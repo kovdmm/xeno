@@ -273,10 +273,16 @@ describe("layout maths", () => {
 });
 
 describe("difficulty look", () => {
-  it("has a look for every difficulty; skulls are counted", () => {
+  it("has a look for every difficulty: always one skull, bigger and redder with the difficulty, Insane with crossbones", () => {
     expect(Object.keys(DIFF_LOOK)).toEqual(["easy", "normal", "hard", "insane"]);
-    expect(skullIcon("hard").match(/<svg/g)!.length).toBe(3);
-    expect(skullIcon("insane")).toContain("big");
+    const size = (k: "easy" | "normal" | "hard" | "insane") => Number(/width:([0-9.]+)px/.exec(skullIcon(k, 30))![1]);
+    for (const k of ["easy", "normal", "hard", "insane"] as const) expect(skullIcon(k).match(/<svg/g)).toHaveLength(1);
+    expect(size("easy")).toBeLessThan(size("normal"));
+    expect(size("normal")).toBeLessThan(size("hard"));
+    expect(size("hard")).toBeLessThan(size("insane"));
+    expect(skullIcon("insane")).toContain("<line"); // the crossbones
+    for (const k of ["easy", "normal", "hard"] as const) expect(skullIcon(k)).not.toContain("<line");
+    expect(new Set(Object.values(DIFF_LOOK).map((l) => l.col)).size).toBe(4);
     expect(diffColor("insane")).toBe(DIFF_LOOK.insane.edge);
     expect(diffColor("easy")).toBe(DIFF_LOOK.easy.col);
   });

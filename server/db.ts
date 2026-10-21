@@ -2,6 +2,9 @@
 import { DatabaseSync } from "node:sqlite";
 import { gzipSync } from "node:zlib";
 import { nickKey } from "../src/nick";
+import { better, type Result } from "../src/ranking";
+
+export { better };
 
 export interface ScoreInput {
   level: string;
@@ -27,6 +30,8 @@ export interface ScoreInput {
 
 export interface ScoreRow {
   id: number;
+  level: string;
+  diff: string;
   rank: number;
   nick: string;
   won: boolean;
@@ -35,16 +40,6 @@ export interface ScoreRow {
   score: number;
   seconds: number;
   created: number;
-}
-
-type Result = Pick<ScoreInput, "won" | "cleared" | "score" | "seconds">;
-
-/** the ranking: a win beats a loss, then more waves cleared, the higher score, the shorter game */
-export function better(a: Result, b: Result): boolean {
-  if (a.won !== b.won) return a.won;
-  if (a.cleared !== b.cleared) return a.cleared > b.cleared;
-  if (a.score !== b.score) return a.score > b.score;
-  return a.seconds < b.seconds;
 }
 
 interface Existing {
@@ -104,7 +99,8 @@ export function openDb(path: string) {
            OR (seconds = ? AND id < ?))))))))`,
     ),
     top: db.prepare(
-      `SELECT id, nick, won, wave, cleared, score, seconds, created FROM scores WHERE level = ? AND diff = ?
+      `SELECT id, level, diff, nick, won, wave, cleared, score, seconds, created FROM scores
+       WHERE (? IS NULL OR level = ?) AND (? IS NULL OR diff = ?)
        ORDER BY won DESC, cleared DESC, score DESC, seconds ASC, id ASC LIMIT ?`,
     ),
     seen: db.prepare("INSERT OR IGNORE INTO seen_runs (hash, created) VALUES (?, ?)"),
@@ -184,9 +180,12 @@ export function openDb(path: string) {
     /** Has this very game (its canonical run text) been entered already? */
     hasRun: (hash: string): boolean => q.wasSeen.get(hash) !== undefined,
 
-    top(level: string, diff: string, limit: number): ScoreRow[] {
-      const rows = q.top.all(level, diff, limit) as {
+    /** The best entries, of one map and difficulty or (with null) of all of them: one ranking for all. */
+    top(level: string | null, diff: string | null, limit: number): ScoreRow[] {
+      const rows = q.top.all(level, level, diff, diff, limit) as {
         id: number;
+        level: string;
+        diff: string;
         nick: string;
         won: number;
         wave: number;

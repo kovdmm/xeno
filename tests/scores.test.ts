@@ -55,6 +55,24 @@ describe("the table", () => {
     expect(calls[0].url).toBe("api/scores?level=crossroads&diff=easy&limit=5");
   });
 
+  it("is the table of everything without a map or a difficulty, and filters by either", async () => {
+    const { c, calls } = client(reply(200, { rows: [] }));
+    await c.table(null, null, 20);
+    await c.table("crossroads", null, 20);
+    await c.table(null, "hard", 20);
+    expect(calls.map((x) => x.url)).toEqual([
+      "api/scores?limit=20",
+      "api/scores?level=crossroads&limit=20",
+      "api/scores?diff=hard&limit=20",
+    ]);
+  });
+
+  it("is always read from the service, never from the browser's cache: a place just won must show", async () => {
+    const { c, calls } = client(reply(200, { rows: [] }));
+    await c.table("crossroads", "easy");
+    expect(calls[0].init?.cache).toBe("no-store");
+  });
+
   it("is null when it cannot be had", async () => {
     expect(await client(new Error("x")).c.table("a", "b")).toBeNull();
     expect(await client(reply(500, {})).c.table("a", "b")).toBeNull();

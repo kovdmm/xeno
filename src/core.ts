@@ -5,6 +5,7 @@ import { campaignOf, lockOf } from "./game/campaign";
 import { pos } from "./game/combat";
 import { createGame, type GameApi } from "./game/game";
 import { createRecorder } from "./game/recorder";
+import { outcomeOf } from "./game/run";
 import type { LevelDef, Rng } from "./game/types";
 import type { Core, I18n } from "./ui/types";
 
@@ -105,6 +106,7 @@ export function createCore(i18n: TextSource, rng?: Rng, newSeed?: () => number):
     cast: rec.cast,
     cheat: rec.cheat,
     run: rec.run,
+    outcome: () => outcomeOf(game.S),
     // queries (read-only)
     stats: game.stats,
     st: game.towerStats,
