@@ -22,6 +22,7 @@
     "langH": "Sprache",
     "diffNote": "Ein Wechsel der Schwierigkeit oder der Karte startet ein neues Spiel. Rekorde werden für jede Karte und Schwierigkeit getrennt gespeichert.",
     "campaignH": "Karten und Schwierigkeiten",
+    "campBtn": "Karte und Schwierigkeit",
     "lockDiff": "Erreiche Welle {n} ({d})",
     "lockMap": "Erreiche Welle {n} ({d}), {m}",
     "cellWon": "Sieg",

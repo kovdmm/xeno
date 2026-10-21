@@ -22,6 +22,7 @@
     "langH": "Språk",
     "diffNote": "Om du byter svårighetsgrad eller karta startar ett nytt spel. Rekord sparas separat för varje karta och svårighetsgrad.",
     "campaignH": "Kartor och svårigheter",
+    "campBtn": "Karta och svårighet",
     "lockDiff": "Nå våg {n} ({d})",
     "lockMap": "Nå våg {n} ({d}), {m}",
     "cellWon": "Seger",

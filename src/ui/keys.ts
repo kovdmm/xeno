@@ -61,6 +61,7 @@ export class CheatTyper {
 
 export interface OpenScreens {
   records?: boolean;
+  campaign?: boolean;
   settings: boolean;
   help: boolean;
   pause: boolean;
@@ -69,10 +70,11 @@ export interface OpenScreens {
 }
 
 export type EscapeAction =
-  "close-records" | "close-settings" | "close-help" | "resume" | "nothing" | "clear-picks" | "pause";
+  "close-campaign" | "close-records" | "close-settings" | "close-help" | "resume" | "nothing" | "clear-picks" | "pause";
 
 /** What Escape does: it closes the topmost thing, and only pauses when there is nothing to close. */
 export function escapeAction(open: OpenScreens, hasPicks: boolean): EscapeAction {
+  if (open.campaign) return "close-campaign";
   if (open.records) return "close-records";
   if (open.settings) return "close-settings";
   if (open.help) return "close-help";

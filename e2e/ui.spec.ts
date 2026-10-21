@@ -27,7 +27,7 @@ const press = async (page: Page, key: string) => {
 };
 const rich = (page: Page) => core(page, (C) => C.cheat("hesoyam"));
 
-/** a cell of the campaign grid in the settings: the map in the row, the difficulty in the column */
+/** a cell of the campaign grid on the campaign screen: the map in the row, the difficulty in the column */
 const cell = (map: string, diff: string) => `#campaign [data-l="${map}"][data-d="${diff}"]`;
 
 test.describe("screens and pause", () => {
@@ -177,7 +177,9 @@ test.describe("the tower card", () => {
     await clickCell(page, [6.5, 5.5]);
   });
 
-  test("clicking a tower selects it and shows its card; clicking it again, or empty ground, deselects", async ({ page }) => {
+  test("clicking a tower selects it and shows its card; clicking it again, or empty ground, deselects", async ({
+    page,
+  }) => {
     await expect(page.locator("#info")).toContainText("Machine Gun");
     await expect(page.locator("#info")).toContainText("lvl 1/5");
     await clickCell(page, [6.5, 5.5]);
@@ -336,15 +338,17 @@ test.describe("waves and speed", () => {
 test.describe("difficulty", () => {
   test.beforeEach(async ({ page }) => openGame(page));
 
-  test("the difficulty is chosen in the settings, applied at once while nothing has been played", async ({ page }) => {
+  test("the difficulty is chosen on the campaign screen, applied at once while nothing has been played", async ({
+    page,
+  }) => {
     await page.click("#pauseBtn");
-    await page.click("#pSettings");
+    await page.click("#pCampaign");
     await expect(page.locator("#campaign .cc")).toHaveCount(16); // 4 maps x 4 difficulties
     await expect(page.locator(cell("crossroads", "easy"))).toHaveClass(/\bon\b/);
     await page.click(cell("crossroads", "hard"));
     expect(await core(page, (C) => C.difficulty())).toBe("hard");
     expect(await page.evaluate(() => localStorage.getItem("xt-diff"))).toBe("hard");
-    await expect(page.locator("#settings")).toBeHidden();
+    await expect(page.locator("#campaignPage")).toBeHidden();
   });
 
   test("with a game in progress the change is confirmed first, and can be declined", async ({ page }) => {
@@ -354,7 +358,7 @@ test.describe("difficulty", () => {
     });
     await core(page, (C) => C.step(0.1));
     await page.click("#pauseBtn");
-    await page.click("#pSettings");
+    await page.click("#pCampaign");
     await page.click(cell("crossroads", "hard"));
     await expect(page.locator("#confirm")).toBeVisible();
     await page.click("#confirmNo");
@@ -368,7 +372,7 @@ test.describe("difficulty", () => {
 
   test("the choice is remembered after a reload", async ({ page }) => {
     await page.click("#pauseBtn");
-    await page.click("#pSettings");
+    await page.click("#pCampaign");
     await page.click(cell("crossroads", "insane"));
     await page.reload();
     await page.waitForFunction(() => window.XT?.core);
@@ -426,21 +430,29 @@ test.describe("keyboard extras", () => {
     expect(s.cd.napalm).toBe(0); // E was not an ability
   });
 
-  test("the Russian layout drives the hotkeys (щ → the tower hotkeys are digits, ы → sell, а → speed)", async ({ page }) => {
+  test("the Russian layout drives the hotkeys (щ → the tower hotkeys are digits, ы → sell, а → speed)", async ({
+    page,
+  }) => {
     await rich(page);
     await core(page, (C) => C.place("gun", 6, 5));
     await tick(page, 2);
     await clickCell(page, [6.5, 5.5]);
-    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "а", code: "KeyF", bubbles: true })));
+    await page.evaluate(() =>
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "а", code: "KeyF", bubbles: true })),
+    );
     await tick(page, 2);
     await expect(page.locator("#speedBtn")).toHaveText("×2");
-    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "ы", code: "KeyS", bubbles: true })));
+    await page.evaluate(() =>
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "ы", code: "KeyS", bubbles: true })),
+    );
     await tick(page, 2);
     expect((await state(page)).towers).toEqual([]);
   });
 
   test("the tower digits work on a layout whose number row types symbols (AZERTY)", async ({ page }) => {
-    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "&", code: "Digit1", bubbles: true })));
+    await page.evaluate(() =>
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "&", code: "Digit1", bubbles: true })),
+    );
     await tick(page, 2);
     await expect(page.locator('.tb[data-t="gun"]')).toHaveClass(/\bon\b/);
   });
@@ -460,7 +472,8 @@ test.describe("phone layout", () => {
   test("selecting a tower swaps the palette for the card; closing brings the palette back", async ({ page }) => {
     // no fullscreen question in the way
     await page.addInitScript(() => {
-      for (const k of ["fullscreenEnabled", "webkitFullscreenEnabled"]) Object.defineProperty(document, k, { value: false });
+      for (const k of ["fullscreenEnabled", "webkitFullscreenEnabled"])
+        Object.defineProperty(document, k, { value: false });
     });
     await openGame(page);
     await rich(page);
@@ -557,7 +570,7 @@ test.describe("levels (maps)", () => {
 
   const openLevels = async (page) => {
     await page.click("#pauseBtn");
-    await page.click("#pSettings");
+    await page.click("#pCampaign");
   };
   const level = (page) => core(page, (C) => C.LEVEL);
   const boardAspectOnScreen = (page: Page) =>
@@ -566,7 +579,9 @@ test.describe("levels (maps)", () => {
       return { w: r.width, h: r.height, W: XT.core.W, H: XT.core.H };
     });
 
-  test("the settings list every level with its picture, name and length; the current one is marked", async ({ page }) => {
+  test("the campaign screen lists every level with its picture, name and length; the current one is marked", async ({
+    page,
+  }) => {
     await openLevels(page);
     const rows = page.locator("#campaign .cRow");
     await expect(rows).toHaveCount(4);
@@ -587,13 +602,15 @@ test.describe("levels (maps)", () => {
     expect(await level(page)).toBe("fronts");
     expect(await core(page, (C) => [C.W, C.H, C.FINAL])).toEqual([23, 15, 150]);
     expect(await page.evaluate(() => localStorage.getItem("xt-level"))).toBe("fronts");
-    await expect(page.locator("#settings")).toBeHidden();
+    await expect(page.locator("#campaignPage")).toBeHidden();
     await expect(page.locator("#sWave")).toHaveText("0/150");
-    await expect.poll(async () => {
-      await tick(page, 3); // the layout is refitted on the next frame
-      const a = await boardAspectOnScreen(page);
-      return Math.abs(a.w / a.h - a.W / a.H) < 0.03;
-    }).toBe(true);
+    await expect
+      .poll(async () => {
+        await tick(page, 3); // the layout is refitted on the next frame
+        const a = await boardAspectOnScreen(page);
+        return Math.abs(a.w / a.h - a.W / a.H) < 0.03;
+      })
+      .toBe(true);
     // the board really is another shape: 23x15, not 22x15
     expect(before.W).toBe(22);
   });
@@ -601,18 +618,22 @@ test.describe("levels (maps)", () => {
   test("a level with another shape re-fits the field (24 wide, then back to 22)", async ({ page }) => {
     await openLevels(page);
     await page.click(cell("switchback", "easy"));
-    await expect.poll(async () => {
-      await tick(page, 3); // the layout is refitted on the next frame
-      const a = await boardAspectOnScreen(page);
-      return a.W === 24 && Math.abs(a.w / a.h - 24 / 15) < 0.03;
-    }).toBe(true);
-    await page.click("#pSettings"); // back on the pause screen, where the settings were opened from
+    await expect
+      .poll(async () => {
+        await tick(page, 3); // the layout is refitted on the next frame
+        const a = await boardAspectOnScreen(page);
+        return a.W === 24 && Math.abs(a.w / a.h - 24 / 15) < 0.03;
+      })
+      .toBe(true);
+    await page.click("#pCampaign"); // back on the pause screen, where the campaign screen was opened from
     await page.click(cell("crossroads", "easy"));
-    await expect.poll(async () => {
-      await tick(page, 3); // the layout is refitted on the next frame
-      const a = await boardAspectOnScreen(page);
-      return a.W === 22 && Math.abs(a.w / a.h - 22 / 15) < 0.03;
-    }).toBe(true);
+    await expect
+      .poll(async () => {
+        await tick(page, 3); // the layout is refitted on the next frame
+        const a = await boardAspectOnScreen(page);
+        return a.W === 22 && Math.abs(a.w / a.h - 22 / 15) < 0.03;
+      })
+      .toBe(true);
   });
 
   test("with a game under way a change of level is confirmed first, and can be declined", async ({ page }) => {
@@ -641,8 +662,8 @@ test.describe("levels (maps)", () => {
     expect(await level(page)).toBe("corner");
     await expect(page.locator("#mLevel")).toContainText("The corner");
     await expect(page.locator("#mLevel svg.map")).toHaveCount(1);
-    await page.click("#mLevel"); // opens the settings
-    await expect(page.locator("#settings")).toBeVisible();
+    await page.click("#mLevel"); // opens the campaign screen
+    await expect(page.locator("#campaignPage")).toBeVisible();
     await expect(page.locator(cell("corner", "easy"))).toHaveClass(/\bon\b/);
   });
 
@@ -702,7 +723,7 @@ test.describe("levels (maps)", () => {
     const p = await ctx.newPage();
     await openGame(p);
     await p.click("#pauseBtn");
-    await p.click("#pSettings");
+    await p.click("#pCampaign");
     await p.click(cell("fronts", "easy"));
     await tick(p, 12);
     const a = await p.evaluate(() => {
@@ -718,7 +739,7 @@ test.describe("levels (maps)", () => {
 test.describe("the campaign grid", () => {
   const openSettings = async (page: Page) => {
     await page.click("#pauseBtn");
-    await page.click("#pSettings");
+    await page.click("#pCampaign");
   };
   const level = (page: Page) => core(page, (C) => C.LEVEL);
 
@@ -733,7 +754,7 @@ test.describe("the campaign grid", () => {
     expect(await level(page)).toBe("switchback");
     await page.locator(cell("corner", "easy")).click({ force: true }); // a closed cell does nothing
     expect(await level(page)).toBe("switchback");
-    await expect(page.locator("#settings")).toBeVisible();
+    await expect(page.locator("#campaignPage")).toBeVisible();
   });
 
   test("the best waves open the next difficulty and the next map", async ({ page }) => {

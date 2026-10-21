@@ -17,6 +17,7 @@ import { createRecords, type Records } from "./records";
 import { createScoresClient } from "../scores";
 import { createScreens } from "./screens";
 import { createSession } from "./session";
+import { installCampaign } from "./campaign";
 import { installSettings } from "./settings";
 import { installSoundControls } from "./soundControls";
 import { createState } from "./state";
@@ -111,7 +112,8 @@ export function createUi(deps: UiDeps) {
   const soundControls = installSoundControls(ui);
   const layout = { refit: () => {}, fit: () => {} };
   const appMode = installAppMode(ui, () => layout.refit());
-  const settings = installSettings(ui, progress, session, {
+  installCampaign(ui, progress, session);
+  const settings = installSettings(ui, {
     applyLang: () => applyLang(),
     redrawOnOpen() {
       appMode.drawFs();

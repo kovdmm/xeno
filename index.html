@@ -235,6 +235,7 @@
         <div class="mbtns">
           <button class="big go" id="pResume" data-i="resume"></button>
           <button class="big" id="pRestart" data-i="restart"></button>
+          <button class="big" id="pCampaign" data-i="campBtn"></button>
           <button class="big" id="pSettings" data-i="settings"></button>
           <button class="big" id="pHelp" data-i="help"></button>
           <button class="big" id="pMenu" data-i="mainMenu"></button>
@@ -265,7 +266,7 @@
         <div class="mbtns">
           <button class="big go" id="restart" data-i="restart"></button>
           <button class="big" id="overRecords" data-i="recordsBtn"></button>
-          <button class="big" id="overDiff" data-i="settings"></button>
+          <button class="big" id="overDiff" data-i="campBtn"></button>
           <button class="big" id="overMenu" data-i="mainMenu"></button>
         </div>
       </div>
@@ -340,7 +341,16 @@
             /></label>
           </div>
         </div>
-        <h3 class="mh" data-i="campaignH"></h3>
+      </div>
+    </div>
+
+    <!-- the maps and difficulties: one grid, with the best waves, the stars and the locks -->
+    <div class="modal" id="campaignPage" hidden>
+      <div class="in plate">
+        <div class="mhead">
+          <h2 data-i="campaignH"></h2>
+          <button class="icon x" id="campClose" data-i-label="close">✕</button>
+        </div>
         <p class="note" data-i="diffNote"></p>
         <div class="camp" id="campaign"></div>
         <div class="confirm" id="confirm" hidden>

@@ -1,10 +1,6 @@
-// The settings and help screens: language, difficulty (with the confirmation when a game is under way).
-import type { DiffKey } from "../game/types";
+// The settings and help screens. The settings are the language, the screen, the install button and the sound; the
+// maps and difficulties are on their own screen (campaign.ts).
 import type { UiContext } from "./context";
-import { diffColor, skullIcon } from "./difficulty";
-import { mapThumb } from "./mapThumb";
-import type { Progress } from "./progress";
-import type { Session } from "./session";
 
 export interface SettingsDeps {
   /** redraws everything that has texts, after the language changed */
@@ -13,10 +9,8 @@ export interface SettingsDeps {
   redrawOnOpen(): void;
 }
 
-export function installSettings(ui: UiContext, progress: Progress, session: Session, deps: SettingsDeps) {
+export function installSettings(ui: UiContext, deps: SettingsDeps) {
   const { core: C, state: st, i18n: I, t, L, $, screens } = ui;
-  // a change of difficulty or map waiting for the player to confirm that the game under way is dropped
-  let pending: { diff?: DiffKey; level?: string } | null = null;
 
   // the language selector lists every language by its own name, so it is readable whatever language is on
   function renderLangs() {
@@ -25,79 +19,9 @@ export function installSettings(ui: UiContext, progress: Progress, session: Sess
     ).join("");
   }
 
-  const LOCK =
-    '<svg class="lockIc" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>';
-  const WIN =
-    '<svg class="winIc" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.7-6-3.4-6 3.4 1.3-6.7-5-4.7 6.8-.8z"/></svg>';
-
-  /**
-   * The campaign as one grid: the maps are the rows, the difficulties the columns. A cell shows the best wave and, after
-   * a victory, a star; a cell that is not open yet shows a lock and the rule that opens it, in words. The cell being
-   * played is marked.
-   */
-  function renderCampaign() {
-    const head = C.DKEYS.map(
-      (k) =>
-        `<b class="cDiff" style="color:${diffColor(k)}"><span class="sk">${skullIcon(k)}</span><span>${L(C.DIFF[k])}</span></b>`,
-    ).join("");
-    const rows = C.LKEYS.map((id) => {
-      const d = C.LEVELS[id],
-        map = L(d);
-      const cells = C.DKEYS.map((k) => {
-        const diff = L(C.DIFF[k]),
-          lock = progress.lockOf(id, k),
-          at = `data-l="${id}" data-d="${k}"`;
-        if (lock) {
-          const rule =
-            lock.kind === "map"
-              ? t("lockMap", { n: lock.need, d: L(C.DIFF[C.DKEYS[0]]), m: L(C.LEVELS[lock.from]) })
-              : t("lockDiff", { n: lock.need, d: L(C.DIFF[lock.from as DiffKey]) });
-          const label = t("cellLocked", { m: map, d: diff, r: rule });
-          return `<button class="cc lock" ${at} disabled aria-label="${label}">${LOCK}<small>${rule}</small></button>`;
-        }
-        const best = progress.bestOf(id, k),
-          won = progress.wonOf(id, k),
-          on = id === st.level && k === st.diff;
-        const label = t("cellOpen", { m: map, d: diff, b: best, f: d.finalWave }) + (won ? ". " + t("cellWon") : "");
-        return `<button class="cc${on ? " on" : ""}${won ? " won" : ""}" ${at} aria-label="${label}"${on ? ' aria-current="true"' : ""}><b>${best || "–"}</b><small>/${d.finalWave}</small>${won ? `<span class="cWin" title="${t("cellWon")}">${WIN}</span>` : ""}</button>`;
-      }).join("");
-      return `<div class="cRow"><div class="cMap">${mapThumb(d)}<b>${map}</b><small>${t("wavesN", { n: d.finalWave })}</small></div>${cells}</div>`;
-    }).join("");
-    $("campaign").innerHTML = `<div class="cHead"><span></span>${head}</div>${rows}`;
-  }
-
-  /** Switches to another difficulty and/or map and starts a new game on it. */
-  function applyChoice(c: { diff?: DiffKey; level?: string }) {
-    if (c.diff) {
-      st.diff = c.diff;
-      progress.saveDiff(c.diff);
-    }
-    if (c.level) {
-      st.level = c.level;
-      progress.saveLevel(c.level);
-    }
-    session.newGame();
-    screens.hide("settings");
-    if (screens.isOpen("menu")) session.openMenu();
-    ui.refresh();
-    ui.toast(ui.where());
-  }
-
-  /** Applies a choice at once, or asks first when a game is under way. */
-  function choose(c: { diff?: DiffKey; level?: string }) {
-    const s = C.S;
-    if (s.started && !s.over && s.wave > 0) {
-      pending = c;
-      $("confirmTxt").textContent = t("confirm", { w: s.wave, d: ui.where(c.level ?? st.level, c.diff ?? st.diff) });
-      $("confirm").hidden = false;
-    } else applyChoice(c);
-  }
-
   function openSettings() {
     deps.redrawOnOpen();
     renderLangs();
-    renderCampaign();
-    $("confirm").hidden = true;
     screens.show("settings");
   }
 
@@ -115,7 +39,6 @@ export function installSettings(ui: UiContext, progress: Progress, session: Sess
     if (!I.setLang((e.target as HTMLSelectElement).value)) return;
     deps.applyLang();
     renderLangs();
-    renderCampaign();
   });
   $("setClose").addEventListener("click", () => screens.hide("settings"));
   $("helpClose").addEventListener("click", () => screens.hide("help"));
@@ -124,20 +47,7 @@ export function installSettings(ui: UiContext, progress: Progress, session: Sess
       if ((e.target as HTMLElement).id === id) screens.hide(id);
     });
 
-  $("campaign").addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-l][data-d]");
-    if (b && !b.disabled) choose({ level: b.dataset.l, diff: b.dataset.d as DiffKey });
-  });
-  $("confirmYes").addEventListener("click", () => {
-    if (pending) applyChoice(pending);
-    pending = null;
-  });
-  $("confirmNo").addEventListener("click", () => {
-    $("confirm").hidden = true;
-    pending = null;
-  });
-
-  return { openSettings, openHelp, renderCampaign };
+  return { openSettings, openHelp };
 }
 
 export type Settings = ReturnType<typeof installSettings>;

@@ -10,7 +10,7 @@ export interface InputDeps {
   /** the screens' own actions */
   menu: { open(): void; newGame(): void; openSettings(): void; openHelp(): void };
   toggleSound(): void;
-  closeScreen(id: "settings" | "help" | "records"): void;
+  closeScreen(id: "settings" | "help" | "records" | "campaignPage"): void;
 }
 
 export function installInput(ui: UiContext, d: InputDeps) {
@@ -63,6 +63,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
     if (!C.cheat(code)) ui.toast(t("cheatBad"));
   });
   const open = (): OpenScreens => ({
+    campaign: screens.isOpen("campaignPage"),
     records: screens.isOpen("records"),
     settings: screens.isOpen("settings"),
     help: screens.isOpen("help"),
@@ -89,6 +90,9 @@ export function installInput(ui: UiContext, d: InputDeps) {
     }
     if (k === "escape") {
       switch (escapeAction(open(), !!(st.build || st.sel || st.aim))) {
+        case "close-campaign":
+          d.closeScreen("campaignPage");
+          break;
         case "close-records":
           d.closeScreen("records");
           break;
@@ -169,8 +173,6 @@ export function installInput(ui: UiContext, d: InputDeps) {
       screens.hide("menu");
     }),
   );
-  $("mLevel").addEventListener("click", d.menu.openSettings);
-  $("mDiff").addEventListener("click", d.menu.openSettings);
   $("mSettings").addEventListener("click", d.menu.openSettings);
   $("mHelp").addEventListener("click", d.menu.openHelp);
   $("pauseBtn").addEventListener("click", () => screens.show("pause"));
@@ -190,5 +192,4 @@ export function installInput(ui: UiContext, d: InputDeps) {
     screens.hide("over");
     d.menu.open();
   });
-  $("overDiff").addEventListener("click", d.menu.openSettings);
 }

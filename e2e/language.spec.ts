@@ -300,13 +300,19 @@ test.describe("the campaign grid and the title in every language", () => {
     { width: 390, height: 844, name: "phone" },
   ])
     for (const l of LANGS)
-      test(`${vp.name} ${l.name}: the grid and the rules of its closed cells fit, the title buttons are not cut`, async ({ page }) => {
+      test(`${vp.name} ${l.name}: the grid and the rules of its closed cells fit, the title buttons are not cut`, async ({
+        page,
+      }) => {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await open(page);
         await choose(page, l.code);
+        // the grid has its own screen now: leave the settings and open it from the title
+        await page.click("#setClose");
+        await page.click("#mLevel");
         const problems = await page.evaluate(() => {
           const bad: string[] = [];
-          const parts = "#campaign .cMap, #campaign .cMap b, #campaign .cMap small, #campaign .cc, #campaign .cc small, #campaign .cDiff, #campaign .cDiff span";
+          const parts =
+            "#campaign .cMap, #campaign .cMap b, #campaign .cMap small, #campaign .cc, #campaign .cc small, #campaign .cDiff, #campaign .cDiff span";
           for (const el of document.querySelectorAll<HTMLElement>(parts))
             if (el.scrollWidth > el.clientWidth + 1) bad.push("cut: " + el.textContent!.slice(0, 30));
           return bad;
@@ -332,7 +338,7 @@ test.describe("the campaign grid and the title in every language", () => {
         }
         // the title button names the chosen map: pick each map with the title open (all maps open, as after bagowpw)
         await page.evaluate(() => localStorage.setItem("xt-allmaps", "1"));
-        await page.click("#setClose");
+        await page.click("#campClose");
         await page.evaluate(() => XT.ui.openMenu());
         for (const id of ["corner", "fronts", "switchback", "crossroads"]) {
           await page.click("#mLevel");

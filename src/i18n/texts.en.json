@@ -22,6 +22,7 @@
     "langH": "Language",
     "diffNote": "Changing the difficulty or the map starts a new game. Best results are kept separately for each map and difficulty.",
     "campaignH": "Maps and difficulties",
+    "campBtn": "Map and difficulty",
     "lockDiff": "Reach wave {n} on {d}",
     "lockMap": "Reach wave {n} on {d}, {m}",
     "cellWon": "Victory",

@@ -1,6 +1,6 @@
 // The full-page screens and dialogs. The game runs only when none of the pausing ones is open.
 
-export const SCREENS = ["menu", "pause", "over", "help", "settings", "records"] as const;
+export const SCREENS = ["menu", "pause", "over", "help", "settings", "records", "campaignPage"] as const;
 export type ScreenId = (typeof SCREENS)[number] | "fsAsk";
 
 export interface Screens {
