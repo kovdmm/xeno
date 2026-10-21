@@ -2,14 +2,15 @@
 //   SECRET              required, at least 24 characters: signs the seed tokens
 //   PORT, HOST          default 3002 on 127.0.0.1 (nginx proxies /api/ to it)
 //   DB_PATH             default $STATE_DIRECTORY/highscores.db (systemd's StateDirectory) or ./highscores.db
-//   REPLAY_TIMEOUT_MS   CPU time one replay may take, default 20000
-//   MAX_QUEUE           replays waiting or running before new ones are refused, default 5
+//   REPLAY_TIMEOUT_MS   CPU time one replay may take, default 90000 (server/limits.ts)
+//   MAX_QUEUE           replays waiting or running before new ones are refused, default 3
 //   SUBMITS_PER_HOUR    runs one address may submit per hour, default 5
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { SIM_BUILD } from "../src/game/run";
 import { createApi } from "./api";
 import { openDb } from "./db";
+import { MAX_QUEUE, REPLAY_TIMEOUT_MS, SUBMITS_PER_HOUR } from "./limits";
 import { workerVerifier } from "./verifier";
 
 const env = process.env;
@@ -20,14 +21,14 @@ if (secret.length < 24) {
 }
 const port = Number(env.PORT ?? 3002);
 const host = env.HOST ?? "127.0.0.1";
-const submitsPerHour = Number(env.SUBMITS_PER_HOUR ?? 5);
+const submitsPerHour = Number(env.SUBMITS_PER_HOUR ?? SUBMITS_PER_HOUR);
 const dbPath = env.DB_PATH ?? join(env.STATE_DIRECTORY ?? ".", "highscores.db");
 
 const db = openDb(dbPath);
 const verifier = workerVerifier({
   url: new URL("./replayWorker.mjs", import.meta.url),
-  timeoutMs: Number(env.REPLAY_TIMEOUT_MS ?? 20000),
-  maxQueue: Number(env.MAX_QUEUE ?? 5),
+  timeoutMs: Number(env.REPLAY_TIMEOUT_MS ?? REPLAY_TIMEOUT_MS),
+  maxQueue: Number(env.MAX_QUEUE ?? MAX_QUEUE),
 });
 const log = (event: Record<string, unknown>) => console.log(JSON.stringify({ t: new Date().toISOString(), ...event }));
 

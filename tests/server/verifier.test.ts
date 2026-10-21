@@ -59,11 +59,11 @@ describe("the replay thread", () => {
   });
 
   it("a worker that does not answer is killed after the timeout, and the next replay gets a fresh one", async () => {
-    const v = workerVerifier({ url: workerUrl, timeoutMs: 400, maxQueue: 5, graceMs: 100 });
+    const v = workerVerifier({ url: workerUrl, timeoutMs: 1000, maxQueue: 5, graceMs: 300 });
     try {
       const t0 = Date.now();
       expect(await v.verify({ mode: "hang" })).toEqual({ ok: false, error: "slow" });
-      expect(Date.now() - t0).toBeLessThan(2000);
+      expect(Date.now() - t0).toBeLessThan(4000);
       expect(outcome(await v.verify({ tag: "after" }))).toBe("after");
     } finally {
       v.close();

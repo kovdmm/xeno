@@ -31,7 +31,7 @@ RestrictNamespaces=true
 LockPersonality=true
 ReadWritePaths=/var/lib/xeno
 
-# one core and 1 GB are shared with nginx and Arranger: a replay must not starve them
+# one core and 1 GB are shared with nginx and Arranger: a replay (up to 90 s of CPU) must not starve them
 MemoryMax=300M
 TasksMax=64
 Nice=10

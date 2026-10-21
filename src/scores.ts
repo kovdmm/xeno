@@ -53,7 +53,8 @@ export interface ScoresClient {
 const QUICK = 4000;
 /** a submission may be replayed for a while on the server: 202 is answered after 8 s and then polled */
 const POLL_EVERY = 1500;
-const POLL_FOR = 45000;
+/** the page waits this long for a replay (the service allows one 90 s, see server/limits.ts); after that it says "busy" while the game may still be entered */
+export const POLL_FOR = 120000;
 
 export function createScoresClient(
   opts: { fetch?: Fetch; base?: string; sleep?: (ms: number) => Promise<void> } = {},

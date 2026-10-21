@@ -535,7 +535,7 @@ its own game. Nothing the client says about its score is used, so a score cannot
    build (see below), that the same game was not entered before (a hash of the canonical text of the run), then replays the
    run in a worker thread, one at a time, with a hard time limit. A run is refused when a command does not fit the game, the
    game is not over at the recorded end, the recorded end is later than the game's, commands are left over or come after the
-   end, it has any field but the seven, or it takes more than 20 s of CPU: a game has exactly one valid text.
+   end, it has any field but the seven, or it takes more than 90 s of CPU: a game has exactly one valid text.
 5. **Entry.** The table gets the **replayed** result. Refusals are 422 (`rejected`), 409 (`build`, `used`, `duplicate`), 410
    (token expired), 429 (too many), 503 (busy: the token is given back and the player may try again).
 
@@ -552,9 +552,11 @@ its own game. Nothing the client says about its score is used, so a score cannot
   characters, accents composed, stacks of combining marks and everything else removed (markup, controls, bidi marks, emoji);
   nothing left, or a name from a short block list, becomes "Anonymous". Names are shown with `textContent` only.
 - **Limits**: a request body of 256 KB; the service allows five submissions and 120 seeds an hour per address (a hash of it,
-  the address itself is never stored); nginx adds 60 reads and 10 submissions a minute; a replay may take 20 s of CPU and
-  five wait at most (then the answer is 503 `busy`). A 100-wave game (192 000 ticks) replays in about 7 s on the server, the
-  longest the format allows (90 minutes of game time) in about 11 s.
+  the address itself is never stored); nginx adds 60 reads and 10 submissions a minute; a replay may take 90 s of CPU and
+  three wait or run at most (then the answer is 503 `busy`; `server/limits.ts`). A 100-wave game (192 000 ticks) replays in
+  about 7 s on the server, but a late game with 70 upgraded towers took 56 s at the natural pace up to the 90-minute limit and
+  77 s with the waves called at once: the cost per tick grows with towers x enemies, which is why the limit is 90 s and the
+  page waits up to 120 s for the answer.
 - A recording proves that a game was **legal**, not that a human played it: a bot that plays well can enter. That is accepted.
 
 ### Rules for the simulation (what keeps replays equal)

@@ -11,6 +11,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { BALANCE } from "../src/game/balance";
 import { sanitizeNick } from "../src/nick";
 import type { Db } from "./db";
+import { SYNC_WAIT_MS } from "./limits";
 import type { Verifier } from "./verifier";
 
 export interface ApiOptions {
@@ -74,7 +75,7 @@ interface Token {
 
 export function createApi(o: ApiOptions) {
   const now = o.now ?? Date.now;
-  const syncWait = o.syncWaitMs ?? 8000;
+  const syncWait = o.syncWaitMs ?? SYNC_WAIT_MS;
   const ttl = o.tokenTtlMs ?? 6 * 3600 * 1000;
   const maxBody = o.maxBody ?? 256 * 1024;
   const submits = createLimiter(o.submitsPerHour ?? 5, 3600 * 1000, now);
