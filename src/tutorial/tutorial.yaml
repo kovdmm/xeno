@@ -8,8 +8,12 @@
 # upgrades; level 5 and overclocking; the abilities as a last resort. The tips teach the rest at the moment it matters.
 level: switchback
 difficulty: easy
-# a wave called with more than this many seconds left on the timer counts as called early
-earlyTimer: 5
+# a wave called with more than this many seconds left on the timer counts as called early. Low on purpose: the field
+# takes about as long to clear as the timer runs, so a player who waits for "almost clear" calls with little time left
+earlyTimer: 2
+# a step that waits for an action offers "Next" after this many ticks (the interface sends about two a second, so 60 s)
+# without progress: nobody is trapped on it
+stuckTicks: 120
 
 # until: the step is over when every number is reached; `next` waits for the player's "Next" button.
 # fresh: counters that start from 0 when the step begins. target: what is highlighted (selector, cells or gates).
@@ -28,7 +32,7 @@ steps:
     fresh: [earlyCalls]
   - id: call-early-again
     target: { selector: "#go" }
-    until: { earlyCalls: 2 }
+    until: { earlyCalls: 1 }
     fresh: [earlyCalls]
   - id: upgrade
     target: { selector: '#info [data-act="up"]' }

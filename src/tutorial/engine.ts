@@ -23,6 +23,8 @@ export function createTutorial(script: Script, opts: TutorialOptions = {}) {
   let base: Progress = { ...ZERO };
   let road0 = 0;
   let road = 0;
+  /** ticks since the current step began: a step nobody completes offers "Next" after `stuckTicks` */
+  let stepTicks = 0;
   let facts: Facts | null = null;
   let hintQueue: Hint[] = [];
   let hint: Hint | null = null;
@@ -71,6 +73,7 @@ export function createTutorial(script: Script, opts: TutorialOptions = {}) {
   function begin() {
     base = { ...total };
     road0 = road;
+    stepTicks = 0;
   }
 
   /** Moves on while the current step's numbers are already reached (a text step waits for "next"). */
@@ -112,6 +115,7 @@ export function createTutorial(script: Script, opts: TutorialOptions = {}) {
     facts = ev.facts;
     road = ev.facts.pathLength;
     if (status === "running" && at === 0 && road0 === 0) road0 = road;
+    if (ev.type === "tick") stepTicks++;
     switch (ev.type) {
       case "upgraded":
         total[ev.kind === "level" ? "upgrades" : ev.kind === "ultimate" ? "ultimates" : "overclocks"]++;
@@ -125,7 +129,7 @@ export function createTutorial(script: Script, opts: TutorialOptions = {}) {
         break;
       case "next": {
         const step = script.steps[at];
-        if (status === "running" && step && step.until === "next") {
+        if (status === "running" && step && (step.until === "next" || stepTicks >= script.stuckTicks)) {
           at++;
           begin();
         }
@@ -143,7 +147,14 @@ export function createTutorial(script: Script, opts: TutorialOptions = {}) {
     view(): TutorialView {
       const step = status === "running" ? script.steps[at] : undefined;
       return {
-        step: step ? { step, index: at + 1, total: script.steps.length, canNext: step.until === "next" } : null,
+        step: step
+          ? {
+              step,
+              index: at + 1,
+              total: script.steps.length,
+              canNext: step.until === "next" || stepTicks >= script.stuckTicks,
+            }
+          : null,
         hint: hint ? ({ hint } as HintView) : null,
       };
     },
@@ -161,6 +172,7 @@ export function createTutorial(script: Script, opts: TutorialOptions = {}) {
       base = { ...ZERO };
       road0 = 0;
       road = 0;
+      stepTicks = 0;
       hint = null;
       hintQueue = [];
       seenNow.clear();

@@ -97,6 +97,8 @@ export interface Script {
   difficulty: string;
   /** a wave called with more than this many seconds left on the timer counts as an early call */
   earlyTimer: number;
+  /** ticks in one step without progress after which "Next" is offered on a step that waits for an action */
+  stuckTicks: number;
   steps: Step[];
   hints: Hint[];
 }

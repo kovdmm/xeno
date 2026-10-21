@@ -38,6 +38,7 @@ export function validateScript(s: unknown, B: Pick<Balance, "levels" | "difficul
   if (typeof s.difficulty !== "string" || !Object.hasOwn(B.difficulty, s.difficulty))
     bad("difficulty", "not a difficulty");
   if (typeof s.earlyTimer !== "number" || !(s.earlyTimer >= 0)) bad("earlyTimer", "expected seconds >= 0");
+  if (!Number.isInteger(s.stuckTicks) || s.stuckTicks < 1) bad("stuckTicks", "expected a whole number of ticks >= 1");
   const ids = new Set<string>();
   const unique = (p: string, id: unknown) => {
     if (typeof id !== "string" || !KEBAB.test(id)) return bad(p, "the id must be lower-case words joined by -");

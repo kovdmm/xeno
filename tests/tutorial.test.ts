@@ -124,15 +124,13 @@ describe("the engine", () => {
     expect(id(t)).toBe("maze");
     t.feed(ev.built({ towers: 4 }));
     expect(id(t)).toBe("call-early");
-    // a wave that came by itself (the timer ran out) is not an early call; one called with the timer at 3 s is not either
+    // a wave that came by itself (the timer ran out) is not an early call; one called with the timer nearly out (1 s) is not either
     t.feed(ev.wave(1, false, 0));
-    t.feed(ev.wave(2, true, 3));
+    t.feed(ev.wave(2, true, 1));
     expect(id(t)).toBe("call-early");
     t.feed(ev.wave(3, true, 15));
     expect(id(t)).toBe("call-early-again");
-    t.feed(ev.wave(4, true, 12));
-    expect(id(t)).toBe("call-early-again"); // one since the step began
-    t.feed(ev.wave(5, true, 12));
+    t.feed(ev.wave(4, true, 12)); // "again": one more call is enough
     expect(id(t)).toBe("upgrade");
     t.feed(ev.up());
     expect(id(t)).toBe("upgrade");
@@ -145,6 +143,33 @@ describe("the engine", () => {
     t.feed(ev.next());
     expect(t.status()).toBe("done");
     expect(t.view().step).toBeNull();
+  });
+
+  it("a player who waits for the field to clear and calls late still gets through the early-call steps", () => {
+    const t = createTutorial(SCRIPT);
+    t.feed(ev.next());
+    t.feed(ev.built({ towers: 4 }));
+    expect(id(t)).toBe("call-early");
+    // the field was cleared as the timer ran down: 3 s are left, which counts
+    t.feed(ev.wave(1, true, 3));
+    expect(id(t)).toBe("call-early-again");
+    t.feed(ev.wave(2, true, 2.5));
+    expect(id(t)).toBe("upgrade");
+  });
+
+  it("a step that waits for an action offers Next after a minute without progress, and Next then moves on", () => {
+    const t = createTutorial(SCRIPT);
+    t.feed(ev.next());
+    expect(id(t)).toBe("build-gun");
+    for (let i = 0; i < SCRIPT.stuckTicks - 1; i++) t.feed(ev.tick());
+    expect(t.view().step!.canNext).toBe(false);
+    t.feed(ev.tick());
+    expect(t.view().step!.canNext).toBe(true);
+    t.feed(ev.next());
+    expect(id(t)).toBe("maze");
+    expect(t.view().step!.canNext).toBe(false); // the clock starts again for the next step
+    t.feed(ev.next()); // Next is not accepted before the wait
+    expect(id(t)).toBe("maze");
   });
 
   it("counts a fresh counter from the start of its step", () => {
