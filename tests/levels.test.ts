@@ -28,7 +28,7 @@ describe("the levels in the data", () => {
 
   it.each(levelIds(BALANCE))("%s: the board, the routes and the fields follow the data", (id) => {
     const g = game(id);
-    const L = makeLevel(BALANCE, id);
+    const L = makeLevel(BALANCE, id, "easy");
     expect(g.level.id).toBe(id);
     expect(g.S.level).toBe(id);
     expect(g.S.grid).toHaveLength(L.width * L.height);
@@ -203,7 +203,7 @@ describe("what makes a level valid", () => {
     // the added map becomes the last of the list, which has other faults of its own: look for this one among them
     expect(problems((b) => (b.levels.Bad_Id = b.levels.crossroads)).join("\n")).toMatch(/the id must be lower case/);
     expect(problems((b) => (L0(b).width = 2))[0]).toMatch(/map\.width: must be >= 3/);
-    expect(problems((b) => (b.levels.crossroads.finalWave = 0))[0]).toMatch(/finalWave/);
+    expect(problems((b) => (b.levels.crossroads.finalWave.easy = 0))[0]).toMatch(/finalWave/);
   });
 
   it("gates: on the board, on the edge, a unit step, not shared", () => {

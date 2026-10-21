@@ -295,11 +295,11 @@ test.describe("waves and speed", () => {
   test.beforeEach(async ({ page }) => openGame(page));
 
   test("N sends the next wave, the button too; the label counts the wave", async ({ page }) => {
-    await expect(page.locator("#sWave")).toHaveText("0/200");
+    await expect(page.locator("#sWave")).toHaveText("0/160");
     await press(page, "n");
     expect((await state(page)).wave).toBe(1);
     await tick(page, 12);
-    await expect(page.locator("#sWave")).toHaveText("1/200");
+    await expect(page.locator("#sWave")).toHaveText("1/160");
     await page.click("#go");
     expect((await state(page)).wave).toBe(2);
   });
@@ -587,10 +587,10 @@ test.describe("levels (maps)", () => {
     await expect(rows).toHaveCount(4);
     // the order of the campaign; the harness plays crossroads on easy, so that cell is marked
     await expect(rows.first().locator(".cMap")).toContainText("Switchback");
-    await expect(rows.first().locator(".cMap")).toContainText("100 waves");
+    await expect(rows.first().locator(".cMap")).toContainText("130 waves");
     await expect(rows.first().locator(".cMap svg.map")).toHaveCount(1);
     await expect(rows.nth(2).locator(".cMap")).toContainText("Crossroads");
-    await expect(rows.nth(2).locator(".cMap")).toContainText("200 waves");
+    await expect(rows.nth(2).locator(".cMap")).toContainText("220 waves");
     await expect(page.locator("#campaign .cc.on")).toHaveCount(1);
     await expect(page.locator(cell("crossroads", "easy"))).toHaveClass(/\bon\b/);
   });
@@ -600,10 +600,10 @@ test.describe("levels (maps)", () => {
     await openLevels(page);
     await page.click(cell("fronts", "easy"));
     expect(await level(page)).toBe("fronts");
-    expect(await core(page, (C) => [C.W, C.H, C.FINAL])).toEqual([23, 15, 150]);
+    expect(await core(page, (C) => [C.W, C.H, C.FINAL])).toEqual([23, 15, 180]);
     expect(await page.evaluate(() => localStorage.getItem("xt-level"))).toBe("fronts");
     await expect(page.locator("#campaignPage")).toBeHidden();
-    await expect(page.locator("#sWave")).toHaveText("0/150");
+    await expect(page.locator("#sWave")).toHaveText("0/180");
     await expect
       .poll(async () => {
         await tick(page, 3); // the layout is refitted on the next frame
@@ -670,13 +670,13 @@ test.describe("levels (maps)", () => {
   test("texts state the length of the level being played", async ({ page }) => {
     await openLevels(page);
     await page.click(cell("corner", "easy"));
-    await expect(page.locator("#banner")).toContainText("80 waves");
+    await expect(page.locator("#banner")).toContainText("120 waves");
     await core(page, (C) => {
       C.sendWave();
       for (let i = 0; i < 4000 && !C.S.over; i++) C.step(0.05);
     });
     await tick(page, 6);
-    await expect(page.locator("#overTxt")).toContainText("of 80");
+    await expect(page.locator("#overTxt")).toContainText("of 120");
     await expect(page.locator("#overTxt")).toContainText("The corner · Easy");
   });
 

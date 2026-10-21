@@ -29,7 +29,7 @@ it("matrix", { timeout: 6 * 3600 * 1000 }, () => {
             diff,
             name,
             out.map((o) => o.wave).join("/"),
-            BALANCE.levels[level].finalWave,
+            BALANCE.levels[level].finalWave[diff],
             out.filter((o) => o.won).length + "/" + out.length,
             avg((o) => o.minutes).toFixed(1),
             avg((o) => o.lives).toFixed(1),

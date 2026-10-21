@@ -119,11 +119,12 @@ export function createGame(opts: GameOptions = {}): GameApi {
   const listeners: ((e: GameEvent) => void)[] = [];
   let nextId = 1;
   const B = opts.balance ?? BALANCE;
+  const diff0 = (opts.difficulty && Object.hasOwn(B.difficulty, opts.difficulty) ? opts.difficulty : "easy") as DiffKey;
   const g: Game = {
     S: undefined as unknown as State,
-    L: makeLevel(B, opts.level && Object.hasOwn(B.levels, opts.level) ? opts.level : levelIds(B)[0]),
+    L: makeLevel(B, opts.level && Object.hasOwn(B.levels, opts.level) ? opts.level : levelIds(B)[0], diff0),
     B,
-    diff: opts.difficulty && Object.hasOwn(B.difficulty, opts.difficulty) ? opts.difficulty : "easy",
+    diff: diff0,
     rand: opts.rng ?? (opts.seed !== undefined ? mulberry32(opts.seed) : Math.random),
     emit: (e) => {
       for (const fn of listeners) fn(e);
@@ -134,7 +135,9 @@ export function createGame(opts: GameOptions = {}): GameApi {
 
   function newGame(difficulty?: string, level?: string, seed?: number): State {
     if (difficulty && Object.hasOwn(B.difficulty, difficulty)) g.diff = difficulty as DiffKey;
-    if (level && Object.hasOwn(B.levels, level) && level !== g.L.id) g.L = makeLevel(B, level);
+    // the level's length depends on the difficulty: make the level again when either changed
+    const id = level && Object.hasOwn(B.levels, level) ? level : g.L.id;
+    if (id !== g.L.id || B.levels[id].finalWave[g.diff] !== g.L.finalWave) g.L = makeLevel(B, id, g.diff);
     if (seed !== undefined) {
       // a seeded game is a function of the seed and the commands: same stream, same ids, whatever was played before
       g.rand = mulberry32(seed);

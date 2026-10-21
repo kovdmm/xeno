@@ -38,10 +38,10 @@ function withText(table: Table, section: string, i18n: TextSource) {
   );
 }
 
-/** A level for the interface: its size and length, and its name and description in the current language. */
+/** A level for the interface: its size and length (`finalWave` is the longest, `finalWaves` one per difficulty), and its name and description in the current language. */
 function levelInfo(id: string, d: LevelDef, i18n: TextSource) {
   return addTexts(
-    { id, finalWave: d.finalWave, width: d.map.width, height: d.map.height, map: d.map },
+    { id, finalWave: Math.max(...Object.values(d.finalWave)), finalWaves: d.finalWave, width: d.map.width, height: d.map.height, map: d.map },
     "levels." + id,
     i18n,
   );

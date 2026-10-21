@@ -1,6 +1,6 @@
 // Levels: which board is played. A level is data (balance.levels); this module turns an entry into the
 // shape the simulation reads, and answers questions about it.
-import type { Balance, Level, Rect, RouteKey, Vec } from "./types";
+import type { Balance, DiffKey, Level, Rect, RouteKey, Vec } from "./types";
 
 /** The ids of the levels, in the order of the balance data (the first is the default). */
 export const levelIds = (B: Balance): string[] => Object.keys(B.levels);
@@ -12,14 +12,14 @@ export function cellsOf(rects: Rect[]): Vec[] {
   return out;
 }
 
-export function makeLevel(B: Balance, id: string): Level {
+export function makeLevel(B: Balance, id: string, diff: DiffKey): Level {
   const d = B.levels[id];
   if (!d) throw new Error(`unknown level "${id}"`);
   return {
     id,
     width: d.map.width,
     height: d.map.height,
-    finalWave: d.finalWave,
+    finalWave: d.finalWave[diff],
     hp: d.hp,
     routes: d.map.routes,
     walls: cellsOf(d.map.walls ?? []),

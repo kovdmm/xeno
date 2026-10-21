@@ -45,8 +45,8 @@ export interface Rect {
 /** A level as written in the balance data. */
 export interface LevelDef {
   map: MapDef;
-  /** the last wave: clearing it wins the game */
-  finalWave: number;
+  /** the last wave, one per difficulty: clearing it wins the game */
+  finalWave: Record<DiffKey, number>;
   /** multiplies the HP of every enemy on this map (1 = as the tables say); sets how hard the map is next to the others */
   hp: number;
   /** the campaign locks: the best wave that opens the next difficulty of this map and the next map in the list */
@@ -65,6 +65,7 @@ export interface Level {
   id: string;
   width: number;
   height: number;
+  /** the last wave of the game being played (the level's length on its difficulty) */
   finalWave: number;
   hp: number;
   routes: Record<RouteKey, Route>;

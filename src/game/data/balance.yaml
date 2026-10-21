@@ -5,7 +5,10 @@
 board:
   enemyBlockRadius: 0.75
 # The maps, in the order of the campaign: the first is the one a new player starts on. finalWave: the wave whose
-# clearing wins. hp: multiplies the HP of every enemy on the map; the simulator's maze bot reaches about 24 waves on
+# clearing wins, one number per difficulty. The length grows along the campaign (a later map is longer) and with the
+# difficulty (a harder one is longer); fronts, the hardest map, is the longest. Only a human gets this far: the
+# simulator's bot stops at wave 12-33 on every cell but switchback easy. A won game is replayed by the server within
+# 90 minutes of game time (src/game/run.ts), so the longest cells must stay well inside that with calls made early. hp: multiplies the HP of every enemy on the map; the simulator's maze bot reaches about 24 waves on
 # normal everywhere but on fronts, where it stops at 16 with 1.0, so fronts gets 0.85 (the maps stay different on
 # purpose, fronts is still the hardest).
 # unlock: the campaign locks. difficulty: the best wave on a difficulty of this map that opens the next difficulty on
@@ -13,7 +16,11 @@ board:
 # what the simulator's maze bot reaches on normal / easy, so a normal player gets there.
 levels:
   switchback:
-    finalWave: 100
+    finalWave:
+      easy: 100
+      normal: 110
+      hard: 120
+      insane: 130
     hp: 1
     unlock:
       difficulty: 21
@@ -36,7 +43,11 @@ levels:
           w: 20
           h: 1
   corner:
-    finalWave: 80
+    finalWave:
+      easy: 120
+      normal: 140
+      hard: 160
+      insane: 180
     hp: 1
     unlock:
       difficulty: 18
@@ -64,7 +75,11 @@ levels:
           w: 3
           h: 3
   crossroads:
-    finalWave: 200
+    finalWave:
+      easy: 160
+      normal: 180
+      hard: 200
+      insane: 220
     hp: 1
     unlock:
       difficulty: 19
@@ -82,7 +97,11 @@ levels:
           exit: [[10, 14], [11, 14], [12, 14]]
           dir: [0, 1]
   fronts:
-    finalWave: 150
+    finalWave:
+      easy: 180
+      normal: 200
+      hard: 220
+      insane: 240
     hp: 0.85
     unlock:
       difficulty: 18

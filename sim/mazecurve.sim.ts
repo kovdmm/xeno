@@ -10,7 +10,7 @@ it("walk by towers", () => {
   const sizes = [0, 5, 10, 15, 20, 30, 40, 60, 80, 100, 130];
   const rows = ["level\t" + sizes.join("\t")];
   for (const [id, m] of Object.entries(mazes as unknown as Record<string, Baked>)) {
-    const L = makeLevel(BALANCE, id);
+    const L = makeLevel(BALANCE, id, "easy");
     const solid = new Uint8Array(L.width * L.height),
       dist = new Int32Array(solid.length),
       queue = new Int32Array(solid.length);

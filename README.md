@@ -1,6 +1,6 @@
 # Xeno-Tactics
 
-A browser tower defence game: 8 tower types, up to 200 waves, 4 difficulties, 4 maps, player abilities, and music and
+A browser tower defence game: 8 tower types, up to 240 waves, 4 difficulties, 4 maps, player abilities, and music and
 sound effects synthesised on the fly. Built with Vite; the source is TypeScript modules in `src/`. It installs as a PWA.
 
 ## Quick start
@@ -123,7 +123,7 @@ and the screenshot scenes play `crossroads` (the unit-test helper and the e2e ha
 
 ```yaml
 switchback:
-  finalWave: 100
+  finalWave: { easy: 100, normal: 110, hard: 120, insane: 130 } # the length grows with the difficulty
   hp: 1 # multiplies the HP of every enemy on this map
   unlock: # the campaign locks, see below
     difficulty: 21
@@ -141,6 +141,11 @@ switchback:
       - { x: 4, y: 8, w: 20, h: 1 }
 ```
 
+- **Length** (`finalWave`) — one number per difficulty, growing with the difficulty and along the campaign:
+  switchback 100 / 110 / 120 / 130, corner 120 / 140 / 160 / 180, crossroads 160 / 180 / 200 / 220, fronts 180 / 200 /
+  220 / 240 (easy / normal / hard / insane). The game picks it when a game starts. The bot of the simulator stops far
+  before any of them (wave 12-33), so these are for a human; the longest game must replay on the server within its
+  limit (see the replay section).
 - **Routes** — as many as you like, with any names. `spawn` is the entrance cells (on the edge of the field, next to
   each other), `exit` the exit cells, `dir` the step an enemy enters with (off the edge of the field, through the
   entrance cells), `exitDir` the step it leaves with through the exit (equal to `dir` by default; on `corner` the
@@ -153,7 +158,7 @@ switchback:
   entrance, a bigger cave), the gate with zebra stripes along the frame of the exit cells, the air lane as a straight
   line between the edges at the entrance and at the exit. Labels like "left → right" are computed from the geometry and
   turn with the field, so nothing is written per map.
-- **Checks at startup:** the gates are on the field, on its edge and do not overlap; `dir`/`exitDir` are unit steps;
+- **Checks at startup:** `finalWave` has all four difficulties and never gets shorter on a harder one; the gates are on the field, on its edge and do not overlap; `dir`/`exitDir` are unit steps;
   walls do not cover the gates; **every entrance cell can reach an exit** (the error names the cell).
 - **Campaign locks** (`unlock`, rules in `src/game/campaign.ts`): `difficulty` is the best wave on one difficulty of the
   map that opens the next difficulty on it, `nextMap` the best wave on easy that opens the next map of the list (the last
@@ -165,7 +170,7 @@ switchback:
 - **Texts** of a map are `game.levels.<id>.name` and `.desc` in every `texts.*.json` (without words like "left" or
   "top": the field rotates); a test reminds you if you forget. The id is lower-case letters, digits, `-` and `_`.
 - **Balance.** The numbers of enemies and towers depend on the wave number and on the map's `hp` coefficient (fronts
-  0.85, the rest 1), so the `finalWave` and the `hp` of a new map are best found by playing: a short map with one road
+  0.85, the rest 1), so the `finalWave` numbers and the `hp` of a new map are best found by playing: a short map with one road
   is harder (every wave comes along it). The balance simulator below helps.
 
 #### Balance simulator (`sim/`)

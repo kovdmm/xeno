@@ -11,7 +11,7 @@ it("bake mazes", { timeout: 3600 * 1000 }, () => {
   const levels = process.env.SIM_LEVELS ? process.env.SIM_LEVELS.split(",") : Object.keys(BALANCE.levels);
   const out: Record<string, Baked> = {};
   for (const id of levels) {
-    const L = makeLevel(BALANCE, id);
+    const L = makeLevel(BALANCE, id, "easy");
     const t0 = Date.now();
     let best = optimize(L, { iterations, seed: 1 });
     for (const seed of [2, 3]) {

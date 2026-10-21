@@ -61,14 +61,28 @@ function validateLevel(
   if (!/^[a-z][a-z0-9_-]*$/.test(id))
     bad(p, "the id must be lower case letters, digits, - or _ (it names texts and saved records)");
   if (!isObj(L) || !isObj(L.map)) return bad(p, "expected { finalWave, map }");
-  num(`${p}.finalWave`, L.finalWave, 1, true);
+  // one length per difficulty, growing with the difficulty
+  let shortest = Infinity;
+  if (!isObj(L.finalWave)) bad(`${p}.finalWave`, "expected one number per difficulty: " + DIFFS.join(", "));
+  else {
+    for (const k of Object.keys(L.finalWave))
+      if (!DIFFS.includes(k)) bad(`${p}.finalWave.${k}`, "unknown difficulty");
+    let prev = 0;
+    for (const d of DIFFS) {
+      const v = L.finalWave[d];
+      num(`${p}.finalWave.${d}`, v, 1, true);
+      if (!isNum(v)) continue;
+      if (v < prev) bad(`${p}.finalWave.${d}`, "a harder difficulty must not be shorter than an easier one");
+      prev = v;
+      shortest = Math.min(shortest, v);
+    }
+  }
   num(`${p}.hp`, L.hp, 0.05);
   if (!isObj(L.unlock)) bad(`${p}.unlock`, "expected { difficulty, nextMap }");
   else {
     const need = (k: string, v: unknown) => {
       num(`${p}.unlock.${k}`, v, 1, true);
-      if (isNum(v) && isNum(L.finalWave) && v > L.finalWave)
-        bad(`${p}.unlock.${k}`, "is above the final wave: it can never be reached");
+      if (isNum(v) && v > shortest) bad(`${p}.unlock.${k}`, "is above the final wave: it can never be reached");
     };
     need("difficulty", L.unlock.difficulty);
     if (last) {

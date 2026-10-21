@@ -93,7 +93,10 @@ export interface Core extends Pick<
 export interface LevelInfo extends Texted {
   id: string;
   map: MapDef;
+  /** the longest length, on the hardest difficulty */
   finalWave: number;
+  /** the length on each difficulty */
+  finalWaves: Record<string, number>;
   width: number;
   height: number;
 }

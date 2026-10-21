@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { BALANCE, validateBalance } from "../src/game/balance";
 import { campaignOf, lockOf } from "../src/game/campaign";
+import { createGame } from "../src/game/game";
 
 const { maps, diffs } = campaignOf(BALANCE);
 const [m0, m1, m2, m3] = maps.map((m) => m.id);
@@ -12,6 +13,40 @@ const bests =
 const open = (table: Record<string, number>) =>
   maps.flatMap((m) => diffs.filter((d) => !lockOf(maps, diffs, m.id, d, bests(table))).map((d) => `${m.id}/${d}`));
 
+describe("the length of the games", () => {
+  const fin = (m: string, d: string) => BALANCE.levels[m].finalWave[d];
+
+  it("a game is as long as its map and difficulty say, and the next game on another one changes it", () => {
+    const g = createGame();
+    for (const m of [m0, m3, m1])
+      for (const d of [...diffs].reverse()) {
+        g.newGame(d, m);
+        expect([m, d, g.level.finalWave]).toEqual([m, d, fin(m, d)]);
+      }
+    g.newGame("normal"); // the same map, another difficulty
+    expect(g.level.finalWave).toBe(fin(m1, "normal"));
+  });
+
+  it("grows with the difficulty on every map and along the campaign on every difficulty; the last map is the longest", () => {
+    for (const m of maps)
+      diffs.slice(1).forEach((d, i) => expect(fin(m.id, d), `${m.id} ${d}`).toBeGreaterThanOrEqual(fin(m.id, diffs[i])));
+    for (const d of diffs)
+      maps.slice(1).forEach((m, i) => expect(fin(m.id, d), `${m.id} ${d}`).toBeGreaterThan(fin(maps[i].id, d)));
+  });
+
+  it("is a number for every difficulty, never more than one for an unknown one, and never shorter on a harder one", () => {
+    const bad = (f: (b: any) => unknown) => {
+      const b = structuredClone(BALANCE) as any;
+      f(b);
+      return validateBalance(b);
+    };
+    expect(bad((b) => delete b.levels.corner.finalWave.hard)[0]).toMatch(/levels\.corner\.finalWave\.hard/);
+    expect(bad((b) => (b.levels.corner.finalWave.extreme = 5))[0]).toMatch(/finalWave\.extreme: unknown difficulty/);
+    expect(bad((b) => (b.levels.corner.finalWave = 80))[0]).toMatch(/levels\.corner\.finalWave: expected one number/);
+    expect(bad((b) => (b.levels.corner.finalWave.hard = 100))[0]).toMatch(/must not be shorter/);
+  });
+});
+
 describe("the campaign data", () => {
   it("lists the maps in the order of the campaign and the difficulties from the easiest", () => {
     expect([m0, m1, m2, m3]).toEqual(["switchback", "corner", "crossroads", "fronts"]);
@@ -20,7 +55,7 @@ describe("the campaign data", () => {
 
   it("every map has a difficulty threshold, every map but the last a next-map threshold, all reachable", () => {
     for (const [i, m] of maps.entries()) {
-      const final = BALANCE.levels[m.id].finalWave;
+      const final = Math.min(...Object.values(BALANCE.levels[m.id].finalWave)); // the shortest cell
       expect(m.unlock.difficulty, m.id).toBeGreaterThan(0);
       expect(m.unlock.difficulty, m.id).toBeLessThanOrEqual(final);
       if (i < maps.length - 1) {
@@ -38,7 +73,7 @@ describe("the campaign data", () => {
     };
     expect(problems((b) => delete b.levels.corner.unlock)[0]).toMatch(/levels\.corner\.unlock: expected/);
     expect(problems((b) => delete b.levels.corner.unlock.nextMap)[0]).toMatch(/levels\.corner\.unlock\.nextMap/);
-    expect(problems((b) => (b.levels.corner.unlock.difficulty = 81))[0]).toMatch(/above the final wave/);
+    expect(problems((b) => (b.levels.corner.unlock.difficulty = 121))[0]).toMatch(/above the final wave/);
     expect(problems((b) => (b.levels.fronts.unlock.nextMap = 5))[0]).toMatch(/opens nothing after it/);
   });
 });
@@ -83,7 +118,7 @@ describe("what is open", () => {
 
   it("with every record at the final wave everything is open, the last map has no next", () => {
     const all = Object.fromEntries(
-      maps.flatMap((m) => diffs.map((d) => [`${m.id}/${d}`, BALANCE.levels[m.id].finalWave])),
+      maps.flatMap((m) => diffs.map((d) => [`${m.id}/${d}`, BALANCE.levels[m.id].finalWave[d]])),
     );
     expect(open(all)).toHaveLength(maps.length * diffs.length);
     expect(lockOf(maps, diffs, "nowhere", "easy", bests())).toBeNull(); // unknown ids are not this rule's business
