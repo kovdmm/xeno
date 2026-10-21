@@ -116,3 +116,9 @@ files into commits; an old session started before `git init` sees no repo.
 - Legible on a phone.
 - Tests prove the behaviour; baselines changed on purpose.
 - No stubs presented as done; no duplicated lists; no leftover timers or listeners.
+
+## Who gets which task (owner's rule)
+
+- Give a task to the session that already worked on that area (its context is reused), and keep the work parallel: queue
+  the next task together with the acknowledgement of a report, and look at the session list after every merge; an idle
+  session is a planning failure. Decide fast and recommend, do not survey.
