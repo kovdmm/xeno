@@ -18,6 +18,7 @@ import { createScoresClient } from "../scores";
 import { createScreens } from "./screens";
 import { createSession } from "./session";
 import { installCampaign } from "./campaign";
+import { installXenopedia } from "./xenopedia";
 import { installSettings } from "./settings";
 import { installSoundControls } from "./soundControls";
 import { createState } from "./state";
@@ -114,6 +115,7 @@ export function createUi(deps: UiDeps) {
   const layout = { refit: () => {}, fit: () => {} };
   const appMode = installAppMode(ui, () => layout.refit());
   installCampaign(ui, progress, session);
+  const xenopedia = installXenopedia(ui);
   const settings = installSettings(ui, {
     applyLang: () => applyLang(),
     redrawOnOpen() {
@@ -146,6 +148,7 @@ export function createUi(deps: UiDeps) {
       openHelp: settings.openHelp,
     },
     toggleSound: soundControls.toggleSound,
+    pedia: xenopedia.open,
     closeScreen: (id) => ui.screens.hide(id),
   });
   new ResizeObserver(() => renderer.resize()).observe($("field"));

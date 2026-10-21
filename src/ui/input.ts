@@ -10,7 +10,9 @@ export interface InputDeps {
   /** the screens' own actions */
   menu: { open(): void; newGame(): void; openSettings(): void; openHelp(): void };
   toggleSound(): void;
-  closeScreen(id: "settings" | "help" | "records" | "campaignPage" | "saveAsk"): void;
+  closeScreen(id: "settings" | "help" | "records" | "campaignPage" | "pedia" | "saveAsk"): void;
+  /** open the Xenopedia, on the page of a tower */
+  pedia(tower?: string): void;
 }
 
 export function installInput(ui: UiContext, d: InputDeps) {
@@ -65,6 +67,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
   const open = (): OpenScreens => ({
     saveAsk: screens.isOpen("saveAsk"),
     campaign: screens.isOpen("campaignPage"),
+    pedia: screens.isOpen("pedia"),
     records: screens.isOpen("records"),
     settings: screens.isOpen("settings"),
     help: screens.isOpen("help"),
@@ -93,6 +96,9 @@ export function installInput(ui: UiContext, d: InputDeps) {
       switch (escapeAction(open(), !!(st.build || st.sel || st.aim))) {
         case "close-ask":
           d.closeScreen("saveAsk");
+          break;
+        case "close-pedia":
+          d.closeScreen("pedia");
           break;
         case "close-campaign":
           d.closeScreen("campaignPage");
@@ -155,6 +161,7 @@ export function installInput(ui: UiContext, d: InputDeps) {
     if (a === "up") cmd.upgrade(b.dataset.u);
     else if (a === "sell") cmd.sell();
     else if (a === "cancel") clearPicks(st);
+    else if (a === "pedia") d.pedia(b.dataset.t);
     ui.refresh();
   });
 

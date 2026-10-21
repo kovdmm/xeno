@@ -222,6 +222,7 @@
           <button class="big" id="mDiff"></button>
           <button class="big" id="mSettings" data-i="settings"></button>
           <button class="big" id="mRecords" data-i="recordsBtn"></button>
+          <button class="big" id="mPedia" data-i="pediaTitle"></button>
           <button class="big" id="mHelp" data-i="help"></button>
         </div>
         <p class="mbest" id="mBest"></p>
@@ -298,6 +299,18 @@
           <tbody id="recBody"></tbody>
         </table>
         <p class="note" data-i="recNote"></p>
+      </div>
+    </div>
+
+    <!-- the Xenopedia: towers, ultimates, enemies and abilities with the game's own numbers -->
+    <div class="modal" id="pedia" hidden>
+      <div class="in plate">
+        <div class="mhead">
+          <h2 data-i="pediaTitle"></h2>
+          <button class="icon x" id="pediaClose" data-i-label="close">✕</button>
+        </div>
+        <div class="rchips" id="pediaTabs" role="tablist"></div>
+        <div id="pediaBody"></div>
       </div>
     </div>
 

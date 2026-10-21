@@ -63,6 +63,7 @@ export interface OpenScreens {
   saveAsk?: boolean;
   records?: boolean;
   campaign?: boolean;
+  pedia?: boolean;
   settings: boolean;
   help: boolean;
   pause: boolean;
@@ -73,6 +74,7 @@ export interface OpenScreens {
 export type EscapeAction =
   | "close-ask"
   | "close-campaign"
+  | "close-pedia"
   | "close-records"
   | "close-settings"
   | "close-help"
@@ -84,6 +86,7 @@ export type EscapeAction =
 /** What Escape does: it closes the topmost thing, and only pauses when there is nothing to close. */
 export function escapeAction(open: OpenScreens, hasPicks: boolean): EscapeAction {
   if (open.saveAsk) return "close-ask";
+  if (open.pedia) return "close-pedia";
   if (open.campaign) return "close-campaign";
   if (open.records) return "close-records";
   if (open.settings) return "close-settings";

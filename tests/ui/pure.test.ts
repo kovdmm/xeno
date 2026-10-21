@@ -91,6 +91,9 @@ describe("Escape and Space", () => {
   it("Escape closes the topmost thing first, and pauses only when nothing else is to be done", () => {
     expect(escapeAction({ ...none, settings: true, help: true, pause: true }, true)).toBe("close-settings");
     expect(escapeAction({ ...none, help: true, pause: true }, false)).toBe("close-help");
+    // the Xenopedia opens over the title or over the game, and Escape closes it first
+    expect(escapeAction({ ...none, menu: true, pedia: true }, false)).toBe("close-pedia");
+    expect(escapeAction({ ...none, pause: true, pedia: true, records: true }, true)).toBe("close-pedia");
     expect(escapeAction({ ...none, pause: true }, false)).toBe("resume");
     expect(escapeAction({ ...none, menu: true }, true)).toBe("nothing");
     expect(escapeAction({ ...none, over: true }, false)).toBe("nothing");

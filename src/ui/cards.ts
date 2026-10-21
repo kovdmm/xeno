@@ -62,7 +62,7 @@ export function towerCard(env: CardEnv, sel: Tower): string {
     lv = t("lvl5") + (sel.oc ? t("oc", { n: sel.oc }) : "");
     up = `<div class="ultHead"><b>${L(u)}:</b> ${L(u, "desc")}</div><div class="btnrow"><button class="go" data-act="up" ${poor}>${t("ocBtn", { n: sel.oc + 1, c: fmt(uc) })}</button></div>`;
   }
-  return `<div class="top"><div class="ttl">${L(d)} · <b style="color:${env.tierColor(Lv, sel.type, sel.ult)}">${lv}</b></div><button class="sellb" data-act="sell">${t("sell", { v: fmt(Math.floor(sel.inv * 0.7)) })}</button><button class="x" data-act="cancel" aria-label="${t("close")}">✕</button></div>
+  return `<div class="top"><div class="ttl">${L(d)} · <b style="color:${env.tierColor(Lv, sel.type, sel.ult)}">${lv}</b></div><button class="pedLink" data-act="pedia" data-t="${sel.type}" aria-label="${t("pediaOpen")}" title="${t("pediaOpen")}">i</button><button class="sellb" data-act="sell">${t("sell", { v: fmt(Math.floor(sel.inv * 0.7)) })}</button><button class="x" data-act="cancel" aria-label="${t("close")}">✕</button></div>
     ${up}<div class="kv">${rows}</div>`;
 }
 
@@ -71,7 +71,7 @@ export function idleCard(env: CardEnv, st: Pick<UiState, "build" | "aim" | "diff
   const { core: C, t, L } = env;
   if (st.build) {
     const d = C.TT[st.build];
-    return `<div class="top"><div class="ttl">${L(d)}</div><button class="x" data-act="cancel" aria-label="${t("close")}">✕</button></div><p>${L(d, "desc")}</p>
+    return `<div class="top"><div class="ttl">${L(d)}</div><button class="pedLink" data-act="pedia" data-t="${st.build}" aria-label="${t("pediaOpen")}" title="${t("pediaOpen")}">i</button><button class="x" data-act="cancel" aria-label="${t("close")}">✕</button></div><p>${L(d, "desc")}</p>
       <div class="kv"><span>${st.build === "laser" ? t("dps") : t("dmg")}</span><span>${d.dmg[0]}</span><span>${t("range")}</span><span>${d.range[0]}</span>${d.size ? `<span>${t("size")}</span><span>${t("size22")}</span>` : ""}<span>${t("price")}</span><span>${d.cost[0]}</span></div>
       <p>${t("ultsList", {
         l: Object.values(d.ults)

@@ -398,6 +398,10 @@ every access, so changing the language needs no rebuild.
   The numbers come from the same functions the game uses (`towerStats`, `upCost`, `enemyAt`, `abilityCost` in
   `src/game/rules.ts`), the words from `texts.*.json`, so a page cannot go stale; a test compares every row with a real tower,
   creep and cast, and one fails when something in the data has no page or no text.
+  The screen is `src/ui/xenopedia.ts` (markup `#pedia`): four tabs (towers, ultimates, enemies, abilities), a difficulty
+  choice for the enemies and the prices, opened from the title (`#mPedia`) and from the `i` button on the card of a tower
+  that is selected or being built; on a phone it is a full-screen page like the settings. `core.pedia()` gives the pages in
+  the current language.
 
 ### Random numbers
 

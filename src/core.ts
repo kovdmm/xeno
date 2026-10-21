@@ -6,6 +6,7 @@ import { pos } from "./game/combat";
 import { createGame, type GameApi } from "./game/game";
 import { createRecorder } from "./game/recorder";
 import { outcomeOf } from "./game/run";
+import { buildPedia } from "./xenopedia/model";
 import type { LevelDef, Rng } from "./game/types";
 import type { Core, I18n } from "./ui/types";
 
@@ -81,6 +82,7 @@ export function createCore(i18n: TextSource, rng?: Rng, newSeed?: () => number):
     },
     LEVELS: Object.fromEntries(game.levelIds.map((id) => [id, levelInfo(id, game.balance.levels[id], i18n)])) as never,
     LKEYS: game.levelIds,
+    pedia: () => buildPedia({ B, text: i18n.gameText }),
     lockOf: (level: string, diff: string, best: (level: string, diff: string) => number) =>
       lockOf(campaign.maps, campaign.diffs, level, diff, best),
     TT: withText(B.towers as never, "towers", i18n),
