@@ -71,7 +71,8 @@ The history is read by people, so keep it short and meaningful.
   anything that is not obvious, a body that says what changed and why. End it with the `Co-Authored-By` line.
 - **Commit under your own name**, so that the history shows who did what. The author and committer are your session
   name, in the form `<name> (Claude Code)`, with the address `noreply@anthropic.com`; the name is the one `/list-agents`
-  shows (an agent without a name uses its role, for example `agent-marks`). Do not change the git config (it is shared by
+  shows, capitalised as the owner named it (`Alpha (Claude Code)`, `Beta (Claude Code)`, `Orchestrator (Claude Code)`); an agent
+  without a name uses its role, for example `agent-marks`. Do not change the git config (it is shared by
   all worktrees); pass the identity to the command:
   `git -c user.name="xeno-92 (Claude Code)" -c user.email=noreply@anthropic.com commit ...`. Never commit under the
   user's name. The `Co-Authored-By` line stays at the end of the message.
