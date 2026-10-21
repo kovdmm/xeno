@@ -23,23 +23,25 @@ For working on the game together with other Claude Code sessions see `CLAUDE.md`
 
 ## Structure
 
-| Path           | Role                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------------ |
-| `src/game/`    | the **simulation**: pure TypeScript, no DOM, sound, colours or texts (see below)                 |
-| `src/i18n/`    | **languages**: `texts.<code>.json` (en, ru, de, ua, sv), language detection, the translator      |
-| `src/render/`  | **rendering**: layers, sprite painters, effects, the floor (see "Rendering")                     |
-| `src/audio/`   | **sound**: music, effects, mixer, player (see "Sound")                                           |
-| `src/ui/`      | **interface**: screens, HUD, palette, input, settings, the main loop (see "Interface")           |
-| `src/core.ts`  | the game as the rest of the app sees it: the simulation plus "live" texts over the data tables   |
-| `src/app.ts`   | assembles the services (translator, game, renderer factory, sound); tests assemble the same ones |
-| `src/main.ts`  | composition root: `createApp` → `createUi`; `window.XT` is only a handle for debugging           |
-| `src/sw.ts`    | the service worker (built to `sw.js` by a plugin in `vite.config.ts`)                            |
-| `sim/`         | the balance simulator: a bot plays the game (see "Balance simulator")                            |
-| `server/`      | the **highscore service** (node, sqlite) and its deploy files (see "Highscores")                 |
-| `scripts/`     | build helpers: icons, the YAML plugin, the build fingerprint, the service bundle, the smoke test |
-| `tests/`       | unit and characterisation tests (Vitest)                                                         |
-| `e2e/`         | browser tests (Playwright): screenshots and interface behaviour                                  |
-| `maintenance/` | a one-page "back soon" site, put on the server in place of the game with `yarn maintenance`      |
+| Path             | Role                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| `src/game/`      | the **simulation**: pure TypeScript, no DOM, sound, colours or texts (see below)                          |
+| `src/i18n/`      | **languages**: `texts.<code>.json` (en, ru, de, ua, sv), language detection, the translator               |
+| `src/render/`    | **rendering**: layers, sprite painters, effects, the floor (see "Rendering")                              |
+| `src/audio/`     | **sound**: music, effects, mixer, player (see "Sound")                                                    |
+| `src/ui/`        | **interface**: screens, HUD, palette, input, settings, the main loop (see "Interface")                    |
+| `src/tutorial/`  | the **tutorial**: the script (`tutorial.yaml`), its pure engine and checks (see "Tutorial and Xenopedia") |
+| `src/xenopedia/` | the reference pages as data, computed from the balance and the texts (see "Tutorial and Xenopedia")       |
+| `src/core.ts`    | the game as the rest of the app sees it: the simulation plus "live" texts over the data tables            |
+| `src/app.ts`     | assembles the services (translator, game, renderer factory, sound); tests assemble the same ones          |
+| `src/main.ts`    | composition root: `createApp` → `createUi`; `window.XT` is only a handle for debugging                    |
+| `src/sw.ts`      | the service worker (built to `sw.js` by a plugin in `vite.config.ts`)                                     |
+| `sim/`           | the balance simulator: a bot plays the game (see "Balance simulator")                                     |
+| `server/`        | the **highscore service** (node, sqlite) and its deploy files (see "Highscores")                          |
+| `scripts/`       | build helpers: icons, the YAML plugin, the build fingerprint, the service bundle, the smoke test          |
+| `tests/`         | unit and characterisation tests (Vitest)                                                                  |
+| `e2e/`           | browser tests (Playwright): screenshots and interface behaviour                                           |
+| `maintenance/`   | a one-page "back soon" site, put on the server in place of the game with `yarn maintenance`               |
 
 Everything is TypeScript with explicit imports: the parts receive each other as arguments (`createUi(deps)`,
 `createRenderer(canvas, deps)`, `createApp(hooks)`). Three "browser" files — `render/browser.ts`, `audio/browser.ts`,
@@ -378,6 +380,25 @@ languages. The names of routes are not texts: they are computed from the geometr
 Texts over the data of the core (`core.TT.gun.name` and the like) are "live" properties: they read the current language on
 every access, so changing the language needs no rebuild.
 
+### Tutorial and Xenopedia (`src/tutorial/`, `src/xenopedia/`)
+
+- **The script** is `src/tutorial/tutorial.yaml` (not in `src/game/`: changing it does not change the build id of the
+  simulation). The first game of a new player is played on `switchback` easy with a coach layer; the steps are _goal, build,
+  maze, call a wave early (twice), upgrade, level 5 and overclocking, abilities_. A step ends when the player does the thing
+  (`until: { towers: 4 }`, `{ earlyCalls: 2 }` …) or presses Next (`until: next`); counters in `fresh` start from 0 at their step.
+  A `target` says what to highlight: a selector, cells or the gates. The **tips** (`hints`) appear by themselves: the first time an
+  enemy type shows up (armored, flyer, swarm, healer, blinker, boss), and "the field is almost clear, call the next wave" in
+  any game until the player calls waves early.
+- **The engine** (`src/tutorial/engine.ts`) is pure: the interface feeds it events and a snapshot of facts
+  (`src/tutorial/types.ts` is the contract) and draws what `view()` returns; it also keeps the clock, the buttons and the saved
+  flags. The text of a step `build-gun` is `tutBuildGun`, of a tip `armored` `tutHintArmored` (`ui` of every `texts.*.json`).
+  `validateScript` checks the file against the game's data at startup and in the tests.
+- **The Xenopedia** (`src/xenopedia/model.ts`) gives the pages as data: every tower (levels 1–4, the ultimates at level 5,
+  overclocking), enemy (health, armour, reward on each difficulty at waves 1–100) and ability (price by wave and difficulty).
+  The numbers come from the same functions the game uses (`towerStats`, `upCost`, `enemyAt`, `abilityCost` in
+  `src/game/rules.ts`), the words from `texts.*.json`, so a page cannot go stale; a test compares every row with a real tower,
+  creep and cast, and one fails when something in the data has no page or no text.
+
 ### Random numbers
 
 Each subsystem has its own stream: `rng.core`, `rng.fx` (rendering), `rng.audio` (passed to `createApp(hooks)`). When
@@ -413,18 +434,20 @@ Modules are imported directly, without a browser (`tests/helpers/load.ts`):
 - `tests/hygiene.test.ts` makes sure `Math.random` stays only as the default in three modules;
 - `run(core, seconds)` runs the simulation in steps of 25 ms, like the game loop.
 
-| File                     | What it checks                                                                                                                                                                                                                      |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/core.test.ts`     | the data tables, stats, upgrade prices, pathfinding, `placeCheck`, the economy, 200 waves, abilities                                                                                                                                |
-| `tests/audio/*.test.ts`  | music (composer, rendering with a sample fingerprint, sound modes, instruments' pitch, song validator, player), effects (recipes, mixer, events → sounds, laser, bank), the system on a fake output, the Howler adapter, the facade |
-| `tests/balance.test.ts`  | the `balance.yaml` validator (errors with a path), replacing numbers changes the game                                                                                                                                               |
-| `tests/campaign.test.ts` | the campaign data and rule: what is open from the best waves, validation of the thresholds                                                                                                                                          |
-| `tests/levels.test.ts`   | the maps: gates, walls, reachability, texts of every level                                                                                                                                                                          |
-| `tests/hygiene.test.ts`  | `Math.random` only as the default of the streams, no IIFE leftovers and no `window.XT` outside `main.ts`, the composer knows no sound and the renderer no songs                                                                     |
-| `tests/i18n.test.ts`     | completeness of all five languages (keys, placeholders, HTML tags, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                |
-| `tests/render/`          | the parts of rendering: projection, the quality governor, effects, the sprite cache, colours, the layer composition                                                                                                                 |
-| `tests/render.test.ts`   | 45 waves on a stub 2D context: it does not crash, leaves no mess in the ctx state; rendering does not influence the simulation                                                                                                      |
-| `tests/ui/`              | the pure logic of the interface: commands, keys, panels, routes, sessions                                                                                                                                                           |
+| File                      | What it checks                                                                                                                                                                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/core.test.ts`      | the data tables, stats, upgrade prices, pathfinding, `placeCheck`, the economy, 200 waves, abilities                                                                                                                                |
+| `tests/audio/*.test.ts`   | music (composer, rendering with a sample fingerprint, sound modes, instruments' pitch, song validator, player), effects (recipes, mixer, events → sounds, laser, bank), the system on a fake output, the Howler adapter, the facade |
+| `tests/balance.test.ts`   | the `balance.yaml` validator (errors with a path), replacing numbers changes the game                                                                                                                                               |
+| `tests/campaign.test.ts`  | the campaign data and rule: what is open from the best waves, validation of the thresholds                                                                                                                                          |
+| `tests/levels.test.ts`    | the maps: gates, walls, reachability, texts of every level                                                                                                                                                                          |
+| `tests/hygiene.test.ts`   | `Math.random` only as the default of the streams, no IIFE leftovers and no `window.XT` outside `main.ts`, the composer knows no sound and the renderer no songs                                                                     |
+| `tests/tutorial.test.ts`  | the tutorial script against the game's data, a text for every step and tip in every language, the engine's steps and tips                                                                                                           |
+| `tests/xenopedia.test.ts` | a page for everything in the data, words in every language, every number equal to the game's own                                                                                                                                    |
+| `tests/i18n.test.ts`      | completeness of all five languages (keys, placeholders, HTML tags, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                         |
+| `tests/render/`           | the parts of rendering: projection, the quality governor, effects, the sprite cache, colours, the layer composition                                                                                                                 |
+| `tests/render.test.ts`    | 45 waves on a stub 2D context: it does not crash, leaves no mess in the ctx state; rendering does not influence the simulation                                                                                                      |
+| `tests/ui/`               | the pure logic of the interface: commands, keys, panels, routes, sessions                                                                                                                                                           |
 
 The golden test of core is kept in `tests/__snapshots__/`. If you changed the balance **on purpose**, update it:
 `yarn vitest run -u`. If you did not and the snapshot differs, that is a regression.

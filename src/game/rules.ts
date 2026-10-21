@@ -1,6 +1,6 @@
 // Pure formulas: tower stats by level, upgrade prices, enemy health curve. Every number comes from the balance.
 import { pow } from "./dmath";
-import type { Balance, Difficulty, Tower, TowerStats, TowerType, UltEffect } from "./types";
+import type { AbilityKey, Balance, Difficulty, EnemyType, Tower, TowerStats, TowerType, UltEffect } from "./types";
 
 /** Applies an ultimate to a stat block: first `set`, then `mul`, then `div`. */
 function applyEffect(s: TowerStats, e: UltEffect): void {
@@ -69,6 +69,29 @@ export function hpScale(B: Balance, n: number): number {
   if (n > c.lateFromWave) m *= pow(c.lateGrowth, n - c.lateFromWave);
   return m;
 }
+
+/**
+ * What an enemy of wave n is on a difficulty and a map: health, armour, speed and reward. `mult` is the wave entry's
+ * own multiplier (bosses, the final wave); `mapHp` the map's hp coefficient. Bosses take only the square root of the
+ * difficulty HP bonus, so boss waves stay beatable; flyers skip the maze and spend far less time under fire, so their
+ * HP grows slower. The spawner and the Xenopedia both read this, so the pages never go stale.
+ */
+export function enemyAt(B: Balance, D: Difficulty, mapHp: number, type: EnemyType, n: number, mult = 1) {
+  const T = B.enemies[type],
+    dh = diffHP(B, D, n),
+    hs = T.fly ? pow(hpScale(B, n), B.scaling.flyerHpExponent) : hpScale(B, n);
+  const m = hs * (T.boss ? Math.sqrt(dh) : dh) * mult * mapHp;
+  return {
+    hp: T.hp * m,
+    armor: T.armor ? T.armor + Math.floor(n / D.armorDiv) + D.armor : 0,
+    spd: T.spd * D.spd,
+    rw: Math.max(1, Math.round(T.rw * (1 + n * B.scaling.rewardGrowth) * mult * D.rw)),
+  };
+}
+
+/** The price of an ability on a wave: it grows with the wave and with the difficulty. */
+export const abilityCost = (B: Balance, D: Difficulty, k: AbilityKey, wave: number): number =>
+  Math.round((B.abilities[k].base + B.abilities[k].per * Math.max(1, wave)) * D.ab);
 
 /** Health of a basic unit of wave n (also the damage scale of abilities). */
 export const unitHP = (B: Balance, D: Difficulty, n: number): number =>

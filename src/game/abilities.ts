@@ -1,11 +1,10 @@
 // Player abilities: pricing, casting and their runtime (meteors, fire zones, bombers, nukes).
 import { cos, sin, hypot } from "./dmath";
 import { areaHit, ex, ey, hit } from "./combat";
-import { unitHP } from "./rules";
+import { abilityCost, unitHP } from "./rules";
 import type { AbilityKey, CastResult, Game, Vec } from "./types";
 
-export const abCost = (g: Game, k: AbilityKey): number =>
-  Math.round((g.B.abilities[k].base + g.B.abilities[k].per * Math.max(1, g.S.wave)) * g.D().ab);
+export const abCost = (g: Game, k: AbilityKey): number => abilityCost(g.B, g.D(), k, g.S.wave);
 
 /* Returns {ok:true} or {ok:false, code:'cd'|'noCred'|'over', s:secondsLeft}. `pt` is in board units (cell edges). */
 export function cast(g: Game, k: AbilityKey, pt?: Vec): CastResult {

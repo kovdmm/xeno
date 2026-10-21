@@ -1,8 +1,8 @@
 // Wave composition, spawning and the wave timer. Every number comes from balance.waves / scaling / combat.
-import { pow, atan2 } from "./dmath";
+import { atan2 } from "./dmath";
 import { mid } from "./constants";
 import { exitDir, routeKeys } from "./level";
-import { diffHP, hpScale } from "./rules";
+import { enemyAt } from "./rules";
 import type { Creep, EnemyType, Game, RouteKey, Wave, WaveEntry, WaveRoute } from "./types";
 
 export function makeWave(g: Game, n: number): Wave {
@@ -76,8 +76,6 @@ export function waveGap(g: Game, n: number, list: WaveEntry[]): number {
 
 /** Puts one creep of wave n on the board. */
 export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
-  // Bosses take only the square root of the difficulty HP bonus, so boss waves stay beatable.
-  // Flyers skip the maze and spend far less time under fire, so their HP grows slower.
   const B = g.B,
     K = B.combat,
     { width: W, routes: ROUTES } = g.L;
@@ -85,20 +83,18 @@ export function spawnCreep(g: Game, e: WaveEntry, n: number): void {
     R = ROUTES[e.route],
     X = exitDir(g.L, e.route),
     Df = g.D(),
-    dh = diffHP(B, Df, n),
-    hs = T.fly ? pow(hpScale(B, n), B.scaling.flyerHpExponent) : hpScale(B, n);
-  const m = hs * (T.boss ? Math.sqrt(dh) : dh) * (e.m || 1) * g.L.hp;
+    at = enemyAt(B, Df, g.L.hp, e.type, n, e.m || 1);
   const c: Creep = {
     id: g.newId(),
     type: e.type,
     route: e.route,
     wave: n,
-    hp: T.hp * m,
-    max: T.hp * m,
-    spd: T.spd * Df.spd,
+    hp: at.hp,
+    max: at.hp,
+    spd: at.spd,
     boss: !!T.boss,
-    armor: T.armor ? T.armor + Math.floor(n / Df.armorDiv) + Df.armor : 0,
-    rw: Math.max(1, Math.round(T.rw * (1 + n * B.scaling.rewardGrowth) * (e.m || 1) * Df.rw)),
+    armor: at.armor,
+    rw: at.rw,
     healT: g.rand(),
     blinkT: K.blinker.firstMin + g.rand() * K.blinker.firstSpread,
     r: T.r,
