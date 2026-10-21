@@ -1,6 +1,7 @@
 // Installability in the real browser: the manifest is served and valid, the service worker takes over,
 // and the game starts with the network gone.
 import { test, expect, type Page } from "@playwright/test";
+import { SAVE } from "../src/saveVersion";
 
 test.use({ locale: "en-US", serviceWorkers: "allow" });
 
@@ -107,6 +108,12 @@ test.describe("installed app", () => {
 
   test("no fullscreen question and no fullscreen button: the app already has the whole screen", async ({ page }) => {
     await asApp(page);
+    // a player who has played: no tutorial and no tips over the field (a new player's coach would stand in the way)
+    await page.addInitScript((schema) => {
+      localStorage.setItem("xt-schema", String(schema));
+      localStorage.setItem("xt-tutorial", "done");
+      localStorage.setItem("xt-tips-off", "1");
+    }, SAVE.version);
     await page.route(/googleapis|gstatic|cdnjs/, (r) => r.abort());
     await page.goto("/");
     await page.waitForFunction(() => window.XT?.i18n);

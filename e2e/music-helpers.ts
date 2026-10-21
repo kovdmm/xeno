@@ -3,6 +3,7 @@
 // the failure depends on Howler's asynchronous loading and its autoplay unlock queue, which fakes hide.
 import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { SAVE } from "../src/saveVersion";
 
 /** the parts of howler.js's internals the checks read */
 interface HowlInternals {
@@ -17,9 +18,14 @@ const howler = readFileSync("node_modules/howler/dist/howler.min.js", "utf8"); /
 export async function open(page: Page, { storage = {} }: { storage?: Record<string, string> } = {}) {
   await page.route(/googleapis|gstatic/, (r) => r.abort());
   await page.route(/cdnjs.*howler/, (r) => r.fulfill({ contentType: "text/javascript", body: howler }));
-  await page.addInitScript((st) => {
-    for (const [k, v] of Object.entries(st)) localStorage.setItem(k, v);
-  }, storage);
+  // the saves are of the current version: the release's reset would remove what a test sets up
+  await page.addInitScript(
+    ([st, schema]) => {
+      if (localStorage.getItem("xt-schema") === null) localStorage.setItem("xt-schema", String(schema));
+      for (const [k, v] of Object.entries(st)) localStorage.setItem(k, v);
+    },
+    [storage, SAVE.version] as const,
+  );
   await page.goto("/");
   // a cold dev server may still be transforming modules: wait until the game has installed its audio
   await page.waitForFunction(() => window.XT?.audio?.ok === true, null, { timeout: 30000 });
