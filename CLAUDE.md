@@ -96,7 +96,9 @@ Tokens are the budget of this project. Work so that none are spent on the same t
   (`path:line`) or a commit hash instead of quoting code or a diff. No "working on it" or "are you done" messages: use the
   status message when the state changes, and `notify_when_idle` instead of polling.
 - **Plan once.** A task comes with its goal, its files, its definition of done and its limits in one message; answer the
-  open questions yourself with a sensible default and say which one you took, rather than starting a round trip.
+  open technical questions yourself with a sensible default and say which one you took. **Product and UX questions are
+  the owner's: when you do not know how to make something better, ask (through the orchestrator) with two or three options
+  and your recommendation; the owner wants to be asked.**
 - **Bundle.** One finished change per commit, one batch of merges per full test run, one deploy per batch; small items go
   into the next task of whoever works in that area, not into a new session.
 - **Keep the context small.** Do a long task in a session that already knows the area; compact the session at a natural
