@@ -335,7 +335,7 @@ English is the default language and the reference; Russian (`ru`), German (`de`)
 are supported. All text for the player is one file per language: `texts.en.json`, `texts.ru.json`, `texts.de.json`,
 `texts.ua.json`, `texts.sv.json`. Each has two sections:
 
-- `ui` — interface strings with `{placeholders}` and HTML tags (`<b>`, `<kbd>`, …); `credits` — the credit lines;
+- `ui` — interface strings with `{placeholders}` and HTML tags (`<b>`, `<kbd>`, …);
 - `game` — names and descriptions of the game's data by their ids from `balance.yaml`: `towers` (with `ults`),
   `enemies`, `difficulties`, `abilities`, `levels`.
 
@@ -416,7 +416,7 @@ Modules are imported directly, without a browser (`tests/helpers/load.ts`):
 | `tests/campaign.test.ts` | the campaign data and rule: what is open from the best waves, validation of the thresholds                                                                                                                                          |
 | `tests/levels.test.ts`   | the maps: gates, walls, reachability, texts of every level                                                                                                                                                                          |
 | `tests/hygiene.test.ts`  | `Math.random` only as the default of the streams, no IIFE leftovers and no `window.XT` outside `main.ts`, the composer knows no sound and the renderer no songs                                                                     |
-| `tests/i18n.test.ts`     | completeness of all five languages (keys, placeholders, HTML tags, credits, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                |
+| `tests/i18n.test.ts`     | completeness of all five languages (keys, placeholders, HTML tags, coverage of the ids in the balance), language detection, the translator with English fallback, live texts over core data                                |
 | `tests/render/`          | the parts of rendering: projection, the quality governor, effects, the sprite cache, colours, the layer composition                                                                                                                 |
 | `tests/render.test.ts`   | 45 waves on a stub 2D context: it does not crash, leaves no mess in the ctx state; rendering does not influence the simulation                                                                                                      |
 | `tests/ui/`              | the pure logic of the interface: commands, keys, panels, routes, sessions                                                                                                                                                           |

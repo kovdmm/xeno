@@ -1,22 +1,5 @@
 {
   "ui": {
-    "crHint": "Klicka för att stänga",
-    "credits": [
-      ["", "Xeno<span>-</span>Tactics"],
-      ["Ursprunglig idé", "Dmitry Kovalev"],
-      ["Speldesign", "Claude Code"],
-      ["Programmering", "Claude Code"],
-      ["Spellogik och balans för 200 vågor", "Claude Code"],
-      ["Grafik och animation", "Claude Code"],
-      ["Gränssnitt", "Claude Code"],
-      ["Musik", "Claude Code"],
-      ["Ljudeffekter", "Claude Code"],
-      ["Lokalisering", "Claude Code"],
-      ["Testning", "Claude Code<br><small>och dess outtröttliga botar</small>"],
-      ["Utomjordingar", "Claude Code"],
-      ["Inspirerat av", "Xeno Tactic"],
-      ["", "Tack för att du spelade!"]
-    ],
     "title": "Xeno-Tactics",
     "brand": "Xeno<span>-</span>Tactics",
     "sub": "Tower defense med labyrint, inspirerat av Xeno Tactic · {f} vågor",

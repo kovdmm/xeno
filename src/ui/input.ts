@@ -9,7 +9,6 @@ export interface InputDeps {
   commands: Commands;
   /** the screens' own actions */
   menu: { open(): void; newGame(): void; openSettings(): void; openHelp(): void };
-  credits: { close(): void };
   toggleSound(): void;
   closeScreen(id: "settings" | "help" | "records"): void;
 }
@@ -77,13 +76,6 @@ export function installInput(ui: UiContext, d: InputDeps) {
     if (target?.closest && target.closest("input,textarea,select")) return;
     // browser shortcuts (Ctrl+S, Ctrl+R, Alt+F ...) are not for the game; a held key does not repeat its action
     if (!e.key || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-    if (screens.isOpen("credits")) {
-      if (e.key === "Escape" || e.key === " " || e.key === "Enter") {
-        e.preventDefault();
-        d.credits.close();
-      }
-      return;
-    }
     // cheat codes use the physical keys, so any layout works
     const kc = physicalLetter(e.code);
     if (kc && cheats.feed(kc)) {

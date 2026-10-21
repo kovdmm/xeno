@@ -23,7 +23,6 @@ function setup() {
   };
   const saved: unknown[][] = [];
   const wins: unknown[][] = [];
-  const credits = vi.fn();
   const shown: string[] = [];
   const ui = {
     core: C,
@@ -38,22 +37,19 @@ function setup() {
     screens: { show: (id: string) => void shown.push(id), hide() {}, isOpen: () => false },
   } as unknown as UiContext;
   const progress = { bestOf: () => 0, saveBest: (...a: unknown[]) => void saved.push(a), saveWon: (...a: unknown[]) => void wins.push(a) } as never;
-  const session = createSession(ui, progress, credits, () => {});
-  return { C, ui, credits, saved, wins, shown, session, fire: (e: GameEvent | object) => onEvent(e as GameEvent) };
+  const session = createSession(ui, progress, () => {});
+  return { C, ui, saved, wins, shown, session, fire: (e: GameEvent | object) => onEvent(e as GameEvent) };
 }
 
 describe("the end of a game", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it("a victory shows the win screen and rolls the credits after a moment", () => {
-    const { C, fire, shown, credits } = setup();
+  it("a victory shows the win screen", () => {
+    const { C, fire, shown } = setup();
     Object.assign(C.S, { over: true, won: true, wave: 200 });
     fire({ type: "end", won: true });
     expect(shown).toContain("over");
-    expect(credits).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1800);
-    expect(credits).toHaveBeenCalledOnce();
   });
 
   it("a win is recorded for the map and difficulty, unless the game was cheated", () => {
@@ -64,16 +60,6 @@ describe("the end of a game", () => {
     Object.assign(C.S, { cheated: true });
     fire({ type: "end", won: true });
     expect(wins).toHaveLength(1);
-  });
-
-  it("starting a new game before the credits roll cancels them", () => {
-    const { C, fire, session, credits } = setup();
-    Object.assign(C.S, { over: true, won: true, wave: 200 });
-    fire({ type: "end", won: true });
-    vi.advanceTimersByTime(900);
-    session.newGame();
-    vi.advanceTimersByTime(5000);
-    expect(credits).not.toHaveBeenCalled();
   });
 
   it("the best wave is saved, unless the game was cheated", () => {

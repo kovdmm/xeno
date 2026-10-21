@@ -6,7 +6,6 @@ import { installAppMode } from "./appMode";
 import type { CardEnv } from "./cards";
 import type { UiContext } from "./context";
 import { createCommands } from "./commands";
-import { installCredits } from "./credits";
 import { createHud } from "./hud";
 import { installInput } from "./input";
 import { createApplyLang } from "./language";
@@ -102,10 +101,9 @@ export function createUi(deps: UiDeps) {
   });
   const hud = createHud(ui, palette);
   const commands = createCommands(ui, hud.drawSpeed);
-  const credits = installCredits(ui);
   const scoresClient = deps.scores ?? createScoresClient();
   let records: Records;
-  const session = createSession(ui, progress, credits.open, () => applyLang(), {
+  const session = createSession(ui, progress, () => applyLang(), {
     takeSeed: (l, d) => records.takeSeed(l, d),
     onEnd: () => records.onEnd(),
   });
@@ -144,7 +142,6 @@ export function createUi(deps: UiDeps) {
       openSettings: settings.openSettings,
       openHelp: settings.openHelp,
     },
-    credits,
     toggleSound: soundControls.toggleSound,
     closeScreen: (id) => ui.screens.hide(id),
   });

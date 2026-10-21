@@ -19,7 +19,7 @@ const read = (f) => readFileSync(new URL("../" + f, import.meta.url), "utf8");
 const CODES = ["en", "ru", "de", "ua", "sv"];
 const OTHERS = CODES.filter((c) => c !== "en");
 
-/** all leaf paths of an object, e.g. "towers.gun.ults.mini.name"; the credits list counts as one leaf */
+/** all leaf paths of an object, e.g. "towers.gun.ults.mini.name" */
 const paths = (o, p = "") =>
   Object.entries(o).flatMap(([k, v]) =>
     v && typeof v === "object" && !Array.isArray(v) ? paths(v, p + k + ".") : [p + k],
@@ -74,7 +74,6 @@ describe("every language is complete", () => {
 
   it.each(CODES)("%s: nothing is empty", (c) => {
     for (const [p, v] of everyString(TEXTS[c])) {
-      if (p === "ui.credits") continue;
       expect(typeof v, p).toBe("string");
       expect(v.trim(), p).not.toBe("");
     }
@@ -88,21 +87,10 @@ describe("every language is complete", () => {
     }
   });
 
-  it.each(OTHERS)("%s has the same credits rows, with proper names left alone", (c) => {
-    const en = TEXTS.en.ui.credits,
-      mine = TEXTS[c].ui.credits;
-    expect(mine).toHaveLength(en.length);
-    en.forEach(([, name], i) => {
-      expect(mine[i]).toHaveLength(2);
-      if (["Dmitry Kovalev", "Claude Code", "Xeno Tactic"].includes(name)) expect(mine[i][1]).toBe(name);
-    });
-  });
-
   it.each(CODES)("%s: the name of the game is never translated", (c) => {
-    // the title, the logo and the credits heading are exactly the English name
+    // the title and the logo are exactly the English name
     expect(TEXTS[c].ui.title).toBe("Xeno-Tactics");
     expect(TEXTS[c].ui.brand).toBe("Xeno<span>-</span>Tactics");
-    expect(TEXTS[c].ui.credits[0][1]).toBe("Xeno<span>-</span>Tactics");
     // and no string spells it in a local form: Xeno next to a word for tactics that is not "Tactics"
     const local = /(xeno|ксено|ксэно)\s*(<span>)?[-\s]*(<\/span>)?\s*(taktik|тактик|такти|tactique|táctic)/gi;
     for (const [p, v] of everyString(TEXTS[c])) if (typeof v === "string") expect(v.match(local), p).toBeNull();
@@ -267,9 +255,8 @@ describe("translator", () => {
     expect(t.gameText("towers.gun.nothing")).toBe("towers.gun.nothing");
   });
 
-  it("returns the credits list as it is, and game texts by path", () => {
+  it("returns game texts by path", () => {
     const t = make();
-    expect(Array.isArray(t.t("credits"))).toBe(true);
     expect(t.gameText("towers.gun.ults.mini.name")).toBe("Minigun");
     t.setLang("sv");
     expect(t.gameText("towers.gun.name")).toBe("Kulspruta");

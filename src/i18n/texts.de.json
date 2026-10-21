@@ -1,22 +1,5 @@
 {
   "ui": {
-    "crHint": "Zum Schließen klicken",
-    "credits": [
-      ["", "Xeno<span>-</span>Tactics"],
-      ["Ursprüngliche Idee", "Dmitry Kovalev"],
-      ["Spieldesign", "Claude Code"],
-      ["Programmierung", "Claude Code"],
-      ["Spiellogik & Balance für 200 Wellen", "Claude Code"],
-      ["Grafik & Animation", "Claude Code"],
-      ["Benutzeroberfläche", "Claude Code"],
-      ["Musik", "Claude Code"],
-      ["Soundeffekte", "Claude Code"],
-      ["Lokalisierung", "Claude Code"],
-      ["Tests", "Claude Code<br><small>und seine unermüdlichen Bots</small>"],
-      ["Außerirdische", "Claude Code"],
-      ["Inspiriert von", "Xeno Tactic"],
-      ["", "Danke fürs Spielen!"]
-    ],
     "title": "Xeno-Tactics",
     "brand": "Xeno<span>-</span>Tactics",
     "sub": "Labyrinth-Tower-Defense nach dem Vorbild von Xeno Tactic · {f} Wellen",

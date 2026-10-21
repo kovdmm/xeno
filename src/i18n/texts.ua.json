@@ -1,22 +1,5 @@
 {
   "ui": {
-    "crHint": "Натисніть, щоб закрити",
-    "credits": [
-      ["", "Xeno<span>-</span>Tactics"],
-      ["Автор ідеї", "Dmitry Kovalev"],
-      ["Геймдизайн", "Claude Code"],
-      ["Програмування", "Claude Code"],
-      ["Ігрова логіка та баланс 200 хвиль", "Claude Code"],
-      ["Графіка та анімація", "Claude Code"],
-      ["Інтерфейс", "Claude Code"],
-      ["Музика", "Claude Code"],
-      ["Звукові ефекти", "Claude Code"],
-      ["Локалізація", "Claude Code"],
-      ["Тестування", "Claude Code<br><small>та його невтомні боти</small>"],
-      ["Прибульці", "Claude Code"],
-      ["Натхнено грою", "Xeno Tactic"],
-      ["", "Дякуємо за гру!"]
-    ],
     "title": "Xeno-Tactics",
     "brand": "Xeno<span>-</span>Tactics",
     "sub": "Tower defense з лабіринтом за мотивами Xeno Tactic · {f} хвиль",

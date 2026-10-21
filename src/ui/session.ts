@@ -10,7 +10,6 @@ import { clearPicks } from "./state";
 export function createSession(
   ui: UiContext,
   progress: Progress,
-  openCredits: () => void,
   /** the length of the game changed with the level: texts that state it must be written again */
   onLengthChange: () => void,
   /** the highscore table's part: the server's seed for a new game, and what to do when a game has ended */
@@ -21,12 +20,9 @@ export function createSession(
 ) {
   const { core: C, state: st, t, L, $, screens } = ui;
 
-  // the credits roll 1.8 s after a victory; starting another game in that time must cancel them
-  let creditsTimer: ReturnType<typeof setTimeout> | undefined;
   let length = C.FINAL;
 
   function newGame() {
-    clearTimeout(creditsTimer);
     st.best = progress.bestOf(st.level, st.diff);
     C.newGame(st.diff, st.level, scores.takeSeed(st.level, st.diff));
     clearPicks(st);
@@ -89,7 +85,6 @@ export function createSession(
       renderOver();
       screens.show("over");
       scores.onEnd();
-      if (e.won) creditsTimer = setTimeout(() => C.S.won && C.S.over && openCredits(), 1800); // over the win screen
     } else if (e.type === "sold" && st.sel === e.tower) st.sel = null;
     else if (e.type === "cheat") {
       if (e.code === "bagowpw") progress.openAllMaps();

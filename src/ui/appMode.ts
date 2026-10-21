@@ -110,7 +110,7 @@ export function installAppMode(ui: UiContext, onFullscreenChange: () => void) {
   let offered = false;
   function offerInstall() {
     const st = installer.state();
-    const quiet = ["fsAsk", "settings", "help", "pause", "over", "credits"].every(
+    const quiet = ["fsAsk", "settings", "help", "pause", "over"].every(
       (s) => !ui.screens.isOpen(s as never),
     );
     if (offered || !quiet || !ui.screens.isOpen("menu")) return;

@@ -445,16 +445,6 @@ test.describe("keyboard extras", () => {
     await expect(page.locator('.tb[data-t="gun"]')).toHaveClass(/\bon\b/);
   });
 
-  test("ten quick clicks on the logo roll the credits", async ({ page }) => {
-    await page.click("#pauseBtn");
-    await page.click("#pMenu");
-    const logo = page.locator(".menu .logo").first();
-    for (let i = 0; i < 10; i++) await logo.click();
-    await expect(page.locator("#credits")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.locator("#credits")).toBeHidden();
-  });
-
   test("typing in an input field does not trigger hotkeys", async ({ page }) => {
     await page.click("#pauseBtn");
     await page.click("#pSettings");

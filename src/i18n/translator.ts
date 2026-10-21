@@ -10,8 +10,7 @@ export interface Translator {
   readonly languages: typeof LANGUAGES;
   /** switches language and remembers it; returns false (and changes nothing) for an unknown code */
   setLang(lang: string): boolean;
-  /** An interface string with {placeholders} filled in; the key itself if no language has it.
-   *  Non-string values (the credits list) are returned as they are. */
+  /** An interface string with {placeholders} filled in; the key itself if no language has it. */
   t(key: string, vars?: Record<string, string | number>): any;
   /** A text of the game data by path, e.g. "towers.gun.ults.mini.desc"; the path itself if missing. */
   gameText(path: string): string;

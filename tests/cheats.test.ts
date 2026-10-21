@@ -128,7 +128,6 @@ describe("bagowpw", () => {
       ui,
       progress,
       () => {},
-      () => {},
     );
     onEvent({ type: "cheat", code: "bagowpw" });
     expect(progress.mapsOpen()).toBe(true);

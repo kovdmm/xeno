@@ -1,22 +1,5 @@
 {
   "ui": {
-    "crHint": "Click to close",
-    "credits": [
-      ["", "Xeno<span>-</span>Tactics"],
-      ["Original idea", "Dmitry Kovalev"],
-      ["Game design", "Claude Code"],
-      ["Programming", "Claude Code"],
-      ["Game logic & 200-wave balance", "Claude Code"],
-      ["Graphics & animation", "Claude Code"],
-      ["Interface", "Claude Code"],
-      ["Music", "Claude Code"],
-      ["Sound effects", "Claude Code"],
-      ["Localization", "Claude Code"],
-      ["Testing", "Claude Code<br><small>and its tireless bots</small>"],
-      ["Aliens", "Claude Code"],
-      ["Inspired by", "Xeno Tactic"],
-      ["", "Thanks for playing!"]
-    ],
     "title": "Xeno-Tactics",
     "brand": "Xeno<span>-</span>Tactics",
     "sub": "Maze tower defense inspired by Xeno Tactic · {f} waves",
