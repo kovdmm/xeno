@@ -11,7 +11,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { BALANCE } from "../src/game/balance";
 import { sanitizeNick } from "../src/nick";
 import type { Db } from "./db";
-import { SYNC_WAIT_MS } from "./limits";
+import { SUBMITS_PER_HOUR, SYNC_WAIT_MS } from "./limits";
 import type { Verifier } from "./verifier";
 
 export interface ApiOptions {
@@ -78,7 +78,7 @@ export function createApi(o: ApiOptions) {
   const syncWait = o.syncWaitMs ?? SYNC_WAIT_MS;
   const ttl = o.tokenTtlMs ?? 6 * 3600 * 1000;
   const maxBody = o.maxBody ?? 256 * 1024;
-  const submits = createLimiter(o.submitsPerHour ?? 5, 3600 * 1000, now);
+  const submits = createLimiter(o.submitsPerHour ?? SUBMITS_PER_HOUR, 3600 * 1000, now);
   const seeds = createLimiter(o.seedsPerHour ?? 120, 3600 * 1000, now);
   const log = o.log ?? (() => {});
 
@@ -208,7 +208,6 @@ export function createApi(o: ApiOptions) {
 
   async function submit(req: IncomingMessage, res: ServerResponse) {
     const hash = ipHash(clientIp(req));
-    if (!submits.hit(hash)) throw new HttpError(429, "rate");
     let body: Record<string, unknown>;
     try {
       body = JSON.parse(await readBody(req));
@@ -222,6 +221,9 @@ export function createApi(o: ApiOptions) {
     const tok = readToken(body.token);
     if (run.seed !== tok.s || run.level !== tok.l || run.diff !== tok.d) throw new HttpError(400, "token mismatch");
     if (run.build !== o.build) throw new HttpError(409, "build");
+    // counted only for a request with a valid token of a matching run and build: malformed and stale-build attempts do not
+    // use up the quota (duplicate and used-token ones still do, they are checked below)
+    if (!submits.hit(hash)) throw new HttpError(429, "rate");
     // one game is entered once, however it is sent: the hash is of the canonical text, not of the bytes received
     const runHash = createHash("sha256")
       .update(JSON.stringify([run.v, run.build, run.level, run.diff, run.seed, run.ticks, run.actions]))

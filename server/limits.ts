@@ -12,6 +12,6 @@ export const REPLAY_TIMEOUT_MS = 90_000;
 /** replays waiting or running before new ones are refused (503 busy): 3 x 90 s is the longest a queue can take */
 export const MAX_QUEUE = 3;
 /** runs one address may enter per hour */
-export const SUBMITS_PER_HOUR = 5;
+export const SUBMITS_PER_HOUR = 20;
 /** how long a POST waits for its replay before it answers 202 and the page polls (ms) */
 export const SYNC_WAIT_MS = 8000;

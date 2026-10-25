@@ -10,7 +10,7 @@ describe("what the service allows", () => {
     expect(REPLAY_TIMEOUT_MS).toBeGreaterThan(77_000);
     expect(REPLAY_TIMEOUT_MS).toBe(90_000);
     expect(MAX_QUEUE).toBe(3);
-    expect(SUBMITS_PER_HOUR).toBe(5);
+    expect(SUBMITS_PER_HOUR).toBe(20);
   });
 
   it("the page waits at least for the longest replay (after the service's own wait), and nginx need not wait for it", () => {

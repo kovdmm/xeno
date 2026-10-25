@@ -270,21 +270,36 @@ describe("the name", () => {
 });
 
 describe("limits", () => {
-  it("one address submits only so many runs an hour, whatever they are", async () => {
+  it("one address submits only so many runs an hour, whatever they come to", async () => {
     const s = await start({ submitsPerHour: 2 });
-    for (let i = 0; i < 2; i++) expect((await s.post({ nope: 1 })).status).toBe(400);
-    const r = await s.post({ nope: 1 });
+    const g = await s.fresh();
+    const send = () => s.post({ run: g.run, nick: "x", token: g.token });
+    expect((await send()).status).toBe(200);
+    expect((await send()).status).toBe(409); // a duplicate still uses up the quota
+    const r = await send();
     expect(r.status).toBe(429);
     expect(r.headers.get("retry-after")).toBeTruthy();
     s.clock.t += 3601_000;
-    expect((await s.post({ nope: 1 })).status).toBe(400); // an hour later it is a bad request again, not a limit
+    expect((await send()).status).toBe(409); // an hour later it is a duplicate again, not a limit
+  });
+
+  it("a malformed or stale request does not use up the quota", async () => {
+    const s = await start({ submitsPerHour: 1 });
+    const g = await s.fresh();
+    for (let i = 0; i < 5; i++) expect((await s.post({ nope: 1 })).status).toBe(400);
+    expect((await s.post({ run: g.run, nick: "x", token: "nonsense" })).status).toBe(400);
+    expect((await s.post({ run: { ...g.run, build: "an-older-game" }, nick: "x", token: g.token })).status).toBe(409);
+    expect((await s.post({ run: g.run, nick: "x", token: g.token })).status).toBe(200);
+    expect((await s.post({ run: g.run, nick: "x", token: g.token })).status).toBe(429);
   });
 
   it("an address is the one nginx forwards, so players behind it do not share a limit", async () => {
     const s = await start({ submitsPerHour: 1 });
-    expect((await s.post({ nope: 1 }, { "x-real-ip": "203.0.113.1" })).status).toBe(400);
-    expect((await s.post({ nope: 1 }, { "x-real-ip": "203.0.113.1" })).status).toBe(429);
-    expect((await s.post({ nope: 1 }, { "x-real-ip": "203.0.113.2" })).status).toBe(400);
+    const g = await s.fresh();
+    const send = (ip: string) => s.post({ run: g.run, nick: "x", token: g.token }, { "x-real-ip": ip });
+    expect((await send("203.0.113.1")).status).toBe(200);
+    expect((await send("203.0.113.1")).status).toBe(429);
+    expect((await send("203.0.113.2")).status).toBe(409);
   });
 
   it("the limiter forgets old hits", () => {

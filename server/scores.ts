@@ -4,7 +4,7 @@
 //   DB_PATH             default $STATE_DIRECTORY/highscores.db (systemd's StateDirectory) or ./highscores.db
 //   REPLAY_TIMEOUT_MS   CPU time one replay may take, default 90000 (server/limits.ts)
 //   MAX_QUEUE           replays waiting or running before new ones are refused, default 3
-//   SUBMITS_PER_HOUR    runs one address may submit per hour, default 5
+//   SUBMITS_PER_HOUR    runs one address may submit per hour, default 20
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { SIM_BUILD } from "../src/game/run";

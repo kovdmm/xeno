@@ -578,8 +578,8 @@ its own game. Nothing the client says about its score is used, so a score cannot
 - **Names** (`src/nick.ts`, used by the server and the page): letters of any script, digits, space and `_ . ' -`, at most 16
   characters, accents composed, stacks of combining marks and everything else removed (markup, controls, bidi marks, emoji);
   nothing left, or a name from a short block list, becomes "Anonymous". Names are shown with `textContent` only.
-- **Limits**: a request body of 256 KB; the service allows five submissions and 120 seeds an hour per address (a hash of it,
-  the address itself is never stored); nginx adds 60 reads and 10 submissions a minute; a replay may take 90 s of CPU and
+- **Limits**: a request body of 256 KB; the service allows twenty submissions and 120 seeds an hour per address (a hash of it,
+  the address itself is never stored); nginx adds 60 reads, 20 submissions and 90 result polls a minute; a replay may take 90 s of CPU and
   three wait or run at most (then the answer is 503 `busy`; `server/limits.ts`). A 100-wave game (192 000 ticks) replays in
   about 7 s on the server, but a late game with 70 upgraded towers took 56 s at the natural pace up to the 90-minute limit and
   77 s with the waves called at once: the cost per tick grows with towers x enemies, which is why the limit is 90 s and the

@@ -3,7 +3,7 @@
 // It asks for a seed, plays a game from it, submits it, and checks that the table shows it; then that a tampered run,
 // a run with an unknown command, a used token and a run of another build are all refused. It enters ONE entry
 // into the table (the nick, "smoke test" by default): remove it afterwards with `admin.mjs remove-nick "smoke test"`.
-// It makes five submissions, the most one address may make in an hour by default: run it once, not in a loop.
+// It makes five submissions, a quarter of what one address may make in an hour by default: run it once an hour at most.
 // It must be built from the same sources as the service (the runs carry a fingerprint of the simulation).
 import { pathToFileURL } from "node:url";
 import { recordedGame } from "../src/game/selfCheck";
@@ -86,7 +86,7 @@ export async function runSmoke(base: string, nick = "smoke test", say: (line: st
   const r1 = await post({ run: tampered, nick, token: t.token });
   check("a tampered run is refused", r1.status === 422, r1);
 
-  // (five submissions in all: the service lets one address submit five an hour by default)
+  // (five submissions in all: the service lets one address submit twenty an hour by default)
   const v = await fresh();
   const old: Run = { ...JSON.parse(JSON.stringify(v.run)), build: "0123456789ab" };
   const r3 = await post({ run: old, nick, token: v.token });

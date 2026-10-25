@@ -83,7 +83,7 @@ nginx backup made by `install.sh` is in `/root/nginx-backup-<time>` if anything 
 - Logs: `journalctl -u xeno-scores -f`. Status: `systemctl status xeno-scores`.
 - Moderation (as the user xeno, with `DB_PATH=/var/lib/xeno/highscores.db`): `admin.mjs top <level> <diff> [n]`,
   `remove <id>`, `remove-nick <nick>`, `backup <file>`.
-- Limits: nginx 60 reads and 10 submissions a minute per address (`nginx-xeno-limits.conf`); the service five submissions and
+- Limits: nginx 60 reads, 20 submissions and 90 result polls a minute per address (`nginx-xeno-limits.conf`); the service twenty submissions and
   120 seeds an hour per address, a body of 256 KB, a replay of at most 90 s of CPU, three replays waiting or running at most (`server/limits.ts`).
 - A replay of a 100-wave game takes about 7 s on this server (192 000 ticks in 6.6 s measured with the real bot game). A late
   game is far heavier: 70 upgraded towers on Crossroads took 56 s at the natural pace to the 90-minute limit and 77 s with the
